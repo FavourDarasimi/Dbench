@@ -1,0 +1,32 @@
+[project]
+name = "dbench-backend"
+version = "0.1.0"
+description = "Dbench API (Django REST Framework)"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "django>=5.2,<5.3",
+    "djangorestframework>=3.16",
+    "drf-spectacular>=0.28",
+    "django-cors-headers>=4.7",
+    "django-environ>=0.12",
+    "cryptography>=44",
+    "psycopg[binary]>=3.2",
+    "pymysql>=1.1",
+    "sshtunnel>=0.4",
+    "gunicorn>=23",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8",
+    "pytest-django>=4.11",
+]
+
+[tool.uv]
+package = false
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "config.settings"
+python_files = ["test_*.py"]
+testpaths = ["apps"]
+addopts = "-q"

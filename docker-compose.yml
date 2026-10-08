@@ -1,0 +1,87 @@
+name: dbench
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: dbench
+      POSTGRES_PASSWORD: dbench-dev-pass
+      POSTGRES_DB: dbench
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dbench -d dbench"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+    ports:
+      - "5432:5432"
+
+  api:
+    build: ./backend
+    environment:
+      SECRET_KEY: ${SECRET_KEY:?Generate it - see .env.example}
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY:?Generate it - see .env.example}
+      DEBUG: "false"
+      DATABASE_URL: postgres://dbench:dbench-dev-pass@postgres:5432/dbench
+      ALLOWED_HOSTS: api,localhost,127.0.0.1
+      CSRF_TRUSTED_ORIGINS: http://localhost:3000,http://127.0.0.1:3000
+      ALLOW_REGISTRATION: "true"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/api/health/').status == 200 else 1)",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 24
+      start_period: 15s
+
+  web:
+    build: ./frontend
+    environment:
+      BACKEND_URL: http://api:8000
+    depends_on:
+      api:
+        condition: service_healthy
+    ports:
+      - "3000:3000"
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:3000/api/health/').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 24
+      start_period: 15s
+
+  # Real-time notifications (PRD F14) - week 5-6 wires Django/browser to it;
+  # the app must keep working on REST polling without it.
+  # Registry note: the Docker Hub `soketi/soketi` image was removed; official
+  # images are published to quay.io (docs.soketi.app). Debian variant keeps
+  # native TLS support. Project upstream is low-activity - re-evaluate at
+  # week 5-6 (PRD risk table), swap-in is easy because it speaks Pusher protocol.
+  soketi:
+    image: quay.io/soketi/soketi:1.6-16-debian
+    environment:
+      PUSHER_APP_ID: app-id
+      PUSHER_APP_KEY: app-key
+      PUSHER_APP_SECRET: app-secret
+      DEBUG: "1"
+    ports:
+      - "6001:6001"
+
+volumes:
+  pgdata:
