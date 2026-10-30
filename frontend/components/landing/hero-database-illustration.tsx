@@ -4,7 +4,7 @@ import { Database, FolderTree, Code2, Table, ShieldCheck } from "lucide-react";
 
 export function HeroDatabaseIllustration() {
   return (
-    <div className="w-full max-w-2xl mt-12 sm:mt-14 flex flex-col items-center">
+    <div className="w-full max-w-2xl mt-8 sm:mt-10 flex flex-col items-center">
       {/* Central Database Icon Node */}
       <div className="flex items-center gap-2 rounded-full border border-zinc-800 bg-[#0a0a0a] px-3.5 py-1.5 shadow-md">
         <Database className="size-3.5 text-emerald-400" />
