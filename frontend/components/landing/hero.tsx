@@ -8,37 +8,37 @@ export function HeroSection() {
   const { data: user } = useCurrentUser();
 
   return (
-    <section className="relative w-full max-w-6xl px-4 sm:px-6 pt-20 pb-16 md:pt-32 md:pb-24 flex flex-col items-center text-center">
+    <section className="relative w-full max-w-6xl min-h-[calc(100vh-4rem)] px-6 sm:px-8 py-16 sm:py-24 md:py-32 flex flex-col items-center justify-center text-center">
       {/* 1. Main Headline */}
-      <h1 className="text-4xl sm:text-6xl md:text-7xl font-extrabold tracking-tight text-white max-w-3xl leading-[1.12]">
+      <h1 className="text-5xl sm:text-7xl md:text-8xl lg:text-[5.5rem] font-extrabold tracking-tight text-white max-w-4xl leading-[1.06]">
         Your databases.{" "}
         <span className="text-zinc-500">
           One powerful workspace.
         </span>
       </h1>
 
-      {/* 2. Catchy Subhead (2 text blocks total, concise & punchy) */}
-      <p className="mt-5 text-lg sm:text-xl text-zinc-400 max-w-xl leading-relaxed">
+      {/* 2. Catchy Subhead */}
+      <p className="mt-7 sm:mt-8 text-xl sm:text-2xl md:text-[1.375rem] text-zinc-400 max-w-2xl leading-relaxed">
         Fast, browser-based database management for PostgreSQL and MySQL—with built-in guardrails.
       </p>
 
       {/* Action Button */}
-      <div className="mt-8 flex items-center justify-center">
+      <div className="mt-10 sm:mt-12 flex items-center justify-center">
         {user ? (
           <Link
             href="/connections"
-            className="inline-flex items-center gap-2 rounded-lg bg-emerald-500 hover:bg-emerald-400 px-7 py-3 text-sm font-bold text-zinc-950 transition shadow-lg shadow-emerald-500/20 hover:scale-[1.02]"
+            className="inline-flex items-center gap-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 px-8 py-4 text-base font-bold text-zinc-950 transition shadow-xl shadow-emerald-500/20 hover:scale-[1.02]"
           >
             Open Workspace
-            <ArrowRight className="size-4" />
+            <ArrowRight className="size-5" />
           </Link>
         ) : (
           <Link
             href="/register"
-            className="inline-flex items-center gap-2 rounded-lg bg-emerald-500 hover:bg-emerald-400 px-7 py-3 text-sm font-bold text-zinc-950 transition shadow-lg shadow-emerald-500/20 hover:scale-[1.02]"
+            className="inline-flex items-center gap-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 px-8 py-4 text-base font-bold text-zinc-950 transition shadow-xl shadow-emerald-500/20 hover:scale-[1.02]"
           >
             Get Started
-            <ArrowRight className="size-4" />
+            <ArrowRight className="size-5" />
           </Link>
         )}
       </div>

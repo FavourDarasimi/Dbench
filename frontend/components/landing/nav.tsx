@@ -22,35 +22,17 @@ export function LandingNav() {
           </Link>
         </div>
 
-        {/* Desktop Navigation Links */}
-        <nav className="hidden lg:flex items-center gap-7 text-sm font-medium text-zinc-300 flex-nowrap shrink-0">
+        {/* Desktop Navigation Links (Only Features & How it works) */}
+        <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-zinc-300 flex-nowrap shrink-0">
           <a href="#features" className="hover:text-white transition-colors whitespace-nowrap">
             Features
           </a>
-          <a
-            href="#guardrails"
-            className="hover:text-white transition-colors text-amber-300/90 font-medium whitespace-nowrap"
-          >
-            Safety Guardrails
-          </a>
           <a href="#how-it-works" className="hover:text-white transition-colors whitespace-nowrap">
-            How It Works
-          </a>
-          <a href="#comparison" className="hover:text-white transition-colors whitespace-nowrap">
-            Comparisons
-          </a>
-          <a href="#security" className="hover:text-white transition-colors whitespace-nowrap">
-            Security
-          </a>
-          <a
-            href="#quickstart"
-            className="hover:text-white transition-colors font-mono text-xs text-zinc-400 whitespace-nowrap"
-          >
-            Quickstart
+            How it works
           </a>
         </nav>
 
-        {/* Right CTA Actions */}
+        {/* Right CTA Actions (Sign in & Get Started) */}
         <div className="hidden md:flex items-center gap-3 shrink-0 flex-nowrap">
           {user ? (
             <Link
@@ -78,7 +60,7 @@ export function LandingNav() {
         </div>
 
         {/* Mobile menu toggle */}
-        <div className="flex lg:hidden shrink-0">
+        <div className="flex md:hidden shrink-0">
           <button
             type="button"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -92,7 +74,7 @@ export function LandingNav() {
 
       {/* Mobile dropdown */}
       {mobileMenuOpen && (
-        <div className="lg:hidden border-b border-zinc-800 bg-black/98 px-5 py-4 space-y-3.5 backdrop-blur-xl">
+        <div className="md:hidden border-b border-zinc-800 bg-black/98 px-5 py-5 space-y-4 backdrop-blur-xl">
           <a
             href="#features"
             onClick={() => setMobileMenuOpen(false)}
@@ -101,41 +83,13 @@ export function LandingNav() {
             Features
           </a>
           <a
-            href="#guardrails"
-            onClick={() => setMobileMenuOpen(false)}
-            className="block text-sm text-amber-300 hover:text-amber-200 font-medium whitespace-nowrap"
-          >
-            Safety Guardrails
-          </a>
-          <a
             href="#how-it-works"
             onClick={() => setMobileMenuOpen(false)}
             className="block text-sm text-zinc-300 hover:text-white whitespace-nowrap"
           >
-            How It Works
+            How it works
           </a>
-          <a
-            href="#comparison"
-            onClick={() => setMobileMenuOpen(false)}
-            className="block text-sm text-zinc-300 hover:text-white whitespace-nowrap"
-          >
-            Comparisons
-          </a>
-          <a
-            href="#security"
-            onClick={() => setMobileMenuOpen(false)}
-            className="block text-sm text-zinc-300 hover:text-white whitespace-nowrap"
-          >
-            Security
-          </a>
-          <a
-            href="#quickstart"
-            onClick={() => setMobileMenuOpen(false)}
-            className="block text-sm text-zinc-400 font-mono text-xs whitespace-nowrap"
-          >
-            Quickstart
-          </a>
-          <div className="pt-2 border-t border-zinc-800 flex items-center justify-between">
+          <div className="pt-3 border-t border-zinc-800 flex items-center justify-between">
             {user ? (
               <Link
                 href="/connections"
