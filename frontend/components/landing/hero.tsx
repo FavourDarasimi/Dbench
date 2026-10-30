@@ -3,13 +3,12 @@
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { useCurrentUser } from "@/components/auth-guard";
-import { ProductHeroMockup } from "./product-mockup";
 
 export function HeroSection() {
   const { data: user } = useCurrentUser();
 
   return (
-    <section className="relative w-full max-w-6xl px-4 sm:px-6 pt-16 pb-16 md:pt-24 md:pb-24 flex flex-col items-center text-center">
+    <section className="relative w-full max-w-6xl px-4 sm:px-6 pt-20 pb-16 md:pt-32 md:pb-24 flex flex-col items-center text-center">
       {/* 1. Main Headline */}
       <h1 className="text-4xl sm:text-6xl md:text-7xl font-extrabold tracking-tight text-white max-w-3xl leading-[1.12]">
         Your databases.{" "}
@@ -42,11 +41,6 @@ export function HeroSection() {
             <ArrowRight className="size-4" />
           </Link>
         )}
-      </div>
-
-      {/* Product Preview Container */}
-      <div className="mt-14 w-full relative flex justify-center">
-        <ProductHeroMockup />
       </div>
     </section>
   );
