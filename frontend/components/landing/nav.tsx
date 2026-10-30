@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Terminal, Database, ArrowRight, ShieldCheck, Menu, X } from "lucide-react";
+import { Terminal, Database, ArrowRight, ShieldCheck, Menu, X, Lock } from "lucide-react";
 import { useState } from "react";
 import { useCurrentUser } from "@/components/auth-guard";
 
@@ -10,41 +10,48 @@ export function LandingNav() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
-    <header className="sticky top-0 z-50 w-full glass-nav">
+    <header className="sticky top-0 z-50 w-full glass-nav border-b border-zinc-800/80">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
         {/* Brand & Version Badge */}
         <div className="flex items-center gap-3">
-          <Link href="/" className="group flex items-center gap-2.5 font-semibold text-white tracking-tight">
-            <span className="flex size-7 items-center justify-center rounded-lg bg-zinc-800 border border-zinc-700/80 text-zinc-100 shadow-sm transition-transform group-hover:scale-105">
+          <Link href="/" className="group flex items-center gap-2.5 font-bold text-white tracking-tight">
+            <span className="flex size-8 items-center justify-center rounded-lg bg-zinc-800 border border-zinc-700 text-zinc-100 shadow-md transition-transform group-hover:scale-105">
               <Database className="size-4 text-indigo-400" />
             </span>
-            <span className="text-base font-semibold">Dbench</span>
+            <span className="text-lg font-bold tracking-tight">Dbench</span>
           </Link>
 
-          <span className="hidden sm:inline-flex items-center gap-1.5 rounded-full border border-zinc-800 bg-zinc-900/90 px-2.5 py-0.5 text-[11px] font-medium text-zinc-400">
-            <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
+          <span className="hidden sm:inline-flex items-center gap-1.5 rounded-full border border-zinc-800/90 bg-zinc-900/90 px-2.5 py-0.5 text-[11px] font-mono text-zinc-400">
+            <span className="size-1.5 rounded-full bg-emerald-400 animate-pulse" />
             v1.0 Self-hosted
           </span>
         </div>
 
         {/* Desktop Navigation Links */}
-        <nav className="hidden md:flex items-center gap-6 text-sm font-medium text-zinc-400">
-          <a
-            href="#safety-shield"
-            className="flex items-center gap-1.5 hover:text-zinc-100 transition-colors"
-          >
-            <ShieldCheck className="size-3.5 text-amber-400/90" />
-            Safety Guardrails
-          </a>
-          <a href="#features" className="hover:text-zinc-100 transition-colors">
+        <nav className="hidden lg:flex items-center gap-7 text-sm font-medium text-zinc-300">
+          <a href="#features" className="hover:text-white transition-colors">
             Features
           </a>
-          <a href="#comparison" className="hover:text-zinc-100 transition-colors">
-            vs. DBeaver & pgAdmin
+          <a
+            href="#guardrails"
+            className="flex items-center gap-1.5 hover:text-white transition-colors text-amber-300/90 font-medium"
+          >
+            <ShieldCheck className="size-4 text-amber-400" />
+            Safety Guardrails
+          </a>
+          <a href="#how-it-works" className="hover:text-white transition-colors">
+            How It Works
+          </a>
+          <a href="#comparison" className="hover:text-white transition-colors">
+            Comparisons
+          </a>
+          <a href="#security" className="flex items-center gap-1 hover:text-white transition-colors">
+            <Lock className="size-3 text-emerald-400" />
+            Security
           </a>
           <a
             href="#quickstart"
-            className="flex items-center gap-1.5 hover:text-zinc-100 transition-colors font-mono text-xs"
+            className="flex items-center gap-1 hover:text-white transition-colors font-mono text-xs text-zinc-400"
           >
             <Terminal className="size-3 text-zinc-500" />
             Quickstart
@@ -56,7 +63,7 @@ export function LandingNav() {
           {user ? (
             <Link
               href="/connections"
-              className="inline-flex items-center gap-2 rounded-lg bg-white px-3.5 py-1.5 text-xs font-semibold text-zinc-950 transition hover:bg-zinc-200"
+              className="inline-flex items-center gap-2 rounded-lg bg-white px-4 py-2 text-xs font-semibold text-zinc-950 transition hover:bg-zinc-200 shadow-sm"
             >
               Open Workspace
               <ArrowRight className="size-3.5" />
@@ -65,13 +72,13 @@ export function LandingNav() {
             <>
               <Link
                 href="/login"
-                className="text-xs font-medium text-zinc-400 hover:text-zinc-100 transition-colors px-2 py-1.5"
+                className="text-xs font-semibold text-zinc-300 hover:text-white transition-colors px-3 py-1.5"
               >
                 Sign in
               </Link>
               <Link
                 href="/register"
-                className="inline-flex items-center gap-1.5 rounded-lg bg-white px-3.5 py-1.5 text-xs font-semibold text-zinc-950 transition hover:bg-zinc-200 shadow-sm"
+                className="inline-flex items-center gap-1.5 rounded-lg bg-white px-4 py-2 text-xs font-semibold text-zinc-950 transition hover:bg-zinc-200 shadow-sm shadow-white/10"
               >
                 Get Started
                 <ArrowRight className="size-3.5" />
@@ -81,7 +88,7 @@ export function LandingNav() {
         </div>
 
         {/* Mobile menu toggle */}
-        <div className="flex md:hidden">
+        <div className="flex lg:hidden">
           <button
             type="button"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -95,14 +102,7 @@ export function LandingNav() {
 
       {/* Mobile dropdown */}
       {mobileMenuOpen && (
-        <div className="md:hidden border-b border-zinc-800 bg-zinc-950/95 px-4 py-4 space-y-3">
-          <a
-            href="#safety-shield"
-            onClick={() => setMobileMenuOpen(false)}
-            className="block text-sm text-zinc-300 hover:text-white"
-          >
-            Safety Guardrails
-          </a>
+        <div className="lg:hidden border-b border-zinc-800 bg-zinc-950/98 px-5 py-4 space-y-3.5 backdrop-blur-xl">
           <a
             href="#features"
             onClick={() => setMobileMenuOpen(false)}
@@ -111,16 +111,37 @@ export function LandingNav() {
             Features
           </a>
           <a
+            href="#guardrails"
+            onClick={() => setMobileMenuOpen(false)}
+            className="block text-sm text-amber-300 hover:text-amber-200 font-medium"
+          >
+            Safety Guardrails
+          </a>
+          <a
+            href="#how-it-works"
+            onClick={() => setMobileMenuOpen(false)}
+            className="block text-sm text-zinc-300 hover:text-white"
+          >
+            How It Works
+          </a>
+          <a
             href="#comparison"
             onClick={() => setMobileMenuOpen(false)}
             className="block text-sm text-zinc-300 hover:text-white"
           >
-            vs. DBeaver & pgAdmin
+            Comparisons (vs. DBeaver & pgAdmin)
+          </a>
+          <a
+            href="#security"
+            onClick={() => setMobileMenuOpen(false)}
+            className="block text-sm text-zinc-300 hover:text-white"
+          >
+            Security & Encryption
           </a>
           <a
             href="#quickstart"
             onClick={() => setMobileMenuOpen(false)}
-            className="block text-sm text-zinc-300 hover:text-white font-mono text-xs"
+            className="block text-sm text-zinc-400 font-mono text-xs"
           >
             docker compose up -d
           </a>
