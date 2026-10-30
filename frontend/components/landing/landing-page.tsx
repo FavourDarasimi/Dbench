@@ -2,13 +2,10 @@
 
 import { LandingNav } from "./nav";
 import { HeroSection } from "./hero";
-import { DatabaseSupport } from "./database-support";
 import { CoreFeatures } from "./core-features";
-import { SafetyGuardrails } from "./safety-guardrails";
 import { HowItWorks } from "./how-it-works";
-import { ComparisonSection } from "./comparison";
-import { SecuritySection } from "./security-section";
-import { QuickstartCta } from "./quickstart-cta";
+import Link from "next/link";
+import { Database } from "lucide-react";
 
 export function LandingPage() {
   return (
@@ -20,30 +17,31 @@ export function LandingPage() {
         <LandingNav />
 
         <main className="flex-1 flex flex-col items-center">
-          {/* Hero Section with Product Mockup & Quickstart */}
+          {/* Hero Section */}
           <HeroSection />
 
-          {/* Database Compatibility Section */}
-          <DatabaseSupport />
-
-          {/* Core Feature Showcase */}
+          {/* Core Feature Showcase (Dual-mode: Data Browser + Monaco SQL) */}
           <CoreFeatures />
 
-          {/* Dedicated Safety Guardrails Section */}
-          <SafetyGuardrails />
-
-          {/* How It Works Section */}
+          {/* How It Works Workflow (Connect -> Browse -> Query) */}
           <HowItWorks />
-
-          {/* Competitor Comparison Matrix */}
-          <ComparisonSection />
-
-          {/* Security & Credential Protection */}
-          <SecuritySection />
-
-          {/* Quickstart Command & Closing CTA */}
-          <QuickstartCta />
         </main>
+
+        {/* Minimal Footer */}
+        <footer className="w-full border-t border-zinc-900 bg-black py-8 px-4 sm:px-6">
+          <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-mono text-zinc-500">
+            <div className="flex items-center gap-2">
+              <Database className="size-3.5 text-emerald-400" />
+              <span className="text-zinc-400 font-semibold">Dbench</span>
+              <span>— Multi-database workspace for PostgreSQL & MySQL</span>
+            </div>
+            <div className="flex items-center gap-6">
+              <a href="#features" className="hover:text-zinc-300 transition-colors">Features</a>
+              <a href="#how-it-works" className="hover:text-zinc-300 transition-colors">How it works</a>
+              <Link href="/register" className="text-emerald-400 hover:text-emerald-300 transition-colors">Get Started</Link>
+            </div>
+          </div>
+        </footer>
       </div>
     </div>
   );

@@ -82,7 +82,32 @@ export function HeroDatabaseIllustration() {
           </div>
         </div>
 
-        {/* Wireframe 2: Query */}
+        {/* Wireframe 2: Data Browser (No-SQL) */}
+        <div className="rounded-lg border border-zinc-800/80 bg-[#0a0a0a] p-3 space-y-2 hover:border-zinc-700 transition">
+          <div className="flex items-center gap-1.5 text-zinc-400 text-[11px] font-mono">
+            <Table className="size-3 text-emerald-400" />
+            <span>browse</span>
+          </div>
+          <div className="space-y-1.5 pt-0.5">
+            <div className="grid grid-cols-3 gap-1">
+              <div className="h-1.5 rounded bg-zinc-700" />
+              <div className="h-1.5 rounded bg-zinc-700" />
+              <div className="h-1.5 rounded bg-zinc-700" />
+            </div>
+            <div className="grid grid-cols-3 gap-1">
+              <div className="h-1.5 rounded bg-zinc-800/80" />
+              <div className="h-1.5 rounded bg-zinc-800/80" />
+              <div className="h-1.5 rounded bg-zinc-800/80" />
+            </div>
+            <div className="grid grid-cols-3 gap-1">
+              <div className="h-1.5 rounded bg-zinc-800/80" />
+              <div className="h-1.5 rounded bg-zinc-800/80" />
+              <div className="h-1.5 rounded bg-zinc-800/80" />
+            </div>
+          </div>
+        </div>
+
+        {/* Wireframe 3: SQL Editor (Advanced Mode) */}
         <div className="rounded-lg border border-zinc-800/80 bg-[#0a0a0a] p-3 space-y-2 hover:border-zinc-700 transition">
           <div className="flex items-center gap-1.5 text-zinc-400 text-[11px] font-mono">
             <Code2 className="size-3 text-teal-400" />
@@ -92,31 +117,6 @@ export function HeroDatabaseIllustration() {
             <div className="h-1.5 w-14 rounded bg-emerald-500/40" />
             <div className="h-1.5 w-20 rounded bg-zinc-800/80" />
             <div className="h-1.5 w-12 rounded bg-zinc-800/80" />
-          </div>
-        </div>
-
-        {/* Wireframe 3: Table / Grid */}
-        <div className="rounded-lg border border-zinc-800/80 bg-[#0a0a0a] p-3 space-y-2 hover:border-zinc-700 transition">
-          <div className="flex items-center gap-1.5 text-zinc-400 text-[11px] font-mono">
-            <Table className="size-3 text-emerald-400" />
-            <span>table</span>
-          </div>
-          <div className="space-y-1.5 pt-0.5">
-            <div className="grid grid-cols-3 gap-1">
-              <div className="h-1.5 rounded bg-zinc-700" />
-              <div className="h-1.5 rounded bg-zinc-700" />
-              <div className="h-1.5 rounded bg-zinc-700" />
-            </div>
-            <div className="grid grid-cols-3 gap-1">
-              <div className="h-1.5 rounded bg-zinc-800/80" />
-              <div className="h-1.5 rounded bg-zinc-800/80" />
-              <div className="h-1.5 rounded bg-zinc-800/80" />
-            </div>
-            <div className="grid grid-cols-3 gap-1">
-              <div className="h-1.5 rounded bg-zinc-800/80" />
-              <div className="h-1.5 rounded bg-zinc-800/80" />
-              <div className="h-1.5 rounded bg-zinc-800/80" />
-            </div>
           </div>
         </div>
 
