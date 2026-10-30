@@ -19,9 +19,7 @@ export function QuickstartCta() {
   return (
     <section className="w-full max-w-6xl px-4 sm:px-6 pt-16 pb-20 border-t border-zinc-800/80">
       {/* High-Impact CTA Box */}
-      <div className="rounded-3xl border border-emerald-500/25 bg-gradient-to-b from-[#0f1712] via-[#0c130f] to-[#080c09] p-8 sm:p-12 text-center relative overflow-hidden shadow-2xl shadow-emerald-950/30">
-        <div className="absolute inset-0 bg-radial-gradient opacity-60 pointer-events-none" />
-
+      <div className="rounded-3xl border border-zinc-800 bg-[#0e120f] p-8 sm:p-12 text-center relative overflow-hidden shadow-2xl">
         <div className="relative z-10 max-w-3xl mx-auto flex flex-col items-center">
           <div className="inline-flex items-center gap-2 rounded-full border border-emerald-500/25 bg-emerald-950/50 px-3.5 py-1 text-xs font-mono text-emerald-300 mb-6">
             <Database className="size-3.5 text-emerald-400" />

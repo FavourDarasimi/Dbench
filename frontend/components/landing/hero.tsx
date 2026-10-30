@@ -39,7 +39,7 @@ export function HeroSection() {
       {/* Main Headline */}
       <h1 className="text-4xl sm:text-6xl md:text-7xl font-extrabold tracking-tight text-white max-w-4xl leading-[1.12]">
         Your databases.{" "}
-        <span className="text-transparent bg-clip-text bg-gradient-to-b from-emerald-200 via-emerald-100 to-zinc-400">
+        <span className="text-emerald-400">
           One powerful workspace.
         </span>
       </h1>
@@ -116,8 +116,6 @@ export function HeroSection() {
 
       {/* Product Preview Container with Feature Callout Chips */}
       <div className="mt-12 w-full relative flex justify-center">
-        {/* Ambient emerald & teal glow behind preview */}
-        <div className="absolute -inset-6 rounded-3xl bg-gradient-to-b from-emerald-500/15 via-teal-500/10 to-transparent blur-2xl pointer-events-none" />
         <ProductHeroMockup />
       </div>
     </section>
