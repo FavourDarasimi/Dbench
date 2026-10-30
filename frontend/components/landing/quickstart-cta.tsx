@@ -17,7 +17,7 @@ export function QuickstartCta() {
   };
 
   return (
-    <section className="w-full max-w-6xl px-4 sm:px-6 pt-16 pb-20 border-t border-zinc-800/80">
+    <section id="quickstart" className="w-full max-w-6xl px-4 sm:px-6 pt-16 pb-20 border-t border-zinc-800/80">
       {/* High-Impact CTA Box */}
       <div className="rounded-3xl border border-zinc-800 bg-[#0e120f] p-8 sm:p-12 text-center relative overflow-hidden shadow-2xl">
         <div className="relative z-10 max-w-3xl mx-auto flex flex-col items-center">
