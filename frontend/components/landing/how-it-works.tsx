@@ -31,8 +31,8 @@ export function HowItWorks() {
   return (
     <section id="how-it-works" className="w-full max-w-6xl px-4 sm:px-6 py-16 md:py-24 border-t border-zinc-800/80">
       <div className="text-center max-w-3xl mx-auto mb-14">
-        <div className="inline-flex items-center gap-1.5 rounded-full border border-indigo-500/20 bg-indigo-500/10 px-3.5 py-1 text-xs font-mono text-indigo-300 mb-4">
-          <Compass className="size-3.5 text-indigo-400" />
+        <div className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/25 bg-emerald-950/40 px-3.5 py-1 text-xs font-mono text-emerald-300 mb-4">
+          <Compass className="size-3.5 text-emerald-400" />
           <span>Workflow</span>
         </div>
         <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-white">
@@ -49,14 +49,14 @@ export function HowItWorks() {
           return (
             <div
               key={step.title}
-              className="rounded-2xl border border-zinc-800 bg-[#101015] p-6 sm:p-7 flex flex-col justify-between hover:border-zinc-700/80 transition-colors shadow-lg relative"
+              className="rounded-2xl border border-zinc-800/90 bg-[#0e120f] p-6 sm:p-7 flex flex-col justify-between hover:border-emerald-500/40 transition-colors shadow-lg relative"
             >
               <div>
                 <div className="flex items-center justify-between mb-5">
-                  <span className="flex size-10 items-center justify-center rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400">
+                  <span className="flex size-10 items-center justify-center rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
                     <Icon className="size-5" />
                   </span>
-                  <span className="text-2xl font-black font-mono text-zinc-700">{step.num}</span>
+                  <span className="text-2xl font-black font-mono text-emerald-900/60">{step.num}</span>
                 </div>
 
                 <h3 className="text-xl font-bold text-white tracking-tight">{step.title}</h3>
@@ -64,8 +64,8 @@ export function HowItWorks() {
               </div>
 
               <div className="mt-6 pt-4 border-t border-zinc-800/80">
-                <span className="inline-flex items-center gap-1 text-xs font-mono text-indigo-400">
-                  <ShieldCheck className="size-3 text-emerald-400" />
+                <span className="inline-flex items-center gap-1.5 text-xs font-mono text-emerald-300">
+                  <ShieldCheck className="size-3.5 text-emerald-400" />
                   {step.tag}
                 </span>
               </div>

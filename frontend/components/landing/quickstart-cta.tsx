@@ -19,12 +19,12 @@ export function QuickstartCta() {
   return (
     <section className="w-full max-w-6xl px-4 sm:px-6 pt-16 pb-20 border-t border-zinc-800/80">
       {/* High-Impact CTA Box */}
-      <div className="rounded-3xl border border-zinc-700/80 bg-gradient-to-b from-[#14141c] to-[#0c0c10] p-8 sm:p-12 text-center relative overflow-hidden shadow-2xl">
+      <div className="rounded-3xl border border-emerald-500/25 bg-gradient-to-b from-[#0f1712] via-[#0c130f] to-[#080c09] p-8 sm:p-12 text-center relative overflow-hidden shadow-2xl shadow-emerald-950/30">
         <div className="absolute inset-0 bg-radial-gradient opacity-60 pointer-events-none" />
 
         <div className="relative z-10 max-w-3xl mx-auto flex flex-col items-center">
-          <div className="inline-flex items-center gap-2 rounded-full border border-indigo-500/20 bg-indigo-500/10 px-3.5 py-1 text-xs font-mono text-indigo-300 mb-6">
-            <Database className="size-3.5 text-indigo-400" />
+          <div className="inline-flex items-center gap-2 rounded-full border border-emerald-500/25 bg-emerald-950/50 px-3.5 py-1 text-xs font-mono text-emerald-300 mb-6">
+            <Database className="size-3.5 text-emerald-400" />
             <span>Ready for your team</span>
           </div>
 
@@ -37,10 +37,10 @@ export function QuickstartCta() {
           </p>
 
           {/* Quickstart Command Container */}
-          <div className="mt-8 flex items-center gap-3 rounded-xl border border-zinc-700 bg-zinc-950 px-5 py-3 font-mono text-sm text-zinc-200 shadow-inner">
-            <Terminal className="size-4 text-zinc-500" />
+          <div className="mt-8 flex items-center gap-3 rounded-xl border border-emerald-900/50 bg-black/60 px-5 py-3 font-mono text-sm text-zinc-200 shadow-inner">
+            <Terminal className="size-4 text-emerald-400" />
             <span className="text-zinc-500 select-none">$</span>
-            <span className="select-all font-semibold text-white">{command}</span>
+            <span className="select-all font-semibold text-emerald-100">{command}</span>
             <button
               type="button"
               onClick={handleCopy}
@@ -66,7 +66,7 @@ export function QuickstartCta() {
             {user ? (
               <Link
                 href="/connections"
-                className="inline-flex items-center gap-2 rounded-lg bg-white px-6 py-3 text-sm font-semibold text-zinc-950 transition hover:bg-zinc-200 shadow-lg shadow-white/10"
+                className="inline-flex items-center gap-2 rounded-lg bg-emerald-500 hover:bg-emerald-400 px-6 py-3 text-sm font-bold text-zinc-950 transition shadow-lg shadow-emerald-500/20"
               >
                 Open Workspace
                 <ArrowRight className="size-4" />
@@ -75,14 +75,14 @@ export function QuickstartCta() {
               <>
                 <Link
                   href="/register"
-                  className="inline-flex items-center gap-2 rounded-lg bg-white px-6 py-3 text-sm font-semibold text-zinc-950 transition hover:bg-zinc-200 shadow-lg shadow-white/10"
+                  className="inline-flex items-center gap-2 rounded-lg bg-emerald-500 hover:bg-emerald-400 px-6 py-3 text-sm font-bold text-zinc-950 transition shadow-lg shadow-emerald-500/20"
                 >
                   Create Free Account
                   <ArrowRight className="size-4" />
                 </Link>
                 <Link
                   href="/login"
-                  className="inline-flex items-center gap-2 rounded-lg border border-zinc-700 bg-zinc-900 px-6 py-3 text-sm font-medium text-zinc-200 hover:text-white hover:border-zinc-600 transition"
+                  className="inline-flex items-center gap-2 rounded-lg border border-zinc-700 bg-zinc-900 px-6 py-3 text-sm font-medium text-zinc-200 hover:text-white hover:border-emerald-500/40 transition"
                 >
                   Sign In
                 </Link>
@@ -105,14 +105,14 @@ export function QuickstartCta() {
             href="https://github.com/FavourDarasimi/Dbench"
             target="_blank"
             rel="noreferrer"
-            className="hover:text-zinc-300 transition"
+            className="hover:text-emerald-400 transition"
           >
             GitHub
           </a>
-          <a href="#guardrails" className="hover:text-zinc-300 transition">
+          <a href="#guardrails" className="hover:text-emerald-400 transition">
             Guardrails
           </a>
-          <a href="#security" className="hover:text-zinc-300 transition">
+          <a href="#security" className="hover:text-emerald-400 transition">
             Security
           </a>
           <span className="text-zinc-600">v1.0.0</span>

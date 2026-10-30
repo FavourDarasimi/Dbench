@@ -15,13 +15,13 @@ export function LandingNav() {
         {/* Brand & Version Badge */}
         <div className="flex items-center gap-3">
           <Link href="/" className="group flex items-center gap-2.5 font-bold text-white tracking-tight">
-            <span className="flex size-8 items-center justify-center rounded-lg bg-zinc-800 border border-zinc-700 text-zinc-100 shadow-md transition-transform group-hover:scale-105">
-              <Database className="size-4 text-indigo-400" />
+            <span className="flex size-8 items-center justify-center rounded-lg bg-emerald-950/60 border border-emerald-500/30 text-emerald-400 shadow-md transition-transform group-hover:scale-105">
+              <Database className="size-4 text-emerald-400" />
             </span>
             <span className="text-lg font-bold tracking-tight">Dbench</span>
           </Link>
 
-          <span className="hidden sm:inline-flex items-center gap-1.5 rounded-full border border-zinc-800/90 bg-zinc-900/90 px-2.5 py-0.5 text-[11px] font-mono text-zinc-400">
+          <span className="hidden sm:inline-flex items-center gap-1.5 rounded-full border border-emerald-900/60 bg-emerald-950/40 px-2.5 py-0.5 text-[11px] font-mono text-emerald-400/90">
             <span className="size-1.5 rounded-full bg-emerald-400 animate-pulse" />
             v1.0 Self-hosted
           </span>
@@ -63,7 +63,7 @@ export function LandingNav() {
           {user ? (
             <Link
               href="/connections"
-              className="inline-flex items-center gap-2 rounded-lg bg-white px-4 py-2 text-xs font-semibold text-zinc-950 transition hover:bg-zinc-200 shadow-sm"
+              className="inline-flex items-center gap-2 rounded-lg bg-emerald-500 hover:bg-emerald-400 px-4 py-2 text-xs font-semibold text-zinc-950 transition shadow-sm shadow-emerald-500/20"
             >
               Open Workspace
               <ArrowRight className="size-3.5" />
@@ -78,7 +78,7 @@ export function LandingNav() {
               </Link>
               <Link
                 href="/register"
-                className="inline-flex items-center gap-1.5 rounded-lg bg-white px-4 py-2 text-xs font-semibold text-zinc-950 transition hover:bg-zinc-200 shadow-sm shadow-white/10"
+                className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 px-4 py-2 text-xs font-bold text-zinc-950 transition shadow-sm shadow-emerald-500/20"
               >
                 Get Started
                 <ArrowRight className="size-3.5" />

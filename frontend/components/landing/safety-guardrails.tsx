@@ -71,7 +71,7 @@ export function SafetyGuardrails() {
       </div>
 
       {/* Interactive Simulation Frame */}
-      <div className="rounded-2xl border border-zinc-700/80 bg-[#101015] p-6 sm:p-8 shadow-2xl">
+      <div className="rounded-2xl border border-zinc-700/80 bg-[#0e120f] p-6 sm:p-8 shadow-2xl">
         <div className="flex flex-col lg:flex-row items-stretch gap-8">
           {/* Left Side: Query Selector and Editor */}
           <div className="flex-1 flex flex-col justify-between">
@@ -80,7 +80,7 @@ export function SafetyGuardrails() {
                 <span className="text-xs font-mono font-medium text-zinc-400 uppercase tracking-wider">
                   Test Dangerous Query Scenarios
                 </span>
-                <span className="text-xs font-mono text-indigo-400">Interactive Simulator</span>
+                <span className="text-xs font-mono text-emerald-400">Interactive Simulator</span>
               </div>
 
               {/* Scenario Toggle Buttons */}
@@ -133,10 +133,10 @@ export function SafetyGuardrails() {
               </div>
 
               {/* Simulated SQL Input Pane */}
-              <div className="rounded-xl border border-zinc-800 bg-[#0c0c10] p-4 font-mono text-sm shadow-inner">
+              <div className="rounded-xl border border-zinc-800 bg-[#09090d] p-4 font-mono text-sm shadow-inner">
                 <div className="flex items-center justify-between text-xs text-zinc-500 mb-2 border-b border-zinc-800/80 pb-2">
                   <span className="flex items-center gap-1.5">
-                    <FileCode className="size-3.5 text-zinc-400" />
+                    <FileCode className="size-3.5 text-emerald-400" />
                     SQL Editor Input
                   </span>
                   <span>Target: production-db</span>
@@ -159,7 +159,7 @@ export function SafetyGuardrails() {
               <button
                 type="button"
                 onClick={handleExecute}
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white px-5 py-2.5 text-xs font-semibold shadow-md transition"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-lg bg-emerald-500 hover:bg-emerald-400 active:scale-95 text-zinc-950 px-5 py-2.5 text-xs font-bold shadow-md shadow-emerald-500/20 transition"
               >
                 <Play className="size-3.5 fill-current" />
                 Simulate Execution
@@ -174,11 +174,11 @@ export function SafetyGuardrails() {
           </div>
 
           {/* Right Side: What Happens (The Interception Engine) */}
-          <div className="flex-1 rounded-xl border border-zinc-800 bg-[#0c0c10] p-5 flex flex-col justify-between">
+          <div className="flex-1 rounded-xl border border-zinc-800 bg-[#09090d] p-5 flex flex-col justify-between">
             <div>
               <div className="flex items-center justify-between mb-4">
                 <span className="text-xs font-mono font-medium text-zinc-400 uppercase tracking-wider flex items-center gap-1.5">
-                  <Sparkles className="size-3.5 text-indigo-400" />
+                  <Sparkles className="size-3.5 text-emerald-400" />
                   Protection Pipeline
                 </span>
                 <span className="inline-flex items-center gap-1 rounded bg-zinc-900 border border-zinc-800 px-2 py-0.5 text-[10px] font-mono text-zinc-400">
@@ -214,7 +214,7 @@ export function SafetyGuardrails() {
               ) : (
                 <div className="space-y-4 py-2">
                   <div className="flex items-start gap-3">
-                    <div className="flex size-6 shrink-0 items-center justify-center rounded-full bg-zinc-900 border border-zinc-800 text-xs font-mono text-indigo-400">
+                    <div className="flex size-6 shrink-0 items-center justify-center rounded-full bg-zinc-900 border border-emerald-500/30 text-xs font-mono text-emerald-400">
                       1
                     </div>
                     <div>
@@ -226,7 +226,7 @@ export function SafetyGuardrails() {
                   </div>
 
                   <div className="flex items-start gap-3">
-                    <div className="flex size-6 shrink-0 items-center justify-center rounded-full bg-zinc-900 border border-zinc-800 text-xs font-mono text-indigo-400">
+                    <div className="flex size-6 shrink-0 items-center justify-center rounded-full bg-zinc-900 border border-emerald-500/30 text-xs font-mono text-emerald-400">
                       2
                     </div>
                     <div>
@@ -238,7 +238,7 @@ export function SafetyGuardrails() {
                   </div>
 
                   <div className="flex items-start gap-3">
-                    <div className="flex size-6 shrink-0 items-center justify-center rounded-full bg-zinc-900 border border-zinc-800 text-xs font-mono text-indigo-400">
+                    <div className="flex size-6 shrink-0 items-center justify-center rounded-full bg-zinc-900 border border-emerald-500/30 text-xs font-mono text-emerald-400">
                       3
                     </div>
                     <div>

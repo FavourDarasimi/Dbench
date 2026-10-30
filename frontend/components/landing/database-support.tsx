@@ -39,8 +39,8 @@ export function DatabaseSupport() {
   return (
     <section className="w-full max-w-6xl px-4 sm:px-6 py-16 md:py-24 border-t border-zinc-800/80">
       <div className="text-center max-w-3xl mx-auto mb-14">
-        <div className="inline-flex items-center gap-1.5 rounded-full border border-zinc-800 bg-zinc-900/90 px-3 py-1 text-xs font-mono text-zinc-400 mb-4">
-          <Database className="size-3.5 text-indigo-400" />
+        <div className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/25 bg-emerald-950/40 px-3.5 py-1 text-xs font-mono text-emerald-300 mb-4">
+          <Database className="size-3.5 text-emerald-400" />
           <span>Engine Compatibility</span>
         </div>
         <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-white">
@@ -56,13 +56,13 @@ export function DatabaseSupport() {
         {supported.map((engine) => (
           <div
             key={engine.name}
-            className="rounded-2xl border border-zinc-800 bg-[#101015] p-6 sm:p-8 flex flex-col justify-between hover:border-zinc-700/80 transition-colors shadow-lg"
+            className="rounded-2xl border border-zinc-800/90 bg-[#0e120f] p-6 sm:p-8 flex flex-col justify-between hover:border-emerald-500/40 transition-colors shadow-lg"
           >
             <div>
               <div className="flex items-center justify-between gap-4 mb-4">
                 <div>
                   <h3 className="text-2xl font-bold text-white tracking-tight">{engine.name}</h3>
-                  <p className="text-xs font-mono text-zinc-500 mt-0.5">Compatible with {engine.version}</p>
+                  <p className="text-xs font-mono text-zinc-400 mt-0.5">Compatible with {engine.version}</p>
                 </div>
                 <span
                   className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-xs font-medium ${engine.badgeColor}`}
@@ -83,11 +83,11 @@ export function DatabaseSupport() {
             </div>
 
             <div className="mt-8 pt-4 border-t border-zinc-800/80 flex items-center justify-between text-xs font-mono text-zinc-500">
-              <span className="flex items-center gap-1.5">
-                <Network className="size-3.5 text-indigo-400" />
+              <span className="flex items-center gap-1.5 text-zinc-400">
+                <Network className="size-3.5 text-emerald-400" />
                 SSL & SSH Bastion Supported
               </span>
-              <span className="text-zinc-400">{engine.tag}</span>
+              <span className="text-emerald-300/90">{engine.tag}</span>
             </div>
           </div>
         ))}

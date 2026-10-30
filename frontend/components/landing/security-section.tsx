@@ -43,7 +43,7 @@ export function SecuritySection() {
   return (
     <section id="security" className="w-full max-w-6xl px-4 sm:px-6 py-16 md:py-24 border-t border-zinc-800/80">
       <div className="text-center max-w-3xl mx-auto mb-14">
-        <div className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3.5 py-1 text-xs font-mono text-emerald-300 mb-4">
+        <div className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/25 bg-emerald-950/40 px-3.5 py-1 text-xs font-mono text-emerald-300 mb-4">
           <Lock className="size-3.5 text-emerald-400" />
           <span>Security & Privacy</span>
         </div>
@@ -61,7 +61,7 @@ export function SecuritySection() {
           return (
             <div
               key={item.title}
-              className="rounded-2xl border border-zinc-800 bg-[#101015] p-6 flex flex-col justify-between hover:border-zinc-700/80 transition-colors shadow-lg"
+              className="rounded-2xl border border-zinc-800/90 bg-[#0e120f] p-6 flex flex-col justify-between hover:border-emerald-500/40 transition-colors shadow-lg"
             >
               <div>
                 <span className="flex size-10 items-center justify-center rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 mb-4">

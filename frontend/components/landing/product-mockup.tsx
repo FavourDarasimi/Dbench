@@ -37,8 +37,8 @@ export function ProductHeroMockup() {
       {/* Floating Feature Callout Labels (Desktop) */}
       <div className="hidden lg:block">
         {/* Top-left: Schema Explorer Callout */}
-        <div className="absolute -top-5 -left-4 z-20 flex items-center gap-2 rounded-full border border-indigo-500/30 bg-zinc-950/90 px-3 py-1 text-xs text-indigo-300 shadow-xl backdrop-blur-md">
-          <Database className="size-3 text-indigo-400" />
+        <div className="absolute -top-5 -left-4 z-20 flex items-center gap-2 rounded-full border border-emerald-500/30 bg-zinc-950/90 px-3 py-1 text-xs text-emerald-300 shadow-xl backdrop-blur-md">
+          <Database className="size-3 text-emerald-400" />
           <span><strong className="text-white">Schema Explorer:</strong> Live introspection</span>
         </div>
 
@@ -49,8 +49,8 @@ export function ProductHeroMockup() {
         </div>
 
         {/* Bottom-right: Virtualized Grid Callout */}
-        <div className="absolute -bottom-5 right-6 z-20 flex items-center gap-2 rounded-full border border-emerald-500/30 bg-zinc-950/90 px-3 py-1 text-xs text-emerald-300 shadow-xl backdrop-blur-md">
-          <Sparkles className="size-3 text-emerald-400" />
+        <div className="absolute -bottom-5 right-6 z-20 flex items-center gap-2 rounded-full border border-teal-500/30 bg-zinc-950/90 px-3 py-1 text-xs text-teal-300 shadow-xl backdrop-blur-md">
+          <Sparkles className="size-3 text-teal-400" />
           <span><strong className="text-white">Results Grid:</strong> Streamed CSV/JSON export</span>
         </div>
       </div>
@@ -90,7 +90,7 @@ export function ProductHeroMockup() {
           <div className="hidden md:flex md:col-span-3 flex-col border-r border-zinc-800/90 bg-[#09090c] text-xs">
             <div className="flex items-center justify-between border-b border-zinc-800/70 p-3">
               <span className="font-semibold text-zinc-200 flex items-center gap-1.5">
-                <Database className="size-3.5 text-indigo-400" />
+                <Database className="size-3.5 text-emerald-400" />
                 Schema Explorer
               </span>
               <span className="text-[10px] text-zinc-500 font-mono uppercase bg-zinc-900 px-1.5 py-0.5 rounded">
@@ -107,13 +107,13 @@ export function ProductHeroMockup() {
               <div className="pl-3 space-y-1">
                 {/* Active Table accounts */}
                 <div>
-                  <div className="flex items-center justify-between group cursor-pointer text-indigo-300 py-1 px-2 rounded-md bg-indigo-950/40 border border-indigo-800/50">
+                  <div className="flex items-center justify-between group cursor-pointer text-emerald-300 py-1 px-2 rounded-md bg-emerald-950/40 border border-emerald-800/50">
                     <span className="flex items-center gap-1.5 font-semibold">
-                      <ChevronDown className="size-3 text-indigo-400" />
-                      <TableIcon className="size-3 text-indigo-400" />
+                      <ChevronDown className="size-3 text-emerald-400" />
+                      <TableIcon className="size-3 text-emerald-400" />
                       accounts
                     </span>
-                    <span className="text-[10px] text-indigo-400/80">14,280 rows</span>
+                    <span className="text-[10px] text-emerald-400/80">14,280 rows</span>
                   </div>
                   <div className="pl-4 py-1.5 space-y-1 text-[11px] text-zinc-400">
                     <div className="flex items-center justify-between">
@@ -176,7 +176,7 @@ export function ProductHeroMockup() {
                   onClick={() => setActiveTab("query1")}
                   className={`flex items-center gap-2 border-r border-zinc-800 px-3.5 py-2.5 font-mono text-[11px] transition-colors ${
                     activeTab === "query1"
-                      ? "bg-[#0d0d12] text-zinc-100 border-t-2 border-t-indigo-500 font-semibold"
+                      ? "bg-[#0d0d12] text-zinc-100 border-t-2 border-t-emerald-400 font-semibold"
                       : "text-zinc-500 hover:text-zinc-300"
                   }`}
                 >
@@ -187,7 +187,7 @@ export function ProductHeroMockup() {
                   onClick={() => setActiveTab("query2")}
                   className={`flex items-center gap-2 border-r border-zinc-800 px-3.5 py-2.5 font-mono text-[11px] transition-colors ${
                     activeTab === "query2"
-                      ? "bg-[#0d0d12] text-zinc-100 border-t-2 border-t-indigo-500 font-semibold"
+                      ? "bg-[#0d0d12] text-zinc-100 border-t-2 border-t-emerald-400 font-semibold"
                       : "text-zinc-500 hover:text-zinc-300"
                   }`}
                 >
@@ -203,7 +203,7 @@ export function ProductHeroMockup() {
                   type="button"
                   onClick={simulateRun}
                   disabled={isRunning}
-                  className="inline-flex items-center gap-1.5 rounded-md bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white px-3 py-1.5 text-xs font-semibold shadow-md transition"
+                  className="inline-flex items-center gap-1.5 rounded-md bg-emerald-500 hover:bg-emerald-400 active:scale-95 text-zinc-950 px-3.5 py-1.5 text-xs font-bold shadow-md shadow-emerald-500/20 transition"
                 >
                   <Play className={`size-3 fill-current ${isRunning ? "animate-spin" : ""}`} />
                   <span>{isRunning ? "Running..." : "Run (⌘Enter)"}</span>
@@ -224,24 +224,24 @@ export function ProductHeroMockup() {
                   </div>
                   <div className="space-y-0.5 text-zinc-200">
                     <div>
-                      <span className="text-purple-400 font-semibold">SELECT</span> plan,{" "}
-                      <span className="text-blue-400">count</span>(*),{" "}
-                      <span className="text-blue-400">round</span>(
-                      <span className="text-blue-400">avg</span>(mrr), <span className="text-amber-300">2</span>) as avg_mrr
+                      <span className="text-emerald-400 font-semibold">SELECT</span> plan,{" "}
+                      <span className="text-teal-300">count</span>(*),{" "}
+                      <span className="text-teal-300">round</span>(
+                      <span className="text-teal-300">avg</span>(mrr), <span className="text-amber-300">2</span>) as avg_mrr
                     </div>
                     <div>
-                      <span className="text-purple-400 font-semibold">FROM</span> accounts
+                      <span className="text-emerald-400 font-semibold">FROM</span> accounts
                     </div>
                     <div>
-                      <span className="text-purple-400 font-semibold">WHERE</span> active ={" "}
-                      <span className="text-emerald-400 font-semibold">true</span>
+                      <span className="text-emerald-400 font-semibold">WHERE</span> active ={" "}
+                      <span className="text-teal-300 font-semibold">true</span>
                     </div>
                     <div>
-                      <span className="text-purple-400 font-semibold">GROUP BY</span> plan
+                      <span className="text-emerald-400 font-semibold">GROUP BY</span> plan
                     </div>
                     <div>
-                      <span className="text-purple-400 font-semibold">ORDER BY</span> count(*) DESC{" "}
-                      <span className="text-purple-400 font-semibold">LIMIT</span>{" "}
+                      <span className="text-emerald-400 font-semibold">ORDER BY</span> count(*) DESC{" "}
+                      <span className="text-emerald-400 font-semibold">LIMIT</span>{" "}
                       <span className="text-amber-300">20</span>;
                     </div>
                   </div>
@@ -255,14 +255,14 @@ export function ProductHeroMockup() {
                   </div>
                   <div className="space-y-0.5 text-zinc-200">
                     <div>
-                      <span className="text-purple-400 font-semibold">SELECT</span> date_trunc('month', created_at) as month, count(*)
+                      <span className="text-emerald-400 font-semibold">SELECT</span> date_trunc('month', created_at) as month, count(*)
                     </div>
                     <div>
-                      <span className="text-purple-400 font-semibold">FROM</span> subscriptions
+                      <span className="text-emerald-400 font-semibold">FROM</span> subscriptions
                     </div>
                     <div>
-                      <span className="text-purple-400 font-semibold">GROUP BY</span> 1{" "}
-                      <span className="text-purple-400 font-semibold">ORDER BY</span> 1 DESC;
+                      <span className="text-emerald-400 font-semibold">GROUP BY</span> 1{" "}
+                      <span className="text-emerald-400 font-semibold">ORDER BY</span> 1 DESC;
                     </div>
                   </div>
                 </div>
@@ -285,7 +285,7 @@ export function ProductHeroMockup() {
                   <tbody className="divide-y divide-zinc-800/60 text-zinc-200">
                     <tr className="hover:bg-zinc-800/30 transition-colors">
                       <td className="py-2 px-3 text-zinc-500">1</td>
-                      <td className="py-2 px-3 text-indigo-300 font-medium">enterprise</td>
+                      <td className="py-2 px-3 text-emerald-300 font-medium">enterprise</td>
                       <td className="py-2 px-3">1,420</td>
                       <td className="py-2 px-3 text-emerald-400 font-medium">$14,250.00</td>
                       <td className="py-2 px-3">
@@ -296,7 +296,7 @@ export function ProductHeroMockup() {
                     </tr>
                     <tr className="hover:bg-zinc-800/30 transition-colors">
                       <td className="py-2 px-3 text-zinc-500">2</td>
-                      <td className="py-2 px-3 text-indigo-300 font-medium">growth</td>
+                      <td className="py-2 px-3 text-emerald-300 font-medium">growth</td>
                       <td className="py-2 px-3">4,810</td>
                       <td className="py-2 px-3 text-emerald-400 font-medium">$3,420.00</td>
                       <td className="py-2 px-3">
@@ -307,7 +307,7 @@ export function ProductHeroMockup() {
                     </tr>
                     <tr className="hover:bg-zinc-800/30 transition-colors">
                       <td className="py-2 px-3 text-zinc-500">3</td>
-                      <td className="py-2 px-3 text-indigo-300 font-medium">starter</td>
+                      <td className="py-2 px-3 text-emerald-300 font-medium">starter</td>
                       <td className="py-2 px-3">8,050</td>
                       <td className="py-2 px-3 text-emerald-400 font-medium">$890.00</td>
                       <td className="py-2 px-3">
@@ -333,14 +333,14 @@ export function ProductHeroMockup() {
 
                 <div className="flex items-center gap-4">
                   <span className="hidden sm:inline-flex items-center gap-1.5 text-zinc-400">
-                    <Activity className="size-3 text-indigo-400" />
+                    <Activity className="size-3 text-emerald-400" />
                     Live sync active
                   </span>
                   <button
                     type="button"
                     className="inline-flex items-center gap-1.5 text-zinc-300 hover:text-white transition font-medium"
                   >
-                    <Download className="size-3 text-indigo-400" />
+                    <Download className="size-3 text-emerald-400" />
                     Export CSV
                   </button>
                 </div>

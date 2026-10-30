@@ -100,17 +100,17 @@
 }
 
 .bg-radial-gradient {
-  background: radial-gradient(ellipse 70% 45% at 50% 0%, rgba(99, 102, 241, 0.14), rgba(255, 255, 255, 0));
+  background: radial-gradient(ellipse 75% 50% at 50% 0%, rgba(16, 185, 129, 0.15), rgba(20, 184, 166, 0.05) 45%, rgba(255, 255, 255, 0));
 }
 
 .glass-nav {
-  background: rgba(9, 9, 11, 0.75);
+  background: rgba(9, 12, 10, 0.8);
   backdrop-filter: blur(12px) saturate(1.8);
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .dark-card {
-  background: #111115;
+  background: #0f1411;
   border: 1px solid rgba(255, 255, 255, 0.08);
   box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.02), 0 20px 40px -20px rgba(0, 0, 0, 0.7);
 }
@@ -120,6 +120,6 @@
 }
 
 .dark-card-hover:hover {
-  border-color: rgba(255, 255, 255, 0.18);
-  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08), 0 24px 48px -20px rgba(0, 0, 0, 0.85);
+  border-color: rgba(52, 211, 153, 0.3);
+  box-shadow: 0 0 0 1px rgba(16, 185, 129, 0.15), 0 24px 48px -20px rgba(0, 0, 0, 0.85);
 }

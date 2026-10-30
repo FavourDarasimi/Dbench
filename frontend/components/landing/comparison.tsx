@@ -56,8 +56,8 @@ export function ComparisonSection() {
   return (
     <section id="comparison" className="w-full max-w-6xl px-4 sm:px-6 py-16 md:py-24 border-t border-zinc-800/80">
       <div className="text-center max-w-3xl mx-auto mb-14">
-        <div className="inline-flex items-center gap-1.5 rounded-full border border-indigo-500/20 bg-indigo-500/10 px-3.5 py-1 text-xs font-mono text-indigo-300 mb-4">
-          <Scale className="size-3.5 text-indigo-400" />
+        <div className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/25 bg-emerald-950/40 px-3.5 py-1 text-xs font-mono text-emerald-300 mb-4">
+          <Scale className="size-3.5 text-emerald-400" />
           <span>Factual Comparison</span>
         </div>
         <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-white">
@@ -68,12 +68,12 @@ export function ComparisonSection() {
         </p>
       </div>
 
-      <div className="rounded-2xl border border-zinc-800 bg-[#101015] shadow-2xl overflow-x-auto">
+      <div className="rounded-2xl border border-zinc-800/90 bg-[#0e120f] shadow-2xl overflow-x-auto">
         <table className="w-full text-left text-sm border-collapse min-w-[640px]">
           <thead>
             <tr className="border-b border-zinc-800 bg-zinc-950/80 text-xs font-mono">
               <th className="py-4 px-5 font-semibold text-zinc-400">Capability</th>
-              <th className="py-4 px-5 font-bold text-indigo-300 bg-indigo-950/20 border-x border-zinc-800">
+              <th className="py-4 px-5 font-bold text-emerald-300 bg-emerald-950/30 border-x border-emerald-900/40">
                 Dbench
               </th>
               <th className="py-4 px-5 font-medium text-zinc-400">DBeaver</th>
@@ -85,7 +85,7 @@ export function ComparisonSection() {
             {features.map((item, index) => (
               <tr key={item.capability} className="hover:bg-zinc-800/20 transition-colors">
                 <td className="py-3.5 px-5 font-medium text-zinc-200">{item.capability}</td>
-                <td className="py-3.5 px-5 font-semibold text-indigo-300 bg-indigo-950/15 border-x border-zinc-800">
+                <td className="py-3.5 px-5 font-semibold text-emerald-300 bg-emerald-950/20 border-x border-emerald-900/40">
                   {item.dbench}
                 </td>
                 <td className="py-3.5 px-5 text-zinc-400">{item.dbeaver}</td>
