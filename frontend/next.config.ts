@@ -5,6 +5,9 @@ const nextConfig: NextConfig = {
   // Django endpoints end with "/", and Next's default 308 canonicalization
   // would bounce every API call (and re-POST bodies) before the proxy sees it.
   skipTrailingSlashRedirect: true,
+  experimental: {
+    agentUpgrade: "security",
+  },
 };
 
 export default nextConfig;
