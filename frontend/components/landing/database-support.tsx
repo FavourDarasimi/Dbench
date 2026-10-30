@@ -56,7 +56,7 @@ export function DatabaseSupport() {
         {supported.map((engine) => (
           <div
             key={engine.name}
-            className="rounded-2xl border border-zinc-800/90 bg-[#0e120f] p-6 sm:p-8 flex flex-col justify-between hover:border-emerald-500/40 transition-colors shadow-lg"
+            className="rounded-2xl border border-zinc-800/90 bg-[#0a0a0a] p-6 sm:p-8 flex flex-col justify-between hover:border-emerald-500/40 transition-colors shadow-lg"
           >
             <div>
               <div className="flex items-center justify-between gap-4 mb-4">

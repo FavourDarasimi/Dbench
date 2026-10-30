@@ -61,7 +61,7 @@ export function SecuritySection() {
           return (
             <div
               key={item.title}
-              className="rounded-2xl border border-zinc-800/90 bg-[#0e120f] p-6 flex flex-col justify-between hover:border-emerald-500/40 transition-colors shadow-lg"
+              className="rounded-2xl border border-zinc-800/90 bg-[#0a0a0a] p-6 flex flex-col justify-between hover:border-emerald-500/40 transition-colors shadow-lg"
             >
               <div>
                 <span className="flex size-10 items-center justify-center rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 mb-4">

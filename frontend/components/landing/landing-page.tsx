@@ -12,7 +12,7 @@ import { QuickstartCta } from "./quickstart-cta";
 
 export function LandingPage() {
   return (
-    <div className="min-h-screen bg-[#080a08] text-zinc-100 selection:bg-emerald-500/25 selection:text-emerald-200 antialiased overflow-x-hidden">
+    <div className="min-h-screen bg-black text-zinc-100 selection:bg-emerald-500/25 selection:text-emerald-200 antialiased overflow-x-hidden">
       {/* Subtle developer grid */}
       <div className="fixed inset-0 pointer-events-none bg-grid-pattern z-0 opacity-30" />
 

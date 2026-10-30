@@ -92,7 +92,7 @@ export function LandingNav() {
 
       {/* Mobile dropdown */}
       {mobileMenuOpen && (
-        <div className="lg:hidden border-b border-zinc-800 bg-zinc-950/98 px-5 py-4 space-y-3.5 backdrop-blur-xl">
+        <div className="lg:hidden border-b border-zinc-800 bg-black/98 px-5 py-4 space-y-3.5 backdrop-blur-xl">
           <a
             href="#features"
             onClick={() => setMobileMenuOpen(false)}

@@ -30,7 +30,7 @@ export function CoreFeatures() {
       {/* 4 Feature Cards Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Card 1: SQL Workspace */}
-        <div className="rounded-2xl border border-zinc-800/90 bg-[#0e120f] p-6 flex flex-col justify-between hover:border-emerald-500/40 transition-colors shadow-lg">
+        <div className="rounded-2xl border border-zinc-800/90 bg-[#0a0a0a] p-6 flex flex-col justify-between hover:border-emerald-500/40 transition-colors shadow-lg">
           <div>
             <div className="flex items-center justify-between mb-4">
               <span className="flex size-10 items-center justify-center rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
@@ -59,7 +59,7 @@ export function CoreFeatures() {
         </div>
 
         {/* Card 2: Schema Explorer */}
-        <div className="rounded-2xl border border-zinc-800/90 bg-[#0e120f] p-6 flex flex-col justify-between hover:border-teal-500/40 transition-colors shadow-lg">
+        <div className="rounded-2xl border border-zinc-800/90 bg-[#0a0a0a] p-6 flex flex-col justify-between hover:border-teal-500/40 transition-colors shadow-lg">
           <div>
             <div className="flex items-center justify-between mb-4">
               <span className="flex size-10 items-center justify-center rounded-xl bg-teal-500/10 border border-teal-500/20 text-teal-400">
@@ -88,7 +88,7 @@ export function CoreFeatures() {
         </div>
 
         {/* Card 3: Query Guardrails */}
-        <div className="rounded-2xl border border-zinc-800/90 bg-[#0e120f] p-6 flex flex-col justify-between hover:border-amber-500/40 transition-colors shadow-lg">
+        <div className="rounded-2xl border border-zinc-800/90 bg-[#0a0a0a] p-6 flex flex-col justify-between hover:border-amber-500/40 transition-colors shadow-lg">
           <div>
             <div className="flex items-center justify-between mb-4">
               <span className="flex size-10 items-center justify-center rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400">
@@ -115,7 +115,7 @@ export function CoreFeatures() {
         </div>
 
         {/* Card 4: Live Updates & Streamed Exports */}
-        <div className="rounded-2xl border border-zinc-800/90 bg-[#0e120f] p-6 flex flex-col justify-between hover:border-emerald-500/40 transition-colors shadow-lg">
+        <div className="rounded-2xl border border-zinc-800/90 bg-[#0a0a0a] p-6 flex flex-col justify-between hover:border-emerald-500/40 transition-colors shadow-lg">
           <div>
             <div className="flex items-center justify-between mb-4">
               <span className="flex size-10 items-center justify-center rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">

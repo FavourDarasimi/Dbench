@@ -26,9 +26,9 @@
 }
 
 .dark {
-  --background: #0e0e11;
+  --background: #000000;
   --foreground: #f4f4f5;
-  --card: #16161a;
+  --card: #0a0a0a;
   --card-foreground: #f4f4f5;
   --popover: #16161a;
   --popover-foreground: #f4f4f5;
@@ -100,13 +100,13 @@
 }
 
 .glass-nav {
-  background: rgba(9, 12, 10, 0.8);
+  background: rgba(0, 0, 0, 0.85);
   backdrop-filter: blur(12px) saturate(1.8);
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .dark-card {
-  background: #0f1411;
+  background: #0a0a0a;
   border: 1px solid rgba(255, 255, 255, 0.08);
   box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.02), 0 20px 40px -20px rgba(0, 0, 0, 0.7);
 }

@@ -68,7 +68,7 @@ export function ComparisonSection() {
         </p>
       </div>
 
-      <div className="rounded-2xl border border-zinc-800/90 bg-[#0e120f] shadow-2xl overflow-x-auto">
+      <div className="rounded-2xl border border-zinc-800/90 bg-[#0a0a0a] shadow-2xl overflow-x-auto">
         <table className="w-full text-left text-sm border-collapse min-w-[640px]">
           <thead>
             <tr className="border-b border-zinc-800 bg-zinc-950/80 text-xs font-mono">

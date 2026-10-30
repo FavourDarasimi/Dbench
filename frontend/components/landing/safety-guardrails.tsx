@@ -71,7 +71,7 @@ export function SafetyGuardrails() {
       </div>
 
       {/* Interactive Simulation Frame */}
-      <div className="rounded-2xl border border-zinc-700/80 bg-[#0e120f] p-6 sm:p-8 shadow-2xl">
+      <div className="rounded-2xl border border-zinc-700/80 bg-[#0a0a0a] p-6 sm:p-8 shadow-2xl">
         <div className="flex flex-col lg:flex-row items-stretch gap-8">
           {/* Left Side: Query Selector and Editor */}
           <div className="flex-1 flex flex-col justify-between">

@@ -49,7 +49,7 @@ export function HowItWorks() {
           return (
             <div
               key={step.title}
-              className="rounded-2xl border border-zinc-800/90 bg-[#0e120f] p-6 sm:p-7 flex flex-col justify-between hover:border-emerald-500/40 transition-colors shadow-lg relative"
+              className="rounded-2xl border border-zinc-800/90 bg-[#0a0a0a] p-6 sm:p-7 flex flex-col justify-between hover:border-emerald-500/40 transition-colors shadow-lg relative"
             >
               <div>
                 <div className="flex items-center justify-between mb-5">

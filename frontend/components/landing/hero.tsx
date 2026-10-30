@@ -13,13 +13,13 @@ export function HeroSection() {
       {/* 1. Main Headline */}
       <h1 className="text-4xl sm:text-6xl md:text-7xl font-extrabold tracking-tight text-white max-w-3xl leading-[1.12]">
         Your databases.{" "}
-        <span className="text-emerald-400">
+        <span className="text-zinc-500">
           One powerful workspace.
         </span>
       </h1>
 
       {/* 2. Catchy Subhead (2 text blocks total, concise & punchy) */}
-      <p className="mt-5 text-lg sm:text-xl text-zinc-300 max-w-xl leading-relaxed">
+      <p className="mt-5 text-lg sm:text-xl text-zinc-400 max-w-xl leading-relaxed">
         Fast, browser-based database management for PostgreSQL and MySQL—with built-in guardrails.
       </p>
 
