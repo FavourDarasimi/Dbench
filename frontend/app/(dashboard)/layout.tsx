@@ -11,6 +11,7 @@ import { api } from "@/lib/api";
 import { cn } from "@/lib/utils";
 
 const NAV = [
+  { href: "/workspace", label: "Workspace" },
   { href: "/connections", label: "Connections" },
 ];
 
@@ -21,7 +22,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <header className="sticky top-0 z-40 border-b border-zinc-800/80 bg-black/90 backdrop-blur">
           <div className="mx-auto flex h-14 max-w-6xl items-center justify-between gap-6 px-4">
             <div className="flex items-center gap-6">
-              <Link href="/connections" className="flex items-center gap-2.5 font-bold tracking-tight text-white group">
+              <Link href="/workspace" className="flex items-center gap-2.5 font-bold tracking-tight text-white group">
                 <span className="flex size-7 items-center justify-center rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 group-hover:bg-emerald-500/20 transition-colors shadow-[0_0_12px_rgba(16,185,129,0.15)]">
                   <Database className="size-4" />
                 </span>

@@ -60,6 +60,7 @@ INSTALLED_APPS = [
     "apps.accounts",
     "apps.connections",
     "apps.explorer",
+    "apps.queries",
 ]
 
 MIDDLEWARE = [
