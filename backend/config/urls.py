@@ -22,6 +22,7 @@ urlpatterns = [
     # /api/connections/{pk}/ detail route.
     path("api/connections/test/", ConnectionTestDraftView.as_view()),
     path("api/connections/<uuid:pk>/test/", ConnectionTestSavedView.as_view()),
+    path("api/", include("apps.explorer.urls")),
     path("api/", include(router.urls)),
     path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
     path("api/docs/", SpectacularSwaggerView.as_view(url_name="schema"), name="swagger-ui"),

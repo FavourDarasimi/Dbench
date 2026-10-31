@@ -1,26 +1,25 @@
 "use client";
 
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useQueryClient } from "@tanstack/react-query";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { useQueryClient } from "@tanstack/react-query";
+import { Mail, Lock, KeyRound, Eye, EyeOff, ArrowRight } from "lucide-react";
 
 import { Alert } from "@/components/ui/alert";
 import { Spinner } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { FieldError, Input, Label } from "@/components/ui/input";
+import { FieldError } from "@/components/ui/input";
 import { apiPost } from "@/lib/api";
 import type { AuthResponse } from "@/lib/types";
 
 const schema = z
   .object({
-    email: z.email("Enter a valid email"),
-    password: z.string().min(8, "At least 8 characters"),
-    password2: z.string(),
+    email: z.string().email("Enter a valid email address"),
+    password: z.string().min(8, "Password must be at least 8 characters"),
+    password2: z.string().min(1, "Please confirm your password"),
   })
   .refine((values) => values.password === values.password2, {
     message: "Passwords do not match",
@@ -33,6 +32,9 @@ export default function RegisterPage() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const [serverError, setServerError] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showPassword2, setShowPassword2] = useState(false);
+
   const { register, handleSubmit, formState } = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: { email: "", password: "", password2: "" },
@@ -53,43 +55,141 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center px-4">
-      <Card className="w-full max-w-md">
-        <CardHeader>
-          <CardTitle className="text-xl">Create your account</CardTitle>
-          <CardDescription>The first account becomes the admin.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit(onSubmit)} className="grid gap-4" noValidate>
-            {serverError && <Alert variant="destructive">{serverError}</Alert>}
-            <div className="grid gap-2">
-              <Label htmlFor="email">Email</Label>
-              <Input id="email" type="email" placeholder="you@example.com" autoComplete="email" {...register("email")} />
-              <FieldError message={formState.errors.email?.message} />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="password">Password</Label>
-              <Input id="password" type="password" autoComplete="new-password" {...register("password")} />
-              <FieldError message={formState.errors.password?.message} />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="password2">Confirm password</Label>
-              <Input id="password2" type="password" autoComplete="new-password" {...register("password2")} />
-              <FieldError message={formState.errors.password2?.message} />
-            </div>
-            <Button type="submit" disabled={formState.isSubmitting} className="w-full">
-              {formState.isSubmitting && <Spinner />}
-              Create account
-            </Button>
-          </form>
-          <p className="mt-4 text-center text-sm text-muted-foreground">
-            Already registered?{" "}
-            <Link href="/login" className="font-medium text-foreground underline-offset-4 hover:underline">
-              Sign in
-            </Link>
+    <div className="w-full max-w-[460px]">
+      {/* Seamless Form Container - No border, No background color */}
+      <div className="w-full">
+        {/* Simple, Punchy Header */}
+        <div className="mb-8 text-left">
+          <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-white leading-tight">
+            Create account
+          </h1>
+          <p className="mt-2 text-sm text-zinc-400">
+            Get started with Dbench in seconds.
           </p>
-        </CardContent>
-      </Card>
+        </div>
+
+        {/* Longer Form with generous spacing */}
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6" noValidate>
+          {serverError && (
+            <Alert variant="destructive" className="bg-red-950/50 border-red-900/50 text-red-200 text-xs py-3">
+              {serverError}
+            </Alert>
+          )}
+
+          {/* Email Field */}
+          <div className="space-y-2">
+            <label htmlFor="email" className="block text-xs font-mono font-medium text-zinc-300">
+              Email address
+            </label>
+            <div className="relative flex items-center rounded-xl border border-zinc-800 bg-[#070707] transition-all focus-within:border-emerald-500/70 focus-within:ring-2 focus-within:ring-emerald-500/20">
+              <span className="pl-4 text-zinc-500 select-none">
+                <Mail className="size-4" />
+              </span>
+              <input
+                id="email"
+                type="email"
+                placeholder="name@company.com"
+                autoComplete="email"
+                className="w-full bg-transparent px-3 py-3 h-12 text-sm text-zinc-100 placeholder:text-zinc-600 focus:outline-none"
+                {...register("email")}
+              />
+            </div>
+            <FieldError message={formState.errors.email?.message} />
+          </div>
+
+          {/* Password Field */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <label htmlFor="password" className="block text-xs font-mono font-medium text-zinc-300">
+                Password
+              </label>
+              <span className="text-[11px] font-mono text-zinc-500">min. 8 chars</span>
+            </div>
+            <div className="relative flex items-center rounded-xl border border-zinc-800 bg-[#070707] transition-all focus-within:border-emerald-500/70 focus-within:ring-2 focus-within:ring-emerald-500/20">
+              <span className="pl-4 text-zinc-500 select-none">
+                <Lock className="size-4" />
+              </span>
+              <input
+                id="password"
+                type={showPassword ? "text" : "password"}
+                autoComplete="new-password"
+                placeholder="••••••••"
+                className="w-full bg-transparent px-3 py-3 h-12 text-sm text-zinc-100 placeholder:text-zinc-600 focus:outline-none pr-11"
+                {...register("password")}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3.5 text-zinc-500 hover:text-zinc-300 transition-colors p-1"
+                aria-label={showPassword ? "Hide password" : "Show password"}
+              >
+                {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+              </button>
+            </div>
+            <FieldError message={formState.errors.password?.message} />
+          </div>
+
+          {/* Confirm Password Field */}
+          <div className="space-y-2">
+            <label htmlFor="password2" className="block text-xs font-mono font-medium text-zinc-300">
+              Confirm password
+            </label>
+            <div className="relative flex items-center rounded-xl border border-zinc-800 bg-[#070707] transition-all focus-within:border-emerald-500/70 focus-within:ring-2 focus-within:ring-emerald-500/20">
+              <span className="pl-4 text-zinc-500 select-none">
+                <KeyRound className="size-4" />
+              </span>
+              <input
+                id="password2"
+                type={showPassword2 ? "text" : "password"}
+                autoComplete="new-password"
+                placeholder="••••••••"
+                className="w-full bg-transparent px-3 py-3 h-12 text-sm text-zinc-100 placeholder:text-zinc-600 focus:outline-none pr-11"
+                {...register("password2")}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword2(!showPassword2)}
+                className="absolute right-3.5 text-zinc-500 hover:text-zinc-300 transition-colors p-1"
+                aria-label={showPassword2 ? "Hide password" : "Show password"}
+              >
+                {showPassword2 ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+              </button>
+            </div>
+            <FieldError message={formState.errors.password2?.message} />
+          </div>
+
+          {/* Primary Action Button (Longer & prominent) */}
+          <button
+            type="submit"
+            disabled={formState.isSubmitting}
+            className="w-full mt-4 inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 px-6 py-4 text-sm font-bold text-zinc-950 transition shadow-xl shadow-emerald-500/20 hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50 disabled:pointer-events-none cursor-pointer"
+          >
+            {formState.isSubmitting ? (
+              <>
+                <Spinner className="size-4 text-zinc-950" />
+                <span>Creating account...</span>
+              </>
+            ) : (
+              <>
+                <span>Create account</span>
+                <ArrowRight className="size-4" />
+              </>
+            )}
+          </button>
+        </form>
+
+        {/* Clean, Simple Footer Switch */}
+        <div className="mt-8 pt-6 border-t border-zinc-800/80 flex items-center justify-between text-xs">
+          <span className="text-zinc-400">Already have an account?</span>
+          <Link
+            href="/login"
+            className="font-mono text-emerald-400 hover:text-emerald-300 transition-colors font-medium flex items-center gap-1"
+          >
+            <span>Sign in</span>
+            <ArrowRight className="size-3" />
+          </Link>
+        </div>
+      </div>
     </div>
   );
 }

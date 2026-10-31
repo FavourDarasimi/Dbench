@@ -34,3 +34,17 @@ export function RequireAuth({ children }: { children: React.ReactNode }) {
   if (isError || !data) return null;
   return <>{children}</>;
 }
+
+export function RedirectIfAuthenticated({ children }: { children: React.ReactNode }) {
+  const router = useRouter();
+  const { data, isLoading } = useCurrentUser();
+
+  useEffect(() => {
+    if (!isLoading && data) {
+      router.replace("/connections");
+    }
+  }, [data, isLoading, router]);
+
+  if (data) return null;
+  return <>{children}</>;
+}
