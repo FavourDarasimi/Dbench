@@ -31,6 +31,7 @@ def config_from_connection(conn) -> dict:
         except Exception as exc:  # noqa: BLE001
             raise ValueError("Stored SSH config could not be decrypted (did ENCRYPTION_KEY change?)") from exc
     return {
+        "id": str(conn.id),
         "engine": conn.engine,
         "host": conn.host,
         "port": conn.port,
@@ -39,6 +40,7 @@ def config_from_connection(conn) -> dict:
         "password": password,
         "ssl_mode": conn.ssl_mode,
         "ssh_config": ssh,
+        "read_only": conn.read_only,
     }
 
 

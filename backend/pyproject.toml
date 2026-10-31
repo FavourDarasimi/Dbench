@@ -14,6 +14,8 @@ dependencies = [
     "pymysql>=1.1",
     "sshtunnel>=0.4",
     "gunicorn>=23",
+    "psycopg-pool>=3.2",
+    "sqlglot>=25",
 ]
 
 [dependency-groups]
