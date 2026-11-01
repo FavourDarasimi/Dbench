@@ -13,6 +13,7 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import { useWorkspaceStore } from "@/lib/stores/workspace-store";
+import { DataBrowserView } from "@/components/browser/data-browser-view";
 import type { Connection } from "@/lib/types";
 
 interface WorkspaceCanvasProps {
@@ -67,63 +68,14 @@ export function WorkspaceCanvas({ connections }: WorkspaceCanvasProps) {
     );
   }
 
-  // Active Tab: Data Browser View (F15 / F16 / F19)
+  // Active Tab: Data Browser View (F15 / F16 / F17 / F19 / F20 / F21)
   if (activeTab.type === "browser") {
     return (
-      <div className="flex-1 flex flex-col bg-[#050505] overflow-hidden">
-        {/* Data Browser Toolbar */}
-        <div className="flex items-center justify-between px-4 py-2.5 border-b border-zinc-800/80 bg-[#080808]">
-          {/* Breadcrumb Navigation */}
-          <div className="flex items-center gap-2 text-xs font-mono text-zinc-400">
-            <span className="text-emerald-400 flex items-center gap-1 font-semibold">
-              <TableIcon className="size-3.5" />
-              <span>{activeTab.schema}</span>
-            </span>
-            <span className="text-zinc-600">/</span>
-            <span className="text-white font-bold">{activeTab.table}</span>
-            <span className="text-zinc-600">·</span>
-            <span className="text-[11px] text-zinc-500">Data Browser</span>
-          </div>
-
-          {/* Quick Actions */}
-          <div className="flex items-center gap-2">
-            {/* Show SQL Bridge Button (F19) */}
-            <button
-              onClick={() => {
-                if (activeConnectionId && activeTab.schema && activeTab.table) {
-                  openSqlTab(
-                    activeConnectionId,
-                    `-- Generated from Data Browser view\nSELECT *\nFROM "${activeTab.schema}"."${activeTab.table}"\nLIMIT 50;\n`,
-                    `${activeTab.table} (SQL)`
-                  );
-                }
-              }}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-zinc-800 bg-[#040404] hover:bg-zinc-900 text-xs font-mono text-zinc-300 hover:text-emerald-300 transition-colors cursor-pointer"
-              title="Convert visual view into Monaco SQL query"
-            >
-              <Code2 className="size-3.5 text-emerald-400" />
-              <span>Show SQL</span>
-            </button>
-          </div>
-        </div>
-
-        {/* Data Browser Grid Canvas Placeholder (Phase 2 Integration Target) */}
-        <div className="flex-1 flex flex-col items-center justify-center p-8 text-center text-zinc-400">
-          <div className="size-12 rounded-xl bg-zinc-900/80 border border-zinc-800 flex items-center justify-center text-emerald-400 mb-3">
-            <TableIcon className="size-6" />
-          </div>
-          <h4 className="text-base font-bold text-white mb-1">
-            Data Browser: {activeTab.schema}.{activeTab.table}
-          </h4>
-          <p className="text-xs text-zinc-400 max-w-sm mb-4">
-            Point-and-click row viewing, keyset cursor pagination, and type-aware filters (Phase 2).
-          </p>
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-950/40 border border-emerald-500/20 text-[11px] font-mono text-emerald-300">
-            <span className="size-1.5 rounded-full bg-emerald-400 animate-pulse" />
-            <span>Ready for Virtualized Grid</span>
-          </div>
-        </div>
-      </div>
+      <DataBrowserView
+        key={activeTab.id}
+        tab={activeTab}
+        connection={activeConn}
+      />
     );
   }
 

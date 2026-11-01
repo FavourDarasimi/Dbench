@@ -9,7 +9,12 @@ interface WorkspaceState {
 
   // Actions
   setActiveConnectionId: (id: string | null) => void;
-  openBrowserTab: (connectionId: string, schema: string, table: string) => void;
+  openBrowserTab: (
+    connectionId: string,
+    schema: string,
+    table: string,
+    initialFilter?: import("@/lib/types").BrowseFilter
+  ) => void;
   openSqlTab: (connectionId: string, initialSql?: string, title?: string) => void;
   closeTab: (tabId: string) => void;
   setActiveTab: (tabId: string) => void;
@@ -28,7 +33,7 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
     set({ activeConnectionId: id });
   },
 
-  openBrowserTab: (connectionId, schema, table) => {
+  openBrowserTab: (connectionId, schema, table, initialFilter) => {
     const { tabs } = get();
     const existing = tabs.find(
       (t) =>
@@ -39,7 +44,15 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
     );
 
     if (existing) {
-      set({ activeTabId: existing.id, activeConnectionId: connectionId });
+      if (initialFilter) {
+        set({
+          tabs: tabs.map((t) => (t.id === existing.id ? { ...t, initialFilter } : t)),
+          activeTabId: existing.id,
+          activeConnectionId: connectionId,
+        });
+      } else {
+        set({ activeTabId: existing.id, activeConnectionId: connectionId });
+      }
       return;
     }
 
@@ -52,6 +65,7 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
       schema,
       table,
       isDirty: false,
+      initialFilter,
     };
 
     set({

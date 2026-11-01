@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 
-const BACKEND_URL = process.env.BACKEND_URL ?? "http://localhost:8000";
+const DEFAULT_BACKEND_URL = "http://127.0.0.1:8004";
 
 // Hop-by-hop headers must not be relayed; everything else (cookies, csrf,
 // origin, content-type) passes through so Django sees a normal browser request.
@@ -15,6 +15,7 @@ const HOP_BY_HOP = new Set([
 ]);
 
 async function proxy(request: NextRequest, context: { params: Promise<{ path: string[] }> }) {
+  const backendUrl = process.env.BACKEND_URL ?? DEFAULT_BACKEND_URL;
   const { path } = await context.params;
   const url = new URL(request.url);
 
@@ -36,7 +37,7 @@ async function proxy(request: NextRequest, context: { params: Promise<{ path: st
 
   let upstream: Response;
   try {
-    upstream = await fetch(`${BACKEND_URL}${pathname}${url.search}`, init);
+    upstream = await fetch(`${backendUrl}${pathname}${url.search}`, init);
   } catch {
     return NextResponse.json({ detail: "API unreachable" }, { status: 502 });
   }

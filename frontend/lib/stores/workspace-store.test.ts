@@ -76,6 +76,33 @@ describe("useWorkspaceStore", () => {
     expect(useWorkspaceStore.getState().tabs[0].isDirty).toBe(false);
   });
 
+  it("opens a browser tab with initial filter and updates it on navigation", () => {
+    useWorkspaceStore.getState().openBrowserTab("conn-1", "public", "orders", {
+      column: "customer_id",
+      operator: "eq",
+      value: "cust_999",
+    });
+
+    const state = useWorkspaceStore.getState();
+    expect(state.tabs.length).toBe(1);
+    expect(state.tabs[0].initialFilter).toEqual({
+      column: "customer_id",
+      operator: "eq",
+      value: "cust_999",
+    });
+
+    // Re-open with new filter
+    useWorkspaceStore.getState().openBrowserTab("conn-1", "public", "orders", {
+      column: "customer_id",
+      operator: "eq",
+      value: "cust_1000",
+    });
+
+    const updated = useWorkspaceStore.getState();
+    expect(updated.tabs.length).toBe(1);
+    expect(updated.tabs[0].initialFilter?.value).toBe("cust_1000");
+  });
+
   it("toggles sidebar collapsed state", () => {
     expect(useWorkspaceStore.getState().sidebarCollapsed).toBe(false);
     useWorkspaceStore.getState().toggleSidebar();

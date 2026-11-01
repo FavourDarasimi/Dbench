@@ -106,6 +106,76 @@ export interface TableColumnsResponse {
   columns: ColumnInfo[];
 }
 
+// ---- Data Browser & Query Building Types ----
+export type FilterOperator =
+  | "eq"
+  | "neq"
+  | "contains"
+  | "startswith"
+  | "gt"
+  | "gte"
+  | "lt"
+  | "lte"
+  | "is_null"
+  | "is_not_null"
+  | "between";
+
+export interface BrowseFilter {
+  column: string;
+  operator: FilterOperator;
+  value?: string | number | boolean | [string, string] | null;
+}
+
+export interface BrowseParams {
+  page?: number;
+  page_size?: number;
+  sort?: string;
+  filters?: BrowseFilter[];
+  search?: string;
+  cursor?: Record<string, unknown> | null;
+}
+
+export interface BrowseResponse {
+  schema: string;
+  table: string;
+  columns: ColumnInfo[];
+  rows: Record<string, unknown>[];
+  page: number;
+  page_size: number;
+  row_count: number;
+  total_rows: number | null;
+  duration_ms: number;
+  has_more: boolean;
+}
+
+export interface RowCountResponse {
+  schema: string;
+  table: string;
+  count: number;
+  is_exact: boolean;
+}
+
+export interface SqlPreviewResponse {
+  sql: string;
+  raw_sql: string;
+  params: string[];
+}
+
+export interface RelatedCount {
+  schema: string;
+  table: string;
+  column: string;
+  count: number;
+}
+
+export interface RowDetailResponse {
+  row: Record<string, unknown>;
+  pk_column: string;
+  pk_value: string;
+  columns: ColumnInfo[];
+  related: RelatedCount[];
+}
+
 // ---- Workspace Tab System Types ----
 export type WorkspaceTabType = "browser" | "sql";
 
@@ -118,5 +188,6 @@ export interface WorkspaceTab {
   table?: string;
   sql?: string;
   isDirty?: boolean;
+  initialFilter?: BrowseFilter;
 }
 
