@@ -62,6 +62,7 @@ INSTALLED_APPS = [
     "apps.explorer",
     "apps.queries",
     "apps.browser",
+    "apps.notifications",
 ]
 
 MIDDLEWARE = [
@@ -159,3 +160,14 @@ SPECTACULAR_SETTINGS = {
 # Filled by config/crypto-free validation above; exposed so services can fail
 # with a clear message instead of a raw cryptography error.
 DBENCH_ENCRYPTION_KEY = ENCRYPTION_KEY
+
+# Soketi / Pusher Real-Time Event Dispatch (PRD F14)
+SOKETI_HOST = env("SOKETI_HOST", default="127.0.0.1")
+SOKETI_PORT = env.int("SOKETI_PORT", default=6001)
+SOKETI_APP_ID = env("SOKETI_APP_ID", default="app-id")
+SOKETI_APP_KEY = env("SOKETI_APP_KEY", default="app-key")
+SOKETI_APP_SECRET = env("SOKETI_APP_SECRET", default="app-secret")
+SOKETI_USE_TLS = env.bool("SOKETI_USE_TLS", default=False)
+SOKETI_ENABLED = env.bool("SOKETI_ENABLED", default=True)
+SOKETI_TIMEOUT = env.int("SOKETI_TIMEOUT", default=2)
+

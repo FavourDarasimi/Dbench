@@ -1,19 +1,9 @@
 "use client";
 
-import {
-  Database,
-  Table as TableIcon,
-  Code2,
-  Plus,
-  Play,
-  RotateCcw,
-  Sparkles,
-  SlidersHorizontal,
-  ArrowRight,
-  ShieldCheck,
-} from "lucide-react";
+import { Database, Code2 } from "lucide-react";
 import { useWorkspaceStore } from "@/lib/stores/workspace-store";
 import { DataBrowserView } from "@/components/browser/data-browser-view";
+import { SqlEditorView } from "@/components/sql/sql-editor-view";
 import type { Connection } from "@/lib/types";
 
 interface WorkspaceCanvasProps {
@@ -26,7 +16,6 @@ export function WorkspaceCanvas({ connections }: WorkspaceCanvasProps) {
     activeTabId,
     openSqlTab,
     activeConnectionId,
-    updateTabSql,
   } = useWorkspaceStore();
 
   const activeTab = tabs.find((t) => t.id === activeTabId);
@@ -80,43 +69,15 @@ export function WorkspaceCanvas({ connections }: WorkspaceCanvasProps) {
   }
 
   // Active Tab: SQL Editor View (F4 / F5 / F6)
-  return (
-    <div className="flex-1 flex flex-col bg-[#050505] overflow-hidden">
-      {/* SQL Editor Toolbar */}
-      <div className="flex items-center justify-between px-4 py-2.5 border-b border-zinc-800/80 bg-[#080808]">
-        {/* Query Title & Run Action */}
-        <div className="flex items-center gap-3">
-          <button
-            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-xs font-mono font-bold text-zinc-950 transition-all shadow-sm shadow-emerald-500/20 cursor-pointer"
-            title="Run SQL statement (Cmd+Enter)"
-          >
-            <Play className="size-3 fill-current" />
-            <span>Run</span>
-          </button>
+  if (activeTab.type === "sql") {
+    return (
+      <SqlEditorView
+        key={activeTab.id}
+        tab={activeTab}
+        connection={activeConn}
+      />
+    );
+  }
 
-          <span className="text-xs font-mono text-zinc-500">
-            {activeConn?.engine.toUpperCase()} · timeout: 30s
-          </span>
-        </div>
-
-        {/* AST Guardrail Status */}
-        <div className="flex items-center gap-2">
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-zinc-900 border border-zinc-800 text-[11px] font-mono text-zinc-400">
-            <ShieldCheck className="size-3 text-emerald-400" />
-            <span>AST Guardrail Active</span>
-          </span>
-        </div>
-      </div>
-
-      {/* SQL Editor Textarea Placeholder (Phase 4 Monaco Integration Target) */}
-      <div className="flex-1 flex flex-col p-4">
-        <textarea
-          value={activeTab.sql || ""}
-          onChange={(e) => updateTabSql(activeTab.id, e.target.value)}
-          placeholder="-- Write SQL statement..."
-          className="w-full flex-1 bg-[#020202] border border-zinc-800/80 rounded-xl p-4 font-mono text-sm text-zinc-200 placeholder:text-zinc-600 focus:outline-none focus:border-emerald-500/60 resize-none"
-        />
-      </div>
-    </div>
-  );
+  return null;
 }

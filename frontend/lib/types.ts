@@ -202,6 +202,37 @@ export interface RowMutationResponse {
   message: string;
 }
 
+// ---- Query Execution Types (Phase 4) ----
+export interface ExecuteQueryRequest {
+  sql: string;
+  params?: unknown[];
+  limit?: number;
+  timeout?: number;
+  confirm_destructive?: boolean;
+}
+
+export interface ExecuteQueryResponse {
+  run_id: string;
+  columns: ColumnInfo[];
+  column_names: string[];
+  rows: Record<string, unknown>[];
+  row_count: number;
+  duration_ms: number;
+  truncated: boolean;
+  total_rows?: number | null;
+}
+
+export interface DestructiveWarningResponse {
+  requires_confirmation: boolean;
+  warnings: string[];
+  message: string;
+}
+
+export interface CancelQueryResponse {
+  ok: boolean;
+  message: string;
+}
+
 // ---- Workspace Tab System Types ----
 export type WorkspaceTabType = "browser" | "sql";
 

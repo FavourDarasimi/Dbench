@@ -24,6 +24,12 @@ from apps.drivers.base import (
 )
 from apps.drivers.factory import get_driver
 from apps.drivers.pool import run_tracker
+from apps.notifications.events import (
+    notify_query_cancelled,
+    notify_query_completed,
+    notify_query_failed,
+    notify_query_started,
+)
 
 from .models import QueryHistory, SavedQuery
 from .safety import analyze_sql_safety, is_mutation_statement
@@ -105,6 +111,14 @@ class ExecuteQueryView(APIView):
         config = config_from_connection(connection)
         driver = get_driver(config)
 
+        notify_query_started(
+            user_id=request.user.id,
+            run_id=run_id,
+            connection_id=str(connection.id),
+            sql=sql,
+            database=connection.db_name,
+        )
+
         try:
             result = driver.execute(
                 sql=sql,
@@ -125,6 +139,14 @@ class ExecuteQueryView(APIView):
                 source=source,
             )
 
+            notify_query_completed(
+                user_id=request.user.id,
+                run_id=run_id,
+                connection_id=str(connection.id),
+                duration_ms=result.duration_ms,
+                row_count=result.row_count,
+            )
+
             payload = {"run_id": run_id, **result.to_dict()}
             return Response(payload, status=status.HTTP_200_OK)
 
@@ -140,19 +162,36 @@ class ExecuteQueryView(APIView):
                 source=source,
                 error_message=err_msg,
             )
+            notify_query_failed(
+                user_id=request.user.id,
+                run_id=run_id,
+                connection_id=str(connection.id),
+                duration_ms=0,
+                error=err_msg,
+                status="blocked",
+            )
             return Response({"detail": err_msg, "run_id": run_id}, status=status.HTTP_403_FORBIDDEN)
 
         except DriverTimeoutError as exc:
             err_msg = str(exc)
+            duration_ms = int(timeout * 1000)
             QueryHistory.objects.create(
                 user=request.user,
                 connection=connection,
                 sql=sql,
                 status=QueryHistory.Status.TIMEOUT,
-                duration_ms=int(timeout * 1000),
+                duration_ms=duration_ms,
                 row_count=0,
                 source=source,
                 error_message=err_msg,
+            )
+            notify_query_failed(
+                user_id=request.user.id,
+                run_id=run_id,
+                connection_id=str(connection.id),
+                duration_ms=duration_ms,
+                error=err_msg,
+                status="timeout",
             )
             return Response({"detail": err_msg, "run_id": run_id}, status=status.HTTP_408_REQUEST_TIMEOUT)
 
@@ -168,6 +207,11 @@ class ExecuteQueryView(APIView):
                 source=source,
                 error_message=err_msg,
             )
+            notify_query_cancelled(
+                user_id=request.user.id,
+                run_id=run_id,
+                connection_id=str(connection.id),
+            )
             return Response({"detail": "Query was cancelled.", "run_id": run_id}, status=499)
 
         except (DriverConnectionError, DriverAuthenticationError) as exc:
@@ -182,6 +226,14 @@ class ExecuteQueryView(APIView):
                 source=source,
                 error_message=err_msg,
             )
+            notify_query_failed(
+                user_id=request.user.id,
+                run_id=run_id,
+                connection_id=str(connection.id),
+                duration_ms=0,
+                error=err_msg,
+                status="failed",
+            )
             return Response({"detail": err_msg, "run_id": run_id}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
 
         except (DriverQueryError, DriverError, Exception) as exc:
@@ -195,6 +247,14 @@ class ExecuteQueryView(APIView):
                 row_count=0,
                 source=source,
                 error_message=err_msg,
+            )
+            notify_query_failed(
+                user_id=request.user.id,
+                run_id=run_id,
+                connection_id=str(connection.id),
+                duration_ms=0,
+                error=err_msg,
+                status="failed",
             )
             return Response({"detail": err_msg, "run_id": run_id}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -243,6 +303,13 @@ class CancelQueryView(APIView):
                 fallback_driver.close()
             except Exception as exc:
                 logger.warning("Fallback cancel failed for query %s: %s", run_id, exc)
+
+        if run_info.connection_id:
+            notify_query_cancelled(
+                user_id=request.user.id,
+                run_id=run_id,
+                connection_id=str(run_info.connection_id),
+            )
 
         return Response(
             {"ok": True, "message": "Cancellation request delivered to database engine."},

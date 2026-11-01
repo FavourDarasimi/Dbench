@@ -8,6 +8,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.connections.models import Connection
+from apps.notifications.events import notify_schema_updated
 from .serializers import (
     ColumnSerializer,
     RefreshSchemaResponseSerializer,
@@ -123,6 +124,7 @@ class ConnectionRefreshSchemaView(APIView):
     def post(self, request, connection_id):
         connection = _get_connection(request, connection_id)
         schema_cache.invalidate_connection(str(connection.id))
+        notify_schema_updated(user_id=request.user.id, connection_id=str(connection.id))
         return Response(
             {"status": "ok", "message": f"Schema cache for '{connection.name}' cleared successfully."},
             status=status.HTTP_200_OK,
