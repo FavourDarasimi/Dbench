@@ -13,6 +13,8 @@ import {
   Layers,
   FileCode,
   List,
+  Pencil,
+  Trash2,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { apiGet } from "@/lib/api";
@@ -28,6 +30,9 @@ interface CellInspectorProps {
   columns: ColumnInfo[];
   row: Record<string, unknown> | null;
   activeColumnName?: string | null;
+  canMutate?: boolean;
+  onEditRow?: (row: Record<string, unknown>) => void;
+  onDeleteRow?: (row: Record<string, unknown>) => void;
 }
 
 export function CellInspector({
@@ -39,6 +44,9 @@ export function CellInspector({
   columns,
   row,
   activeColumnName,
+  canMutate = false,
+  onEditRow,
+  onDeleteRow,
 }: CellInspectorProps) {
   const { openBrowserTab } = useWorkspaceStore();
   const [activeTab, setActiveTab] = useState<"cell" | "row" | "related">("cell");
@@ -121,13 +129,37 @@ export function CellInspector({
           </div>
         </div>
 
-        <button
-          onClick={onClose}
-          className="size-7 rounded-md hover:bg-zinc-800 text-zinc-400 hover:text-white flex items-center justify-center transition-colors cursor-pointer"
-          title="Close inspector (Esc)"
-        >
-          <X className="size-4" />
-        </button>
+        <div className="flex items-center gap-2">
+          {canMutate && row && onEditRow && (
+            <button
+              onClick={() => onEditRow(row)}
+              className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[#141416] hover:bg-zinc-800 border border-zinc-800 text-xs font-mono text-zinc-300 hover:text-blue-400 transition-colors cursor-pointer"
+              title="Edit record"
+            >
+              <Pencil className="size-3 text-blue-400" />
+              <span>Edit</span>
+            </button>
+          )}
+
+          {canMutate && row && onDeleteRow && (
+            <button
+              onClick={() => onDeleteRow(row)}
+              className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[#141416] hover:bg-zinc-800 border border-zinc-800 text-xs font-mono text-zinc-300 hover:text-red-400 transition-colors cursor-pointer"
+              title="Delete record"
+            >
+              <Trash2 className="size-3 text-red-400" />
+              <span>Delete</span>
+            </button>
+          )}
+
+          <button
+            onClick={onClose}
+            className="size-7 rounded-md hover:bg-zinc-800 text-zinc-400 hover:text-white flex items-center justify-center transition-colors cursor-pointer"
+            title="Close inspector (Esc)"
+          >
+            <X className="size-4" />
+          </button>
+        </div>
       </div>
 
       {/* Tabs */}

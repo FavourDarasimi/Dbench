@@ -1,22 +1,27 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Table as TableIcon,
   ShieldCheck,
   AlertCircle,
   Database,
-  ExternalLink,
+  CheckCircle2,
+  X,
 } from "lucide-react";
-import { apiGet } from "@/lib/api";
+import { apiGet, apiPost } from "@/lib/api";
 import { BrowseToolbar } from "./browse-toolbar";
 import { DataGrid } from "@/components/grid/data-grid";
+import { RowFormModal } from "@/components/forms/row-form-modal";
+import { MutationDiffDialog } from "@/components/forms/mutation-diff-dialog";
 import type {
   BrowseFilter,
   BrowseResponse,
   ColumnInfo,
   Connection,
+  RowMutationRequest,
+  RowMutationResponse,
   TableColumnsResponse,
   WorkspaceTab,
 } from "@/lib/types";
@@ -27,6 +32,7 @@ interface DataBrowserViewProps {
 }
 
 export function DataBrowserView({ tab, connection }: DataBrowserViewProps) {
+  const queryClient = useQueryClient();
   const schema = tab.schema || "public";
   const table = tab.table || "";
 
@@ -38,6 +44,27 @@ export function DataBrowserView({ tab, connection }: DataBrowserViewProps) {
     tab.initialFilter ? [tab.initialFilter] : []
   );
   const [search, setSearch] = useState<string>("");
+
+  // Mutation State (Phase 3)
+  const [rowFormOpen, setRowFormOpen] = useState(false);
+  const [rowFormMode, setRowFormMode] = useState<"insert" | "edit">("insert");
+  const [editingRow, setEditingRow] = useState<Record<string, unknown> | null>(null);
+
+  // Selection & Delete State
+  const [selectedRowKeys, setSelectedRowKeys] = useState<Set<string>>(new Set());
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deletingRow, setDeletingRow] = useState<Record<string, unknown> | null>(null);
+  const [isBulkDelete, setIsBulkDelete] = useState(false);
+  const [deleteSqlPreview, setDeleteSqlPreview] = useState<string>("");
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  // Toast / Feedback message
+  const [toastMessage, setToastMessage] = useState<{ text: string; type: "success" | "error" } | null>(null);
+
+  function showToast(text: string, type: "success" | "error" = "success") {
+    setToastMessage({ text, type });
+    setTimeout(() => setToastMessage(null), 4000);
+  }
 
   // Sync initialFilter when tab prop updates
   useEffect(() => {
@@ -51,11 +78,13 @@ export function DataBrowserView({ tab, connection }: DataBrowserViewProps) {
   function handleFiltersChange(newFilters: BrowseFilter[]) {
     setFilters(newFilters);
     setPage(1);
+    setSelectedRowKeys(new Set());
   }
 
   function handleSearchChange(newSearch: string) {
     setSearch(newSearch);
     setPage(1);
+    setSelectedRowKeys(new Set());
   }
 
   // 1. Fetch Columns Metadata
@@ -74,6 +103,10 @@ export function DataBrowserView({ tab, connection }: DataBrowserViewProps) {
   });
 
   const columns: ColumnInfo[] = columnsData?.columns || [];
+  const pkCol = columns.find((c) => c.is_primary_key);
+  const hasPrimaryKey = Boolean(pkCol);
+  const isReadOnly = Boolean(connection?.read_only);
+  const isView = Boolean(table.toLowerCase().includes("view"));
 
   // 2. Fetch Browsable Rows
   const queryParams = new URLSearchParams();
@@ -114,6 +147,153 @@ export function DataBrowserView({ tab, connection }: DataBrowserViewProps) {
   const durationMs = rowsData?.duration_ms ?? 0;
   const hasMore = rowsData?.has_more ?? false;
 
+  // Row Selection Handlers (F22)
+  function handleToggleSelectRow(rowKey: string) {
+    setSelectedRowKeys((prev) => {
+      const next = new Set(prev);
+      if (next.has(rowKey)) {
+        next.delete(rowKey);
+      } else {
+        next.add(rowKey);
+      }
+      return next;
+    });
+  }
+
+  function handleToggleSelectAll() {
+    if (!pkCol) return;
+    const allKeys = rows.map((r) => String(r[pkCol.name]));
+    const areAllSelected = allKeys.length > 0 && allKeys.every((k) => selectedRowKeys.has(k));
+
+    if (areAllSelected) {
+      setSelectedRowKeys(new Set());
+    } else {
+      setSelectedRowKeys(new Set(allKeys));
+    }
+  }
+
+  // Row Mutation Trigger Handlers
+  function openInsertModal() {
+    setRowFormMode("insert");
+    setEditingRow(null);
+    setRowFormOpen(true);
+  }
+
+  function handleEditRow(row: Record<string, unknown>) {
+    setRowFormMode("edit");
+    setEditingRow(row);
+    setRowFormOpen(true);
+  }
+
+  // Delete Action Handlers (PRD F18 & F22)
+  async function handleDeleteSingleRow(row: Record<string, unknown>) {
+    if (!pkCol) return;
+    const pkVal = String(row[pkCol.name]);
+    setDeletingRow(row);
+    setIsBulkDelete(false);
+
+    try {
+      // Fetch preview SQL
+      const res = await apiPost<RowMutationResponse>(
+        `/connections/${tab.connectionId}/rows/`,
+        {
+          action: "delete",
+          schema,
+          table,
+          pk: pkVal,
+          preview: true,
+        }
+      );
+      setDeleteSqlPreview(res.sql);
+      setDeleteDialogOpen(true);
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : "Failed to preview delete", "error");
+    }
+  }
+
+  async function handleBulkDelete() {
+    if (!pkCol || selectedRowKeys.size === 0) return;
+    setDeletingRow(null);
+    setIsBulkDelete(true);
+
+    try {
+      const pks = Array.from(selectedRowKeys);
+      const res = await apiPost<RowMutationResponse>(
+        `/connections/${tab.connectionId}/rows/`,
+        {
+          action: "bulk_delete",
+          schema,
+          table,
+          pks,
+          preview: true,
+        }
+      );
+      setDeleteSqlPreview(res.sql);
+      setDeleteDialogOpen(true);
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : "Failed to preview bulk delete", "error");
+    }
+  }
+
+  async function confirmCommitDelete() {
+    setIsDeleting(true);
+    try {
+      if (isBulkDelete) {
+        const pks = Array.from(selectedRowKeys);
+        const res = await apiPost<RowMutationResponse>(
+          `/connections/${tab.connectionId}/rows/`,
+          {
+            action: "bulk_delete",
+            schema,
+            table,
+            pks,
+            preview: false,
+          }
+        );
+        showToast(res.message || `Deleted ${pks.length} records.`);
+        setSelectedRowKeys(new Set());
+      } else if (deletingRow && pkCol) {
+        const pkVal = String(deletingRow[pkCol.name]);
+        const res = await apiPost<RowMutationResponse>(
+          `/connections/${tab.connectionId}/rows/`,
+          {
+            action: "delete",
+            schema,
+            table,
+            pk: pkVal,
+            preview: false,
+          }
+        );
+        showToast(res.message || `Record '${pkVal}' deleted.`);
+      }
+
+      setDeleteDialogOpen(false);
+      setDeletingRow(null);
+      // Invalidate query cache
+      await queryClient.invalidateQueries({
+        queryKey: ["browse-rows", tab.connectionId, schema, table],
+      });
+      refetchRows();
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : "Delete failed", "error");
+      setDeleteDialogOpen(false);
+    } finally {
+      setIsDeleting(false);
+    }
+  }
+
+  function handleMutationSuccess() {
+    showToast(
+      rowFormMode === "insert"
+        ? "Record created successfully."
+        : "Record updated successfully."
+    );
+    queryClient.invalidateQueries({
+      queryKey: ["browse-rows", tab.connectionId, schema, table],
+    });
+    refetchRows();
+  }
+
   // Loading state for initial column introspection
   if (isColumnsLoading) {
     return (
@@ -145,8 +325,32 @@ export function DataBrowserView({ tab, connection }: DataBrowserViewProps) {
   }
 
   return (
-    <div className="flex-1 flex flex-col h-full bg-[#050505] overflow-hidden select-none">
-      {/* Table Toolbar & Search & Filters & Pagination */}
+    <div className="flex-1 flex flex-col h-full bg-[#050505] overflow-hidden select-none relative">
+      {/* Toast Notification Banner */}
+      {toastMessage && (
+        <div
+          className={`absolute top-3 right-4 z-50 flex items-center gap-2 px-4 py-2.5 rounded-xl border text-xs font-mono shadow-2xl animate-in slide-in-from-top-2 duration-150 ${
+            toastMessage.type === "success"
+              ? "bg-[#0c1811] border-emerald-500/40 text-emerald-300"
+              : "bg-[#1f0e10] border-red-500/40 text-red-300"
+          }`}
+        >
+          {toastMessage.type === "success" ? (
+            <CheckCircle2 className="size-4 text-emerald-400 shrink-0" />
+          ) : (
+            <AlertCircle className="size-4 text-red-400 shrink-0" />
+          )}
+          <span>{toastMessage.text}</span>
+          <button
+            onClick={() => setToastMessage(null)}
+            className="ml-2 hover:opacity-75 p-0.5"
+          >
+            <X className="size-3" />
+          </button>
+        </div>
+      )}
+
+      {/* Table Toolbar & Search & Filters & Actions */}
       <BrowseToolbar
         connectionId={tab.connectionId}
         schema={schema}
@@ -167,7 +371,22 @@ export function DataBrowserView({ tab, connection }: DataBrowserViewProps) {
         onSearchChange={handleSearchChange}
         onRefresh={() => refetchRows()}
         isLoading={isRowsLoading}
+        isReadOnly={isReadOnly}
+        isView={isView}
+        onAddRecord={openInsertModal}
+        selectedCount={selectedRowKeys.size}
+        onBulkDelete={handleBulkDelete}
       />
+
+      {/* Primary Key Absence Warning for Mutations */}
+      {!hasPrimaryKey && !isReadOnly && !isView && (
+        <div className="px-4 py-1.5 bg-amber-950/30 border-b border-amber-500/20 text-amber-300 text-[11px] font-mono flex items-center gap-2">
+          <ShieldCheck className="size-3.5 text-amber-400 shrink-0" />
+          <span>
+            Table has no primary key. Direct mutations are locked in the Data Browser (PRD Decision 11). Use the SQL Editor for modifications.
+          </span>
+        </div>
+      )}
 
       {/* Row Query Error Alert Banner */}
       {isRowsError && (
@@ -195,6 +414,13 @@ export function DataBrowserView({ tab, connection }: DataBrowserViewProps) {
           sort={sort}
           onSortChange={setSort}
           isLoading={isRowsLoading}
+          isReadOnly={isReadOnly}
+          isView={isView}
+          selectedRowKeys={selectedRowKeys}
+          onToggleSelectRow={handleToggleSelectRow}
+          onToggleSelectAll={handleToggleSelectAll}
+          onEditRow={handleEditRow}
+          onDeleteRow={handleDeleteSingleRow}
         />
       </div>
 
@@ -207,13 +433,30 @@ export function DataBrowserView({ tab, connection }: DataBrowserViewProps) {
           </span>
           <span>·</span>
           <span>{connection?.engine || "postgres"}</span>
-          {connection?.read_only && (
+          {isReadOnly ? (
             <>
               <span>·</span>
               <span className="text-amber-400/90 flex items-center gap-1">
                 <ShieldCheck className="size-3" />
-                Read-Only
+                Read-Only Connection
               </span>
+            </>
+          ) : isView ? (
+            <>
+              <span>·</span>
+              <span className="text-zinc-400 flex items-center gap-1">
+                <span>View (Read-Only)</span>
+              </span>
+            </>
+          ) : !hasPrimaryKey ? (
+            <>
+              <span>·</span>
+              <span className="text-zinc-500">No PK (Read-Only Grid)</span>
+            </>
+          ) : (
+            <>
+              <span>·</span>
+              <span className="text-emerald-400/90">Writable</span>
             </>
           )}
         </div>
@@ -226,6 +469,37 @@ export function DataBrowserView({ tab, connection }: DataBrowserViewProps) {
           </span>
         </div>
       </div>
+
+      {/* Add / Edit Row Modal Form */}
+      <RowFormModal
+        isOpen={rowFormOpen}
+        onClose={() => setRowFormOpen(false)}
+        mode={rowFormMode}
+        connectionId={tab.connectionId}
+        schema={schema}
+        table={table}
+        columns={columns}
+        initialData={editingRow}
+        onSuccess={handleMutationSuccess}
+      />
+
+      {/* Delete Confirmation Diff Dialog */}
+      <MutationDiffDialog
+        isOpen={deleteDialogOpen}
+        onClose={() => {
+          setDeleteDialogOpen(false);
+          setDeletingRow(null);
+        }}
+        onConfirm={confirmCommitDelete}
+        isSubmitting={isDeleting}
+        action={isBulkDelete ? "bulk_delete" : "delete"}
+        schema={schema}
+        table={table}
+        sqlPreview={deleteSqlPreview}
+        pkColumn={pkCol?.name}
+        pkValue={deletingRow && pkCol ? String(deletingRow[pkCol.name]) : null}
+        bulkCount={selectedRowKeys.size}
+      />
     </div>
   );
 }

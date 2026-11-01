@@ -77,3 +77,26 @@ class RowDetailResponseSerializer(serializers.Serializer):
     pk_value = serializers.CharField()
     columns = ColumnSerializer(many=True)
     related = RelatedCountSerializer(many=True)
+
+
+class RowMutationRequestSerializer(serializers.Serializer):
+    action = serializers.ChoiceField(choices=["insert", "update", "delete", "bulk_delete"])
+    schema = serializers.CharField(required=False, default="public")
+    table = serializers.CharField(required=True)
+    pk = serializers.CharField(required=False, allow_null=True, allow_blank=True)
+    pks = serializers.ListField(required=False, allow_null=True)
+    data = serializers.DictField(required=False, default=dict)
+    preview = serializers.BooleanField(required=False, default=False)
+
+
+class RowMutationResponseSerializer(serializers.Serializer):
+    action = serializers.CharField()
+    schema = serializers.CharField()
+    table = serializers.CharField()
+    pk = serializers.CharField(required=False, allow_null=True)
+    pks = serializers.ListField(required=False, allow_null=True)
+    rows_affected = serializers.IntegerField()
+    preview = serializers.BooleanField()
+    sql = serializers.CharField()
+    row = serializers.DictField(required=False, allow_null=True)
+    message = serializers.CharField()

@@ -16,6 +16,8 @@ import {
   Maximize2,
   Copy,
   Check,
+  Pencil,
+  Trash2,
 } from "lucide-react";
 import { ForeignKeyBadge } from "@/components/browser/foreign-key-badge";
 import { CellInspector } from "./cell-inspector";
@@ -30,6 +32,13 @@ interface DataGridProps {
   sort?: string;
   onSortChange?: (sort: string) => void;
   isLoading?: boolean;
+  isReadOnly?: boolean;
+  isView?: boolean;
+  selectedRowKeys?: Set<string>;
+  onToggleSelectRow?: (rowKey: string) => void;
+  onToggleSelectAll?: () => void;
+  onEditRow?: (row: Record<string, unknown>) => void;
+  onDeleteRow?: (row: Record<string, unknown>) => void;
 }
 
 export function DataGrid({
@@ -41,6 +50,13 @@ export function DataGrid({
   sort = "",
   onSortChange,
   isLoading = false,
+  isReadOnly = false,
+  isView = false,
+  selectedRowKeys,
+  onToggleSelectRow,
+  onToggleSelectAll,
+  onEditRow,
+  onDeleteRow,
 }: DataGridProps) {
   const tableContainerRef = useRef<HTMLDivElement>(null);
 
@@ -79,23 +95,66 @@ export function DataGrid({
     }
   }
 
+  // Primary key and mutation availability
+  const pkCol = columns.find((c) => c.is_primary_key);
+  const hasPrimaryKey = Boolean(pkCol);
+  const canMutate = !isReadOnly && !isView && hasPrimaryKey;
+
   // Define Columns for TanStack Table
   const tableColumns = useMemo<ColumnDef<Record<string, unknown>>[]>(() => {
-    // 1. Row Index Column
+    // 1. Row Index & Checkbox Selection Column
     const cols: ColumnDef<Record<string, unknown>>[] = [
       {
         id: "__row_index",
-        header: () => (
-          <span className="text-[10px] font-mono text-zinc-400 select-none">#</span>
-        ),
-        cell: (info) => (
-          <div className="flex items-center justify-center text-[10px] font-mono text-zinc-400 select-none">
-            {info.row.index + 1}
-          </div>
-        ),
-        size: 48,
+        header: () => {
+          const isAllSelected =
+            rows.length > 0 &&
+            selectedRowKeys &&
+            rows.every((r) => {
+              const k = String(pkCol ? r[pkCol.name] : r.id);
+              return selectedRowKeys.has(k);
+            });
+
+          return (
+            <div className="flex items-center justify-center gap-1">
+              {canMutate && onToggleSelectAll && (
+                <input
+                  type="checkbox"
+                  checked={Boolean(isAllSelected)}
+                  onChange={onToggleSelectAll}
+                  className="size-3 rounded border-zinc-700 bg-zinc-900 text-emerald-500 focus:ring-0 cursor-pointer"
+                  title="Select all on this page"
+                />
+              )}
+              <span className="text-[10px] font-mono text-zinc-400 select-none">#</span>
+            </div>
+          );
+        },
+        cell: (info) => {
+          const rowData = info.row.original;
+          const rowKey = String(pkCol ? rowData[pkCol.name] : info.row.id);
+          const isSelected = selectedRowKeys ? selectedRowKeys.has(rowKey) : false;
+
+          return (
+            <div className="flex items-center justify-center gap-1 text-[10px] font-mono text-zinc-400 select-none">
+              {canMutate && onToggleSelectRow && (
+                <input
+                  type="checkbox"
+                  checked={isSelected}
+                  onChange={(e) => {
+                    e.stopPropagation();
+                    onToggleSelectRow(rowKey);
+                  }}
+                  className="size-3 rounded border-zinc-700 bg-zinc-900 text-emerald-500 focus:ring-0 cursor-pointer"
+                />
+              )}
+              <span>{info.row.index + 1}</span>
+            </div>
+          );
+        },
+        size: canMutate && onToggleSelectRow ? 64 : 48,
         minSize: 40,
-        maxSize: 60,
+        maxSize: 80,
       },
     ];
 
@@ -252,8 +311,69 @@ export function DataGrid({
       });
     }
 
+    // 3. Row Actions Column (Pencil Edit, Trash Delete)
+    if (canMutate && (onEditRow || onDeleteRow)) {
+      cols.push({
+        id: "__actions",
+        header: () => (
+          <span className="text-[10px] font-mono text-zinc-400 select-none">Actions</span>
+        ),
+        cell: (info) => {
+          const rowData = info.row.original;
+          return (
+            <div className="flex items-center gap-1 justify-center">
+              {onEditRow && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onEditRow(rowData);
+                  }}
+                  className="size-6 rounded hover:bg-zinc-800 text-zinc-400 hover:text-blue-400 flex items-center justify-center transition-colors cursor-pointer"
+                  title="Edit record"
+                >
+                  <Pencil className="size-3" />
+                </button>
+              )}
+
+              {onDeleteRow && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onDeleteRow(rowData);
+                  }}
+                  className="size-6 rounded hover:bg-zinc-800 text-zinc-400 hover:text-red-400 flex items-center justify-center transition-colors cursor-pointer"
+                  title="Delete record"
+                >
+                  <Trash2 className="size-3" />
+                </button>
+              )}
+            </div>
+          );
+        },
+        size: 72,
+        minSize: 60,
+        maxSize: 80,
+      });
+    }
+
     return cols;
-  }, [columns, currentSortCol, currentSortDir, connectionId, copiedCellKey]);
+  }, [
+    columns,
+    currentSortCol,
+    currentSortDir,
+    connectionId,
+    copiedCellKey,
+    canMutate,
+    onToggleSelectRow,
+    onToggleSelectAll,
+    selectedRowKeys,
+    rows,
+    pkCol,
+    onEditRow,
+    onDeleteRow,
+  ]);
 
   const tableInstance = useReactTable({
     data: rows,
@@ -395,6 +515,15 @@ export function DataGrid({
         columns={columns}
         row={inspectedRow}
         activeColumnName={inspectedColumn}
+        canMutate={canMutate}
+        onEditRow={(r) => {
+          setInspectorOpen(false);
+          onEditRow?.(r);
+        }}
+        onDeleteRow={(r) => {
+          setInspectorOpen(false);
+          onDeleteRow?.(r);
+        }}
       />
     </div>
   );

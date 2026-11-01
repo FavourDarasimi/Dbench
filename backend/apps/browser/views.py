@@ -15,11 +15,14 @@ from apps.drivers.base import ColumnMeta, ForeignKeyMeta
 from apps.explorer.services import schema_cache
 
 from .builder import BrowseQueryBuilder
+from .mutations import execute_row_mutation
 from .serializers import (
     BrowseRequestSerializer,
     BrowseResponseSerializer,
     RowCountResponseSerializer,
     RowDetailResponseSerializer,
+    RowMutationRequestSerializer,
+    RowMutationResponseSerializer,
     SqlPreviewResponseSerializer,
 )
 from .services import execute_browse, get_row_detail_with_related, get_table_row_count
@@ -127,6 +130,59 @@ class BrowseRowsView(APIView):
         payload = execute_browse(connection, request.user, builder)
         return Response(payload, status=status.HTTP_200_OK)
 
+    @extend_schema(
+        summary="Insert row",
+        description="Insert a new row into the table with validation against column metadata.",
+        request=None,
+        responses={201: RowMutationResponseSerializer},
+    )
+    def post(self, request, connection_id, table_ref=None, schema=None, table=None):
+        connection = _get_connection(request, connection_id)
+        schema_name, table_name, _ = _resolve_table_and_columns(
+            connection, table_ref=table_ref, schema=schema, table=table
+        )
+        data = request.data.get("data") if (isinstance(request.data, dict) and "data" in request.data) else request.data
+        preview = bool(request.data.get("preview", False)) if isinstance(request.data, dict) else False
+
+        payload = execute_row_mutation(
+            connection=connection,
+            user=request.user,
+            action="insert",
+            schema=schema_name,
+            table=table_name,
+            data=data,
+            preview=preview,
+        )
+        http_status = status.HTTP_201_CREATED if not preview else status.HTTP_200_OK
+        return Response(payload, status=http_status)
+
+    @extend_schema(
+        summary="Bulk delete rows",
+        description="Delete multiple rows by primary keys.",
+        request=None,
+        responses={200: RowMutationResponseSerializer},
+    )
+    def delete(self, request, connection_id, table_ref=None, schema=None, table=None):
+        connection = _get_connection(request, connection_id)
+        schema_name, table_name, _ = _resolve_table_and_columns(
+            connection, table_ref=table_ref, schema=schema, table=table
+        )
+        pks = request.data.get("pks") if isinstance(request.data, dict) else None
+        preview = bool(request.data.get("preview", False)) if isinstance(request.data, dict) else False
+        if not pks:
+            raise ValidationError("List of primary keys 'pks' is required in request body for bulk deletion.")
+
+        payload = execute_row_mutation(
+            connection=connection,
+            user=request.user,
+            action="bulk_delete",
+            schema=schema_name,
+            table=table_name,
+            pks=pks,
+            preview=preview,
+        )
+        return Response(payload, status=status.HTTP_200_OK)
+
 
 class TableRowCountView(APIView):
     """
@@ -205,6 +261,56 @@ class RowDetailView(APIView):
         payload = get_row_detail_with_related(connection, schema=schema_name, table=table_name, pk_value=pk)
         return Response(payload, status=status.HTTP_200_OK)
 
+    @extend_schema(
+        summary="Update row by PK",
+        description="Update an existing row by primary key.",
+        request=None,
+        responses={200: RowMutationResponseSerializer},
+    )
+    def patch(self, request, connection_id, pk, table_ref=None, schema=None, table=None):
+        connection = _get_connection(request, connection_id)
+        schema_name, table_name, _ = _resolve_table_and_columns(
+            connection, table_ref=table_ref, schema=schema, table=table
+        )
+        data = request.data.get("data") if (isinstance(request.data, dict) and "data" in request.data) else request.data
+        preview = bool(request.data.get("preview", False)) if isinstance(request.data, dict) else False
+
+        payload = execute_row_mutation(
+            connection=connection,
+            user=request.user,
+            action="update",
+            schema=schema_name,
+            table=table_name,
+            data=data,
+            pk=pk,
+            preview=preview,
+        )
+        return Response(payload, status=status.HTTP_200_OK)
+
+    @extend_schema(
+        summary="Delete row by PK",
+        description="Delete a row by primary key.",
+        request=None,
+        responses={200: RowMutationResponseSerializer},
+    )
+    def delete(self, request, connection_id, pk, table_ref=None, schema=None, table=None):
+        connection = _get_connection(request, connection_id)
+        schema_name, table_name, _ = _resolve_table_and_columns(
+            connection, table_ref=table_ref, schema=schema, table=table
+        )
+        preview = bool(request.data.get("preview", False)) if isinstance(request.data, dict) else False
+
+        payload = execute_row_mutation(
+            connection=connection,
+            user=request.user,
+            action="delete",
+            schema=schema_name,
+            table=table_name,
+            pk=pk,
+            preview=preview,
+        )
+        return Response(payload, status=status.HTTP_200_OK)
+
 
 class SqlPreviewView(APIView):
     """
@@ -262,3 +368,38 @@ class SqlPreviewView(APIView):
             },
             status=status.HTTP_200_OK,
         )
+
+
+class RowMutationView(APIView):
+    """POST /api/connections/{id}/rows/ - insert, update, or delete rows with confirmation (PRD §12)."""
+
+    permission_classes = [IsAuthenticated]
+
+    @extend_schema(
+        summary="Mutate row(s)",
+        description="Perform safe insert, update, delete, or bulk delete on table rows by primary key.",
+        request=RowMutationRequestSerializer,
+        responses={200: RowMutationResponseSerializer},
+    )
+    def post(self, request, connection_id):
+        connection = _get_connection(request, connection_id)
+        serializer = RowMutationRequestSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        validated = serializer.validated_data
+
+        default_schema = "public" if connection.engine == Connection.Engine.POSTGRES else connection.db_name
+        schema_name = (validated.get("schema") or default_schema).strip()
+        table_name = validated["table"].strip()
+
+        payload = execute_row_mutation(
+            connection=connection,
+            user=request.user,
+            action=validated["action"],
+            schema=schema_name,
+            table=table_name,
+            data=validated.get("data"),
+            pk=validated.get("pk"),
+            pks=validated.get("pks"),
+            preview=validated.get("preview", False),
+        )
+        return Response(payload, status=status.HTTP_200_OK)

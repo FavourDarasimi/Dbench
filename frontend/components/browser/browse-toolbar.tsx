@@ -44,6 +44,11 @@ interface BrowseToolbarProps {
   onSearchChange: (newSearch: string) => void;
   onRefresh: () => void;
   isLoading?: boolean;
+  isReadOnly?: boolean;
+  isView?: boolean;
+  onAddRecord?: () => void;
+  selectedCount?: number;
+  onBulkDelete?: () => void;
 }
 
 export function BrowseToolbar({
@@ -66,6 +71,11 @@ export function BrowseToolbar({
   onSearchChange,
   onRefresh,
   isLoading = false,
+  isReadOnly = false,
+  isView = false,
+  onAddRecord,
+  selectedCount = 0,
+  onBulkDelete,
 }: BrowseToolbarProps) {
   const { openSqlTab } = useWorkspaceStore();
 
@@ -289,6 +299,37 @@ export function BrowseToolbar({
           >
             <RotateCw className={`size-3.5 ${isLoading ? "animate-spin text-emerald-400" : ""}`} />
           </button>
+
+          {/* Bulk Delete Action (F22) */}
+          {selectedCount > 0 && onBulkDelete && !isReadOnly && !isView && (
+            <button
+              onClick={onBulkDelete}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-950/60 hover:bg-red-900/80 border border-red-500/40 text-red-300 text-xs font-mono font-medium transition-colors cursor-pointer shadow-sm shadow-red-500/10"
+              title={`Delete ${selectedCount} selected rows`}
+            >
+              <X className="size-3 text-red-400" />
+              <span>Delete ({selectedCount})</span>
+            </button>
+          )}
+
+          {/* Add Record Button (Phase 3 Mutation) */}
+          {onAddRecord && (
+            <button
+              onClick={onAddRecord}
+              disabled={isReadOnly || isView}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-zinc-950 text-xs font-mono font-bold transition-all shadow-sm shadow-emerald-500/20 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+              title={
+                isReadOnly
+                  ? "Mutations disabled: Connection is read-only"
+                  : isView
+                  ? "Mutations disabled: Database views are read-only"
+                  : "Add new record to this table"
+              }
+            >
+              <Plus className="size-3.5 stroke-[2.5]" />
+              <span>Add Record</span>
+            </button>
+          )}
 
           {/* Show SQL Bridge (F19) */}
           <button

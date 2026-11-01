@@ -176,6 +176,32 @@ export interface RowDetailResponse {
   related: RelatedCount[];
 }
 
+// ---- Row Mutation Types (Phase 3) ----
+export type RowMutationAction = "insert" | "update" | "delete" | "bulk_delete";
+
+export interface RowMutationRequest {
+  action: RowMutationAction;
+  schema?: string;
+  table: string;
+  pk?: string | number | null;
+  pks?: (string | number)[];
+  data?: Record<string, unknown>;
+  preview?: boolean;
+}
+
+export interface RowMutationResponse {
+  action: RowMutationAction;
+  schema: string;
+  table: string;
+  pk?: string | null;
+  pks?: string[] | null;
+  rows_affected: number;
+  preview: boolean;
+  sql: string;
+  row?: Record<string, unknown> | null;
+  message: string;
+}
+
 // ---- Workspace Tab System Types ----
 export type WorkspaceTabType = "browser" | "sql";
 
