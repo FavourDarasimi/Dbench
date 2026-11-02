@@ -1,14 +1,18 @@
 "use client";
 
 import { useState } from "react";
-import { Table, Code2, X, Plus, History, Bookmark, Radio } from "lucide-react";
+import { Table, Code2, X, Plus, History, Bookmark, Radio, Search } from "lucide-react";
 import { useWorkspaceStore } from "@/lib/stores/workspace-store";
 import { useRealtimeStore } from "@/lib/stores/realtime-store";
 import { QueryHistoryDrawer } from "@/components/history/query-history-drawer";
 import { SavedQueriesDrawer } from "@/components/saved-queries/saved-queries-drawer";
 import type { WorkspaceTab } from "@/lib/types";
 
-export function WorkspaceTabs() {
+interface WorkspaceTabsProps {
+  onOpenCommandPalette?: () => void;
+}
+
+export function WorkspaceTabs({ onOpenCommandPalette }: WorkspaceTabsProps = {}) {
   const {
     tabs,
     activeTabId,
@@ -134,6 +138,19 @@ export function WorkspaceTabs() {
               </span>
             )}
           </button>
+
+          {/* Global Command Palette Trigger Button (PRD F13: Cmd+K) */}
+          {onOpenCommandPalette && (
+            <button
+              onClick={onOpenCommandPalette}
+              className="hidden lg:flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#050505] hover:bg-zinc-900 border border-zinc-800 text-[11px] font-mono text-zinc-400 hover:text-white transition-colors cursor-pointer"
+              title="Open Command Palette (⌘K)"
+            >
+              <Search className="size-3 text-zinc-500" />
+              <span>Commands</span>
+              <kbd className="px-1 py-0.2 rounded bg-zinc-800 text-[9px] text-zinc-400">⌘K</kbd>
+            </button>
+          )}
 
           {/* New SQL Tab Button */}
           <button

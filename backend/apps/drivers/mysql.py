@@ -182,7 +182,7 @@ class MySQLDriver(BaseDriver):
             if code in (1792, 1290) or "read only" in str(msg).lower():
                 raise DriverReadOnlyError("Database is in read-only mode. Modifying operations are blocked.", exc) from exc
             if code in (1317, 3024) or "query execution was interrupted" in str(msg).lower():
-                if "max_execution_time" in str(msg).lower():
+                if code == 3024 or "max_execution_time" in str(msg).lower() or "max_statement_time" in str(msg).lower():
                     raise DriverTimeoutError(f"Query timed out after {timeout} seconds.", exc) from exc
                 raise DriverCancelledError("Query was cancelled by the user.", exc) from exc
             raise DriverQueryError(f"MySQL error: {msg}", exc) from exc
@@ -245,7 +245,7 @@ class MySQLDriver(BaseDriver):
             if code in (1792, 1290) or "read only" in str(msg).lower():
                 raise DriverReadOnlyError("Database is in read-only mode.", exc) from exc
             if code in (1317, 3024) or "query execution was interrupted" in str(msg).lower():
-                if "max_execution_time" in str(msg).lower():
+                if code == 3024 or "max_execution_time" in str(msg).lower() or "max_statement_time" in str(msg).lower():
                     raise DriverTimeoutError(f"Query timed out after {timeout} seconds.", exc) from exc
                 raise DriverCancelledError("Query was cancelled.", exc) from exc
             raise DriverQueryError(f"MySQL error: {msg}", exc) from exc

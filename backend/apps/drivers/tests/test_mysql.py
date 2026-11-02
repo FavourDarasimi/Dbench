@@ -38,7 +38,9 @@ class FakeMySqlCursor:
         return list(self._rows)
 
     def fetchmany(self, size):
-        return list(self._rows[:size])
+        res = list(self._rows[:size])
+        self._rows = self._rows[size:]
+        return res
 
 
 class FakeMySqlConnection:
@@ -55,7 +57,7 @@ class FakeMySqlConnection:
     def __exit__(self, *args):
         return False
 
-    def cursor(self):
+    def cursor(self, cursor=None):
         return self._cursor
 
     def thread_id(self):
@@ -179,3 +181,99 @@ def test_mysql_list_tables(monkeypatch):
     assert tables[0].row_count_estimate == 500
     assert tables[1].name == "active_users"
     assert tables[1].type == "view"
+
+
+def test_mysql_describe_table_columns_and_fks(monkeypatch):
+    cols_data = [
+        ("id", "int", "NO", None, "PRI"),
+        ("email", "varchar", "NO", None, "UNI"),
+        ("org_id", "int", "YES", None, "MUL"),
+    ]
+    fks_data = [
+        ("org_id", "app_db", "organizations", "id", "fk_users_org"),
+    ]
+
+    class MultiQueryCursor(FakeMySqlCursor):
+        def __init__(self):
+            super().__init__()
+            self._query_index = 0
+
+        def execute(self, query, params=None):
+            super().execute(query, params)
+            if "information_schema.columns" in query:
+                self._rows = cols_data
+            elif "information_schema.key_column_usage" in query:
+                self._rows = fks_data
+
+    cursor = MultiQueryCursor()
+    conn = FakeMySqlConnection(cursor_obj=cursor)
+    monkeypatch.setattr("apps.drivers.mysql.pymysql.connect", lambda **kwargs: conn)
+
+    driver = MySQLDriver(CONFIG)
+    columns = driver.describe_table("app_db", "users")
+
+    assert len(columns) == 3
+    assert columns[0].name == "id"
+    assert columns[0].is_primary_key is True
+    assert columns[0].nullable is False
+
+    assert columns[1].name == "email"
+    assert columns[1].is_primary_key is False
+
+    assert columns[2].name == "org_id"
+    assert columns[2].foreign_key is not None
+    assert columns[2].foreign_key.target_table == "organizations"
+    assert columns[2].foreign_key.target_column == "id"
+    assert columns[2].foreign_key.constraint_name == "fk_users_org"
+
+
+def test_mysql_stream_query(monkeypatch):
+    rows = [(1, "Product 1"), (2, "Product 2"), (3, "Product 3")]
+    desc = [("id",), ("name",)]
+    cursor = FakeMySqlCursor(rows=rows, description=desc)
+    conn = FakeMySqlConnection(cursor_obj=cursor)
+    monkeypatch.setattr("apps.drivers.mysql.pymysql.connect", lambda **kwargs: conn)
+
+    driver = MySQLDriver(CONFIG)
+    chunks = list(driver.stream_query("SELECT id, name FROM products", chunk_size=2))
+
+    assert len(chunks) == 2
+    col_names, first_chunk = chunks[0]
+    assert col_names == ["id", "name"]
+    assert len(first_chunk) == 2
+    assert first_chunk[0] == (1, "Product 1")
+
+    _, second_chunk = chunks[1]
+    assert len(second_chunk) == 1
+    assert second_chunk[0] == (3, "Product 3")
+
+
+def test_mysql_execute_timeout(monkeypatch):
+    def fake_execute(statement, params=None):
+        if "max_execution_time" not in statement:
+            raise pymysql.err.OperationalError(3024, "Query execution was interrupted, max_statement_time exceeded")
+
+    cursor = FakeMySqlCursor()
+    cursor.execute = fake_execute
+    conn = FakeMySqlConnection(cursor_obj=cursor)
+    monkeypatch.setattr("apps.drivers.mysql.pymysql.connect", lambda **kwargs: conn)
+
+    driver = MySQLDriver(CONFIG)
+    with pytest.raises(DriverTimeoutError) as exc_info:
+        driver.execute("SELECT SLEEP(10)", timeout=1)
+    assert "timed out" in str(exc_info.value).lower()
+
+
+def test_mysql_execute_non_select(monkeypatch):
+    cursor = FakeMySqlCursor(rowcount=5, description=None)
+    conn = FakeMySqlConnection(cursor_obj=cursor)
+    monkeypatch.setattr("apps.drivers.mysql.pymysql.connect", lambda **kwargs: conn)
+
+    driver = MySQLDriver(CONFIG)
+    result = driver.execute("UPDATE products SET price = 10 WHERE category_id = 2")
+
+    assert result.row_count == 5
+    assert result.rows == []
+    assert result.columns == []
+    assert conn.committed is True
+

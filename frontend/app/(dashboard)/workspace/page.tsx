@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
-import { Database, Plus, Sparkles } from "lucide-react";
+import { Database, Plus } from "lucide-react";
 
 import { api } from "@/lib/api";
 import type { Connection } from "@/lib/types";
@@ -11,10 +11,21 @@ import { useWorkspaceStore } from "@/lib/stores/workspace-store";
 import { SchemaExplorer } from "@/components/schema/schema-explorer";
 import { WorkspaceTabs } from "@/components/workspace/workspace-tabs";
 import { WorkspaceCanvas } from "@/components/workspace/workspace-canvas";
+import { CommandPalette } from "@/components/command-palette/command-palette";
+import { ShortcutsModal } from "@/components/shortcuts/shortcuts-modal";
+import { useKeyboardShortcuts } from "@/lib/hooks/use-keyboard-shortcuts";
 import { Spinner } from "@/components/ui/badge";
 
 export default function WorkspacePage() {
   const { activeConnectionId, setActiveConnectionId } = useWorkspaceStore();
+  const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
+  const [shortcutsOpen, setShortcutsOpen] = useState(false);
+
+  // Global Keyboard Shortcuts (PRD F13)
+  useKeyboardShortcuts({
+    onToggleCommandPalette: () => setCommandPaletteOpen((prev) => !prev),
+    onOpenShortcuts: () => setShortcutsOpen(true),
+  });
 
   // Load user connections
   const { data: connections, isLoading } = useQuery<Connection[]>({
@@ -70,9 +81,23 @@ export default function WorkspacePage() {
 
       {/* Center & Right Pane: Tabbed Workspace Canvas */}
       <div className="flex-1 flex flex-col h-full min-w-0 overflow-hidden">
-        <WorkspaceTabs />
+        <WorkspaceTabs onOpenCommandPalette={() => setCommandPaletteOpen(true)} />
         <WorkspaceCanvas connections={connections} />
       </div>
+
+      {/* Global Command Palette (PRD F13: Cmd+K) */}
+      <CommandPalette
+        isOpen={commandPaletteOpen}
+        onClose={() => setCommandPaletteOpen(false)}
+        connections={connections || []}
+        onOpenShortcuts={() => setShortcutsOpen(true)}
+      />
+
+      {/* Global Keyboard Shortcuts Cheat Sheet (PRD F13: ?) */}
+      <ShortcutsModal
+        isOpen={shortcutsOpen}
+        onClose={() => setShortcutsOpen(false)}
+      />
     </div>
   );
 }
