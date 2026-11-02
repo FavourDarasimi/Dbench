@@ -5,7 +5,7 @@ from abc import ABC, abstractmethod
 from dataclasses import asdict, dataclass, field
 from decimal import Decimal
 from enum import Enum
-from typing import Any
+from typing import Any, Generator
 import uuid
 
 
@@ -223,6 +223,17 @@ class BaseDriver(ABC):
         run_id: str | None = None,
     ) -> QueryResult:
         """Execute SQL with timeout, row limit, and run tracking."""
+
+    @abstractmethod
+    def stream_query(
+        self,
+        sql: str,
+        params: tuple | list | dict | None = None,
+        chunk_size: int = 1000,
+        timeout: int = 60,
+        max_rows: int | None = None,
+    ) -> Generator[tuple[list[str], list[list[Any]]], None, None]:
+        """Stream query result in chunks: yields (column_names, rows_chunk)."""
 
     @abstractmethod
     def list_schemas(self) -> list[str]:

@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { LogOut, Database, User as UserIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -9,15 +10,32 @@ import { RequireAuth, useCurrentUser } from "@/components/auth-guard";
 import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api";
 import { cn } from "@/lib/utils";
+import { subscribeUserChannel, disconnectPusher } from "@/lib/pusher";
 
 const NAV = [
   { href: "/workspace", label: "Workspace" },
   { href: "/connections", label: "Connections" },
 ];
 
+function RealtimeSubscriber() {
+  const { data: user } = useCurrentUser();
+
+  useEffect(() => {
+    if (user?.id) {
+      subscribeUserChannel(user.id);
+    }
+    return () => {
+      disconnectPusher();
+    };
+  }, [user?.id]);
+
+  return null;
+}
+
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
     <RequireAuth>
+      <RealtimeSubscriber />
       <div className="min-h-screen bg-black text-zinc-100 selection:bg-emerald-500/25 selection:text-emerald-200 antialiased">
         <header className="sticky top-0 z-40 border-b border-zinc-800/80 bg-black/90 backdrop-blur">
           <div className="mx-auto flex h-14 max-w-6xl items-center justify-between gap-6 px-4">

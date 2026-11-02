@@ -87,3 +87,62 @@ class SavedQuerySerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         validated_data.setdefault("owner", self.context["request"].user)
         return SavedQuery.objects.create(**validated_data)
+
+
+class ExportQueryParamsSerializer(serializers.Serializer):
+    """Query parameter validation for streamed export endpoints (PRD F8)."""
+
+    format = serializers.ChoiceField(
+        choices=["csv", "json", "jsonl", "ndjson"],
+        default="csv",
+        required=False,
+        help_text="Export format (csv, json, or jsonl/ndjson).",
+    )
+    filename = serializers.CharField(
+        max_length=200,
+        required=False,
+        default="",
+        help_text="Custom filename for download.",
+    )
+    max_rows = serializers.IntegerField(
+        min_value=1,
+        max_value=500000,
+        required=False,
+        allow_null=True,
+        help_text="Maximum rows to stream (default unlimited up to driver limits).",
+    )
+
+
+class DirectExportRequestSerializer(serializers.Serializer):
+    """Request payload for direct SQL streamed export."""
+
+    sql = serializers.CharField(
+        required=True,
+        help_text="SQL query to execute and stream.",
+    )
+    params = serializers.ListField(
+        child=serializers.CharField(),
+        required=False,
+        allow_null=True,
+        help_text="Positional parameters for the query.",
+    )
+    format = serializers.ChoiceField(
+        choices=["csv", "json", "jsonl", "ndjson"],
+        default="csv",
+        required=False,
+        help_text="Export format.",
+    )
+    filename = serializers.CharField(
+        max_length=200,
+        required=False,
+        default="",
+        help_text="Custom filename for download.",
+    )
+    max_rows = serializers.IntegerField(
+        min_value=1,
+        max_value=500000,
+        required=False,
+        allow_null=True,
+        help_text="Maximum rows to stream.",
+    )
+

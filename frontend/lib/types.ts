@@ -248,3 +248,65 @@ export interface WorkspaceTab {
   initialFilter?: BrowseFilter;
 }
 
+// ---- Query History & Saved Queries (Phase 5) ----
+export type QueryStatus = "success" | "failed" | "cancelled" | "timeout" | "blocked";
+export type QuerySource = "editor" | "browser";
+
+export interface QueryHistoryItem {
+  id: string;
+  connection: string;
+  connection_name: string;
+  user: number;
+  user_email: string;
+  sql: string;
+  status: QueryStatus;
+  duration_ms: number;
+  row_count: number;
+  source: QuerySource;
+  error_message?: string;
+  created_at: string;
+}
+
+export interface SavedQuery {
+  id: string;
+  connection?: string | null;
+  connection_name?: string | null;
+  title: string;
+  sql: string;
+  tags: string[];
+  created_at: string;
+  updated_at: string;
+}
+
+export interface SavedQueryPayload {
+  title: string;
+  sql: string;
+  connection?: string | null;
+  tags?: string[];
+}
+
+// ---- Streamed Export Types (Phase 5) ----
+export type ExportFormat = "csv" | "json" | "jsonl";
+
+export interface DirectExportRequest {
+  sql: string;
+  params?: unknown[];
+  format?: ExportFormat;
+  filename?: string;
+  max_rows?: number | null;
+}
+
+// ---- Real-time Soketi Event Types (Phase 5) ----
+export interface RealtimeQueryEvent {
+  event: "query.started" | "query.progress" | "query.completed" | "query.failed" | "query.cancelled";
+  run_id: string;
+  connection_id: string;
+  sql?: string;
+  duration_ms?: number;
+  row_count?: number;
+  error?: string;
+  status?: string;
+  timestamp: string;
+}
+
+

@@ -9,6 +9,9 @@ import {
   Copy,
   Check,
   ShieldCheck,
+  Bookmark,
+  Download,
+  ChevronDown,
 } from "lucide-react";
 
 interface QueryToolbarProps {
@@ -26,6 +29,8 @@ interface QueryToolbarProps {
   truncated: boolean;
   sqlContent: string;
   isReadOnly?: boolean;
+  onSaveQuery?: () => void;
+  onExport?: (format: "csv" | "json") => void;
 }
 
 export function QueryToolbar({
@@ -43,8 +48,11 @@ export function QueryToolbar({
   truncated,
   sqlContent,
   isReadOnly = false,
+  onSaveQuery,
+  onExport,
 }: QueryToolbarProps) {
   const [copied, setCopied] = useState(false);
+  const [exportMenuOpen, setExportMenuOpen] = useState(false);
 
   function handleCopy() {
     navigator.clipboard.writeText(sqlContent);
@@ -156,6 +164,61 @@ export function QueryToolbar({
             <Copy className="size-3.5" />
           )}
         </button>
+
+        {/* Save Query Button (PRD F9) */}
+        {onSaveQuery && (
+          <button
+            onClick={onSaveQuery}
+            disabled={!sqlContent.trim()}
+            className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-300 hover:text-white transition-colors cursor-pointer disabled:opacity-40"
+            title="Save query to snippets"
+          >
+            <Bookmark className="size-3.5 text-emerald-400" />
+            <span className="hidden sm:inline">Save</span>
+          </button>
+        )}
+
+        {/* Streamed Export Dropdown (PRD F8) */}
+        {onExport && (
+          <div className="relative">
+            <button
+              onClick={() => setExportMenuOpen(!exportMenuOpen)}
+              disabled={!sqlContent.trim()}
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-300 hover:text-white transition-colors cursor-pointer disabled:opacity-40"
+              title="Export query results"
+            >
+              <Download className="size-3.5 text-emerald-400" />
+              <span>Export</span>
+              <ChevronDown className="size-3 text-zinc-500" />
+            </button>
+
+            {exportMenuOpen && (
+              <div
+                onMouseLeave={() => setExportMenuOpen(false)}
+                className="absolute right-0 top-full mt-1 w-36 bg-[#0e0e11] border border-zinc-800 rounded-xl shadow-xl py-1 z-50 flex flex-col font-mono text-[11px]"
+              >
+                <button
+                  onClick={() => {
+                    setExportMenuOpen(false);
+                    onExport("csv");
+                  }}
+                  className="px-3 py-1.5 text-left text-zinc-300 hover:text-white hover:bg-zinc-800 transition-colors cursor-pointer"
+                >
+                  Download CSV
+                </button>
+                <button
+                  onClick={() => {
+                    setExportMenuOpen(false);
+                    onExport("json");
+                  }}
+                  className="px-3 py-1.5 text-left text-zinc-300 hover:text-white hover:bg-zinc-800 transition-colors cursor-pointer"
+                >
+                  Download JSON
+                </button>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

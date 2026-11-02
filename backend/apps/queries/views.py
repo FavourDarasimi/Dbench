@@ -31,12 +31,15 @@ from apps.notifications.events import (
     notify_query_started,
 )
 
+from .export import build_streaming_export_response
 from .models import QueryHistory, SavedQuery
 from .safety import analyze_sql_safety, is_mutation_statement
 from .serializers import (
     DestructiveWarningResponseSerializer,
+    DirectExportRequestSerializer,
     ExecuteQueryRequestSerializer,
     ExecuteQueryResponseSerializer,
+    ExportQueryParamsSerializer,
     QueryCancelResponseSerializer,
     QueryHistorySerializer,
     SavedQuerySerializer,
@@ -130,6 +133,7 @@ class ExecuteQueryView(APIView):
 
             # Record successful run in history
             QueryHistory.objects.create(
+                id=uuid.UUID(run_id),
                 user=request.user,
                 connection=connection,
                 sql=sql,
@@ -153,6 +157,7 @@ class ExecuteQueryView(APIView):
         except DriverReadOnlyError as exc:
             err_msg = str(exc)
             QueryHistory.objects.create(
+                id=uuid.UUID(run_id),
                 user=request.user,
                 connection=connection,
                 sql=sql,
@@ -176,6 +181,7 @@ class ExecuteQueryView(APIView):
             err_msg = str(exc)
             duration_ms = int(timeout * 1000)
             QueryHistory.objects.create(
+                id=uuid.UUID(run_id),
                 user=request.user,
                 connection=connection,
                 sql=sql,
@@ -198,6 +204,7 @@ class ExecuteQueryView(APIView):
         except DriverCancelledError as exc:
             err_msg = str(exc)
             QueryHistory.objects.create(
+                id=uuid.UUID(run_id),
                 user=request.user,
                 connection=connection,
                 sql=sql,
@@ -217,6 +224,7 @@ class ExecuteQueryView(APIView):
         except (DriverConnectionError, DriverAuthenticationError) as exc:
             err_msg = str(exc)
             QueryHistory.objects.create(
+                id=uuid.UUID(run_id),
                 user=request.user,
                 connection=connection,
                 sql=sql,
@@ -239,6 +247,7 @@ class ExecuteQueryView(APIView):
         except (DriverQueryError, DriverError, Exception) as exc:
             err_msg = str(exc)
             QueryHistory.objects.create(
+                id=uuid.UUID(run_id),
                 user=request.user,
                 connection=connection,
                 sql=sql,
@@ -355,3 +364,99 @@ class SavedQueryViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save(owner=self.request.user)
+
+
+class BaseStreamingExportView(APIView):
+    """Bypasses DRF format-suffix negotiation for streamed custom files (CSV, JSONL, etc.)."""
+
+    def perform_content_negotiation(self, request, force=False):
+        renderers = self.get_renderers()
+        return renderers[0], renderers[0].media_type
+
+
+class QueryExportByRunIdView(BaseStreamingExportView):
+    """GET /api/connections/{connection_id}/query/{run_id}/export/ - stream export of executed query (PRD F8)."""
+
+    permission_classes = [IsAuthenticated]
+
+    @extend_schema(
+        summary="Stream query results export by run ID",
+        description="Stream the results of an executed query as CSV, JSON, or JSONL with minimal memory overhead.",
+        parameters=[
+            OpenApiParameter("format", str, description="Export format: 'csv', 'json', or 'jsonl' (default 'csv')."),
+            OpenApiParameter("filename", str, description="Custom filename without extension."),
+            OpenApiParameter("max_rows", int, description="Max rows to stream."),
+        ],
+    )
+    def get(self, request, connection_id, run_id):
+        connection = _get_connection(request, connection_id)
+        param_serializer = ExportQueryParamsSerializer(data=request.query_params)
+        param_serializer.is_valid(raise_exception=True)
+        params_data = param_serializer.validated_data
+
+        export_format = params_data.get("format", "csv")
+        filename = params_data.get("filename") or f"export_{str(run_id)[:8]}"
+        max_rows = params_data.get("max_rows")
+
+        try:
+            run_uuid = uuid.UUID(run_id) if isinstance(run_id, str) else run_id
+            query_record = QueryHistory.objects.get(
+                id=run_uuid,
+                connection=connection,
+                user=request.user,
+            )
+        except (QueryHistory.DoesNotExist, ValueError):
+            raise NotFound("Query execution history record not found.")
+
+        config = config_from_connection(connection)
+        driver = get_driver(config)
+
+        return build_streaming_export_response(
+            driver=driver,
+            sql=query_record.sql,
+            export_format=export_format,
+            filename=filename,
+            max_rows=max_rows,
+        )
+
+
+class QueryDirectExportView(BaseStreamingExportView):
+    """POST /api/connections/{connection_id}/query/export/ - stream arbitrary SQL query export directly."""
+
+    permission_classes = [IsAuthenticated]
+
+    @extend_schema(
+        summary="Stream arbitrary SQL query export",
+        description="Execute an arbitrary SQL query and stream its results directly as CSV or JSON.",
+        request=DirectExportRequestSerializer,
+    )
+    def post(self, request, connection_id):
+        connection = _get_connection(request, connection_id)
+        serializer = DirectExportRequestSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+
+        sql = data["sql"].strip()
+        params = data.get("params") or None
+        export_format = data.get("format", "csv")
+        filename = data.get("filename") or f"export_{connection.name.lower()}"
+        max_rows = data.get("max_rows")
+
+        # Fast-path check: block mutating SQL on read-only connection
+        if connection.read_only and is_mutation_statement(sql, connection.engine):
+            return Response(
+                {"detail": "Connection is in read-only mode. Modifying operations are blocked."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        config = config_from_connection(connection)
+        driver = get_driver(config)
+
+        return build_streaming_export_response(
+            driver=driver,
+            sql=sql,
+            params=params,
+            export_format=export_format,
+            filename=filename,
+            max_rows=max_rows,
+        )

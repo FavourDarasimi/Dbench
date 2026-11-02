@@ -13,6 +13,8 @@ import {
   Hash,
   Sparkles,
   Check,
+  Download,
+  ChevronDown,
 } from "lucide-react";
 import { apiGet, apiPost } from "@/lib/api";
 import { useWorkspaceStore } from "@/lib/stores/workspace-store";
@@ -92,6 +94,22 @@ export function BrowseToolbar({
 
   // SQL Preview loading state
   const [isPreviewingSql, setIsPreviewingSql] = useState(false);
+  const [exportMenuOpen, setExportMenuOpen] = useState(false);
+
+  function handleExportTable(format: "csv" | "json") {
+    const params = new URLSearchParams({ format });
+    if (search) params.set("search", search);
+    if (sort) params.set("sort", sort);
+    if (filters.length > 0) params.set("filters", JSON.stringify(filters));
+
+    const url = `/api/connections/${connectionId}/tables/${schema}.${table}/export/?${params.toString()}`;
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${table}_export.${format}`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  }
 
   // Derive active column metadata
   const selectedCol = columns.find((c) => c.name === selectedColName) || columns[0];
@@ -341,6 +359,45 @@ export function BrowseToolbar({
             <Sparkles className="size-3 text-emerald-400" />
             <span>Show SQL</span>
           </button>
+
+          {/* Streamed Table Export (PRD F8) */}
+          <div className="relative">
+            <button
+              onClick={() => setExportMenuOpen(!exportMenuOpen)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#121214] hover:bg-zinc-800 border border-zinc-800 text-zinc-300 text-xs font-mono font-medium transition-colors cursor-pointer"
+              title="Export current table view"
+            >
+              <Download className="size-3 text-emerald-400" />
+              <span>Export</span>
+              <ChevronDown className="size-3 text-zinc-500" />
+            </button>
+
+            {exportMenuOpen && (
+              <div
+                onMouseLeave={() => setExportMenuOpen(false)}
+                className="absolute right-0 top-full mt-1 w-36 bg-[#0e0e11] border border-zinc-800 rounded-xl shadow-xl py-1 z-50 flex flex-col font-mono text-[11px]"
+              >
+                <button
+                  onClick={() => {
+                    setExportMenuOpen(false);
+                    handleExportTable("csv");
+                  }}
+                  className="px-3 py-1.5 text-left text-zinc-300 hover:text-white hover:bg-zinc-800 transition-colors cursor-pointer"
+                >
+                  Download CSV
+                </button>
+                <button
+                  onClick={() => {
+                    setExportMenuOpen(false);
+                    handleExportTable("json");
+                  }}
+                  className="px-3 py-1.5 text-left text-zinc-300 hover:text-white hover:bg-zinc-800 transition-colors cursor-pointer"
+                >
+                  Download JSON
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import logging
 import time
-from typing import Any
+from typing import Any, Generator
 
 import pymysql
 import pymysql.cursors
@@ -196,6 +196,68 @@ class MySQLDriver(BaseDriver):
                 conn.close()
             except Exception:
                 pass
+
+    def stream_query(
+        self,
+        sql: str,
+        params: tuple | list | dict | None = None,
+        chunk_size: int = 1000,
+        timeout: int = 60,
+        max_rows: int | None = None,
+    ) -> Generator[tuple[list[str], list[list[Any]]], None, None]:
+        conn = self._open_direct_connection(timeout=min(timeout, 10))
+        try:
+            if timeout > 0:
+                timeout_ms = int(timeout * 1000)
+                with conn.cursor() as cur:
+                    cur.execute(f"SET SESSION max_execution_time = {timeout_ms};")
+
+            # Use SSCursor (streaming cursor) to avoid loading all rows in memory
+            with conn.cursor(pymysql.cursors.SSCursor) as cur:
+                cur.execute(sql, params)
+                if cur.description is None:
+                    return
+
+                col_names = [desc[0] for desc in cur.description]
+                fetched_so_far = 0
+
+                while True:
+                    to_fetch = chunk_size
+                    if max_rows is not None:
+                        remaining = max_rows - fetched_so_far
+                        if remaining <= 0:
+                            break
+                        to_fetch = min(chunk_size, remaining)
+
+                    raw_rows = cur.fetchmany(to_fetch)
+                    if not raw_rows:
+                        break
+
+                    fetched_so_far += len(raw_rows)
+                    yield col_names, raw_rows
+
+                    if max_rows is not None and fetched_so_far >= max_rows:
+                        break
+
+        except pymysql.err.OperationalError as exc:
+            conn.rollback()
+            code, msg = exc.args if len(exc.args) >= 2 else (0, str(exc))
+            if code in (1792, 1290) or "read only" in str(msg).lower():
+                raise DriverReadOnlyError("Database is in read-only mode.", exc) from exc
+            if code in (1317, 3024) or "query execution was interrupted" in str(msg).lower():
+                if "max_execution_time" in str(msg).lower():
+                    raise DriverTimeoutError(f"Query timed out after {timeout} seconds.", exc) from exc
+                raise DriverCancelledError("Query was cancelled.", exc) from exc
+            raise DriverQueryError(f"MySQL error: {msg}", exc) from exc
+        except pymysql.MySQLError as exc:
+            conn.rollback()
+            raise DriverQueryError(f"MySQL error: {exc}", exc) from exc
+        finally:
+            try:
+                conn.close()
+            except Exception:
+                pass
+            self.close()
 
     def cancel(self, run_id: str) -> bool:
         """Cancel a running query by looking up its thread ID and issuing KILL QUERY."""

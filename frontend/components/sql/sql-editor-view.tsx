@@ -8,6 +8,8 @@ import { MonacoSqlCanvas } from "./monaco-sql-canvas";
 import { QueryToolbar } from "./query-toolbar";
 import { QueryResultsPanel } from "./query-results-panel";
 import { AstGuardrailModal } from "./ast-guardrail-modal";
+import { SaveQueryModal } from "@/components/saved-queries/save-query-modal";
+import { downloadDirectExport, downloadExportByRunId } from "@/lib/export";
 import type {
   ColumnInfo,
   Connection,
@@ -50,6 +52,9 @@ export function SqlEditorView({ tab, connection }: SqlEditorViewProps) {
   const [guardrailOpen, setGuardrailOpen] = useState<boolean>(false);
   const [guardrailWarnings, setGuardrailWarnings] = useState<string[]>([]);
   const [pendingSql, setPendingSql] = useState<string>("");
+
+  // Save Query Modal State (PRD F9)
+  const [saveModalOpen, setSaveModalOpen] = useState<boolean>(false);
 
   // Cached Schema Tree for Autocomplete / IntelliSense (PRD F4)
   const { data: schemaTreeData } = useQuery<SchemaTreeResponse>({
@@ -147,6 +152,19 @@ export function SqlEditorView({ tab, connection }: SqlEditorViewProps) {
     executeSql(pendingSql, true);
   }
 
+  // Streamed Export Handler (PRD F8)
+  async function handleExport(format: "csv" | "json") {
+    try {
+      if (activeRunId) {
+        await downloadExportByRunId(tab.connectionId, activeRunId, format);
+      } else if (currentSql.trim()) {
+        await downloadDirectExport(tab.connectionId, currentSql.trim(), format);
+      }
+    } catch (err) {
+      setErrorMessage(err instanceof Error ? err.message : "Export failed");
+    }
+  }
+
   return (
     <div className="flex-1 flex flex-col h-full bg-[#050505] overflow-hidden select-none">
       {/* Query Execution & Configuration Toolbar */}
@@ -165,6 +183,8 @@ export function SqlEditorView({ tab, connection }: SqlEditorViewProps) {
         truncated={truncated}
         sqlContent={currentSql}
         isReadOnly={Boolean(connection?.read_only)}
+        onSaveQuery={() => setSaveModalOpen(true)}
+        onExport={handleExport}
       />
 
       {/* Center Monaco SQL Canvas */}
@@ -199,6 +219,14 @@ export function SqlEditorView({ tab, connection }: SqlEditorViewProps) {
         isSubmitting={isRunning}
         warnings={guardrailWarnings}
         sql={pendingSql}
+      />
+
+      {/* Save Query Modal (PRD F9) */}
+      <SaveQueryModal
+        isOpen={saveModalOpen}
+        onClose={() => setSaveModalOpen(false)}
+        connectionId={tab.connectionId}
+        initialSql={currentSql}
       />
     </div>
   );

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import logging
 import time
-from typing import Any
+from typing import Any, Generator
 
 import psycopg
 from psycopg import sql as pg_sql
@@ -190,6 +190,67 @@ class PostgresDriver(BaseDriver):
                 conn.close()
             except Exception:
                 pass
+
+    def stream_query(
+        self,
+        sql: str,
+        params: tuple | list | dict | None = None,
+        chunk_size: int = 1000,
+        timeout: int = 60,
+        max_rows: int | None = None,
+    ) -> Generator[tuple[list[str], list[list[Any]]], None, None]:
+        conn = self._open_direct_connection(timeout=min(timeout, 10))
+        try:
+            timeout_ms = max(int(timeout * 1000), 1000)
+            conn.execute(f"SET statement_timeout = {timeout_ms};")
+
+            with conn.cursor() as cur:
+                cur.execute(sql, params)
+                if cur.description is None:
+                    return
+
+                col_names = [desc.name for desc in cur.description]
+                fetched_so_far = 0
+
+                while True:
+                    to_fetch = chunk_size
+                    if max_rows is not None:
+                        remaining = max_rows - fetched_so_far
+                        if remaining <= 0:
+                            break
+                        to_fetch = min(chunk_size, remaining)
+
+                    raw_rows = cur.fetchmany(to_fetch)
+                    if not raw_rows:
+                        break
+
+                    fetched_so_far += len(raw_rows)
+                    yield col_names, raw_rows
+
+                    if max_rows is not None and fetched_so_far >= max_rows:
+                        break
+
+        except ReadOnlySqlTransaction as exc:
+            conn.rollback()
+            raise DriverReadOnlyError("Database is in read-only mode.", exc) from exc
+        except QueryCanceled as exc:
+            conn.rollback()
+            msg = str(exc).lower()
+            if "statement timeout" in msg or "canceling statement due to statement timeout" in msg:
+                raise DriverTimeoutError(f"Query timed out after {timeout} seconds.", exc) from exc
+            raise DriverCancelledError("Query was cancelled.", exc) from exc
+        except OperationalError as exc:
+            conn.rollback()
+            raise DriverConnectionError(f"Connection error during query: {exc}", exc) from exc
+        except psycopg.Error as exc:
+            conn.rollback()
+            raise DriverQueryError(f"Database error: {exc}", exc) from exc
+        finally:
+            try:
+                conn.close()
+            except Exception:
+                pass
+            self.close()
 
     def cancel(self, run_id: str) -> bool:
         """Cancel a running query by looking up its backend PID and issuing pg_cancel_backend."""

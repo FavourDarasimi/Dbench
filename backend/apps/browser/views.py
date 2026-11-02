@@ -11,8 +11,13 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.connections.models import Connection
+from apps.connections.services import config_from_connection
 from apps.drivers.base import ColumnMeta, ForeignKeyMeta
+from apps.drivers.factory import get_driver
 from apps.explorer.services import schema_cache
+from apps.queries.export import build_streaming_export_response
+from apps.queries.serializers import ExportQueryParamsSerializer
+from apps.queries.views import BaseStreamingExportView
 
 from .builder import BrowseQueryBuilder
 from .mutations import execute_row_mutation
@@ -403,3 +408,73 @@ class RowMutationView(APIView):
             preview=validated.get("preview", False),
         )
         return Response(payload, status=status.HTTP_200_OK)
+
+
+class TableBrowseExportView(BaseStreamingExportView):
+    """GET /api/connections/{connection_id}/tables/{table}/export/ - stream filtered table export."""
+
+    permission_classes = [IsAuthenticated]
+
+    @extend_schema(
+        summary="Stream filtered table export",
+        description="Stream filtered and sorted table rows directly as CSV, JSON, or JSONL.",
+        parameters=[
+            OpenApiParameter("format", str, description="Export format: 'csv', 'json', or 'jsonl' (default 'csv')."),
+            OpenApiParameter("schema", str, description="Database schema name."),
+            OpenApiParameter("search", str, description="Search term across text columns."),
+            OpenApiParameter("sort", str, description="Column to sort by (prefix '-' for descending)."),
+            OpenApiParameter("max_rows", int, description="Max rows to stream."),
+        ],
+    )
+    def get(self, request, connection_id, table_ref=None, schema=None, table=None):
+        connection = _get_connection(request, connection_id)
+        schema_name, table_name, columns = _resolve_table_and_columns(
+            connection, table_ref=table_ref, schema=schema, table=table
+        )
+
+        param_serializer = ExportQueryParamsSerializer(data=request.query_params)
+        param_serializer.is_valid(raise_exception=True)
+        export_params = param_serializer.validated_data
+
+        export_format = export_params.get("format", "csv")
+        filename = export_params.get("filename") or f"{table_name}_export"
+        max_rows = export_params.get("max_rows")
+
+        filters = []
+        raw_filters = request.query_params.get("filters")
+        if raw_filters:
+            try:
+                parsed = json.loads(raw_filters)
+                if isinstance(parsed, list):
+                    filters = parsed
+            except Exception:
+                pass
+
+        sort_field = request.query_params.get("sort") or None
+        search_term = request.query_params.get("search") or None
+
+        builder = BrowseQueryBuilder(
+            dialect=connection.engine,
+            schema=schema_name,
+            table=table_name,
+            columns=columns,
+            filters=filters,
+            search=search_term,
+            sort=sort_field,
+            page=1,
+            page_size=max_rows or 50000,
+        )
+        sql, params = builder.build()
+
+        config = config_from_connection(connection)
+        driver = get_driver(config)
+
+        return build_streaming_export_response(
+            driver=driver,
+            sql=sql,
+            params=params,
+            export_format=export_format,
+            filename=filename,
+            max_rows=max_rows,
+        )
+
