@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import logging
 from typing import Any
 from rest_framework.exceptions import PermissionDenied, ValidationError
@@ -29,6 +30,8 @@ def _friendly_constraint_error(exc: Exception) -> str:
         return "Database is in read-only mode. Modifying operations are blocked."
     # Strip noisy stack trace details
     first_line = str(exc).split("\n")[0].strip()
+    if first_line.lower().startswith("database error:"):
+        first_line = first_line[len("database error:"):].strip()
     return f"Database error: {first_line}"[:250]
 
 
@@ -51,6 +54,34 @@ class MutationBuilder:
     def _quote(self, identifier: str) -> str:
         return quote_identifier(identifier, dialect=self.dialect)
 
+    def _normalize_param_value(self, col_name: str, val: Any) -> Any:
+        col = self.columns_by_name.get(col_name)
+        if not col:
+            return val
+
+        is_json = col.generic_type == "json" or "json" in col.data_type.lower()
+        if is_json:
+            if val is None:
+                return None
+            if isinstance(val, (dict, list)):
+                return json.dumps(val)
+            if isinstance(val, str):
+                trimmed = val.strip()
+                if not trimmed:
+                    return None if col.nullable else "{}"
+                try:
+                    # Validate that it is valid JSON
+                    json.loads(trimmed)
+                    return trimmed
+                except Exception as exc:
+                    raise ValidationError(f"Invalid JSON format for column '{col_name}': {exc}")
+            return json.dumps(val)
+
+        if val == "" and col.generic_type in ("number", "datetime", "date", "time", "uuid"):
+            return None
+
+        return val
+
     def build_insert(self, data: dict[str, Any]) -> tuple[str, list[Any]]:
         if not data:
             raise ValidationError("Insert payload cannot be empty.")
@@ -61,7 +92,7 @@ class MutationBuilder:
             if col_name not in self.columns_by_name:
                 raise ValidationError(f"Unknown column: '{col_name}'.")
             cols.append(self._quote(col_name))
-            params.append(val)
+            params.append(self._normalize_param_value(col_name, val))
 
         table_ref = f"{self._quote(self.schema)}.{self._quote(self.table)}"
         cols_sql = ", ".join(cols)
@@ -89,7 +120,7 @@ class MutationBuilder:
             if col_name == self.primary_key_col and str(val) == str(pk_value):
                 continue
             set_clauses.append(f"{self._quote(col_name)} = %s")
-            params.append(val)
+            params.append(self._normalize_param_value(col_name, val))
 
         if not set_clauses:
             raise ValidationError("No fields to update.")

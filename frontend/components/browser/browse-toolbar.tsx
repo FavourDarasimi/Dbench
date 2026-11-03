@@ -266,14 +266,6 @@ export function BrowseToolbar({
             </button>
           )}
 
-          {/* DATA Mode Indicator */}
-          <div className="flex items-center gap-1">
-            <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-[3px] border border-emerald-500/60 bg-emerald-500/10 text-emerald-400 text-xs sm:text-sm font-semibold">
-              <HugeiconsIcon icon={TableIcon} className="size-3.5" />
-              <span>DATA</span>
-            </span>
-          </div>
-
           {/* Add Record Button */}
           {onAddRecord && (
             <button

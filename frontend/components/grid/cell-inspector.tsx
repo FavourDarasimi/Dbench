@@ -332,7 +332,6 @@ export function CellInspector({
                 >
                   <div className="flex items-center justify-between text-xs font-mono mb-1">
                     <div className="flex items-center gap-1.5">
-                      {col.is_primary_key && <HugeiconsIcon icon={KeyRoundIcon} className="size-3 text-amber-400" />}
                       {col.foreign_key && <HugeiconsIcon icon={Link02Icon} className="size-3 text-blue-400" />}
                       <span className="font-semibold text-zinc-200 group-hover:text-emerald-300 transition-colors">
                         {col.name}

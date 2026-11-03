@@ -18,7 +18,6 @@ import {
   Delete02Icon,
   Edit02Icon,
   ExpandIcon,
-  KeyRoundIcon,
 } from "@hugeicons/core-free-icons";
 import { cn } from "@/lib/utils";
 import { ForeignKeyBadge } from "@/components/browser/foreign-key-badge";
@@ -212,11 +211,6 @@ export function DataGrid({
               title={`Sort by ${col.name}`}
             >
               <div className="flex items-center gap-1.5 truncate">
-                {col.is_primary_key && (
-                  <span title="Primary Key">
-                    <HugeiconsIcon icon={KeyRoundIcon} className="size-3.5 text-amber-400 shrink-0" />
-                  </span>
-                )}
                 <span className="truncate font-semibold text-xs sm:text-[13px] text-zinc-200 group-hover:text-white">
                   {col.name}
                 </span>

@@ -14,7 +14,7 @@ import { apiGet, apiPost } from "@/lib/api";
 import { BrowseToolbar } from "./browse-toolbar";
 import { DataGrid } from "@/components/grid/data-grid";
 import { RowFormModal } from "@/components/forms/row-form-modal";
-import { MutationDiffDialog } from "@/components/forms/mutation-diff-dialog";
+import { DeleteConfirmModal } from "@/components/forms/delete-confirm-modal";
 import type {
   BrowseFilter,
   BrowseResponse,
@@ -193,53 +193,18 @@ export function DataBrowserView({
   }
 
   // Delete Action Handlers (PRD F18 & F22)
-  async function handleDeleteSingleRow(row: Record<string, unknown>) {
+  function handleDeleteSingleRow(row: Record<string, unknown>) {
     if (!pkCol) return;
-    const pkVal = String(row[pkCol.name]);
     setDeletingRow(row);
     setIsBulkDelete(false);
-
-    try {
-      // Fetch preview SQL
-      const res = await apiPost<RowMutationResponse>(
-        `/connections/${tab.connectionId}/rows/`,
-        {
-          action: "delete",
-          schema,
-          table,
-          pk: pkVal,
-          preview: true,
-        }
-      );
-      setDeleteSqlPreview(res.sql);
-      setDeleteDialogOpen(true);
-    } catch (err) {
-      showToast(err instanceof Error ? err.message : "Failed to preview delete", "error");
-    }
+    setDeleteDialogOpen(true);
   }
 
-  async function handleBulkDelete() {
+  function handleBulkDelete() {
     if (!pkCol || selectedRowKeys.size === 0) return;
     setDeletingRow(null);
     setIsBulkDelete(true);
-
-    try {
-      const pks = Array.from(selectedRowKeys);
-      const res = await apiPost<RowMutationResponse>(
-        `/connections/${tab.connectionId}/rows/`,
-        {
-          action: "bulk_delete",
-          schema,
-          table,
-          pks,
-          preview: true,
-        }
-      );
-      setDeleteSqlPreview(res.sql);
-      setDeleteDialogOpen(true);
-    } catch (err) {
-      showToast(err instanceof Error ? err.message : "Failed to preview bulk delete", "error");
-    }
+    setDeleteDialogOpen(true);
   }
 
   async function confirmCommitDelete() {
@@ -457,8 +422,8 @@ export function DataBrowserView({
         onSuccess={handleMutationSuccess}
       />
 
-      {/* Delete Confirmation Diff Dialog */}
-      <MutationDiffDialog
+      {/* Delete Confirmation Modal (Simple, Minimal Design) */}
+      <DeleteConfirmModal
         isOpen={deleteDialogOpen}
         onClose={() => {
           setDeleteDialogOpen(false);
@@ -466,13 +431,11 @@ export function DataBrowserView({
         }}
         onConfirm={confirmCommitDelete}
         isSubmitting={isDeleting}
-        action={isBulkDelete ? "bulk_delete" : "delete"}
         schema={schema}
         table={table}
-        sqlPreview={deleteSqlPreview}
         pkColumn={pkCol?.name}
         pkValue={deletingRow && pkCol ? String(deletingRow[pkCol.name]) : null}
-        bulkCount={selectedRowKeys.size}
+        bulkCount={isBulkDelete ? selectedRowKeys.size : 1}
       />
     </div>
   );
