@@ -1,7 +1,16 @@
 "use client";
 
 import { useState } from "react";
-import { Table, Code2, X, Plus, History, Bookmark, Radio, Search } from "lucide-react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  Bookmark02Icon,
+  Cancel01Icon,
+  CodeIcon,
+  PlusSignIcon,
+  Search01Icon,
+  TableIcon,
+  Time04Icon,
+} from "@hugeicons/core-free-icons";
 import { useWorkspaceStore } from "@/lib/stores/workspace-store";
 import { useRealtimeStore } from "@/lib/stores/realtime-store";
 import { QueryHistoryDrawer } from "@/components/history/query-history-drawer";
@@ -10,9 +19,10 @@ import type { WorkspaceTab } from "@/lib/types";
 
 interface WorkspaceTabsProps {
   onOpenCommandPalette?: () => void;
+  filterType?: "browser" | "sql";
 }
 
-export function WorkspaceTabs({ onOpenCommandPalette }: WorkspaceTabsProps = {}) {
+export function WorkspaceTabs({ onOpenCommandPalette, filterType }: WorkspaceTabsProps = {}) {
   const {
     tabs,
     activeTabId,
@@ -32,14 +42,16 @@ export function WorkspaceTabs({ onOpenCommandPalette }: WorkspaceTabsProps = {})
     setHistoryOpen(true);
   }
 
+  const visibleTabs = filterType ? tabs.filter((t) => t.type === filterType) : tabs;
+
   return (
     <>
       <div className="flex items-center justify-between border-b border-zinc-800/80 bg-[#090909] px-2 h-10 select-none overflow-x-auto">
         {/* Scrollable Tabs List */}
         <div className="flex items-center gap-1 overflow-x-auto scrollbar-none flex-1 min-w-0 pr-2">
-          {tabs.map((tab) => {
+          {visibleTabs.map((tab) => {
             const isActive = tab.id === activeTabId;
-            const Icon = tab.type === "browser" ? Table : Code2;
+            const iconDef = tab.type === "browser" ? TableIcon : CodeIcon;
 
             return (
               <div
@@ -51,7 +63,8 @@ export function WorkspaceTabs({ onOpenCommandPalette }: WorkspaceTabsProps = {})
                     : "bg-transparent border-transparent text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/60"
                 }`}
               >
-                <Icon
+                <HugeiconsIcon
+                  icon={iconDef}
                   className={`size-3.5 shrink-0 ${
                     isActive
                       ? tab.type === "browser"
@@ -76,7 +89,7 @@ export function WorkspaceTabs({ onOpenCommandPalette }: WorkspaceTabsProps = {})
                   className="opacity-0 group-hover:opacity-100 hover:bg-zinc-800 rounded p-0.5 text-zinc-500 hover:text-zinc-200 transition-opacity ml-1"
                   title="Close tab"
                 >
-                  <X className="size-3" />
+                  <HugeiconsIcon icon={Cancel01Icon} className="size-3" />
                 </button>
               </div>
             );
@@ -114,30 +127,35 @@ export function WorkspaceTabs({ onOpenCommandPalette }: WorkspaceTabsProps = {})
             </span>
           </div>
 
-          {/* Saved Queries Drawer Button (PRD F9) */}
-          <button
-            onClick={() => setSavedQueriesOpen(true)}
-            className="flex items-center gap-1 px-2.5 py-1 rounded-md bg-[#050505] hover:bg-zinc-900 border border-zinc-800 text-[11px] font-mono text-zinc-400 hover:text-emerald-300 transition-colors cursor-pointer"
-            title="Open Saved Queries"
-          >
-            <Bookmark className="size-3 text-emerald-400" />
-            <span className="hidden sm:inline">Saved</span>
-          </button>
+          {/* SQL-only drawers: Saved Queries & History */}
+          {(!filterType || filterType === "sql") && (
+            <>
+              {/* Saved Queries Drawer Button (PRD F9) */}
+              <button
+                onClick={() => setSavedQueriesOpen(true)}
+                className="flex items-center gap-1 px-2.5 py-1 rounded-md bg-[#050505] hover:bg-zinc-900 border border-zinc-800 text-[11px] font-mono text-zinc-400 hover:text-emerald-300 transition-colors cursor-pointer"
+                title="Open Saved Queries"
+              >
+                <HugeiconsIcon icon={Bookmark02Icon} className="size-3 text-emerald-400" />
+                <span className="hidden sm:inline">Saved</span>
+              </button>
 
-          {/* Query History Drawer Button (PRD F9) */}
-          <button
-            onClick={handleOpenHistory}
-            className="relative flex items-center gap-1 px-2.5 py-1 rounded-md bg-[#050505] hover:bg-zinc-900 border border-zinc-800 text-[11px] font-mono text-zinc-400 hover:text-emerald-300 transition-colors cursor-pointer"
-            title="Open Query Execution History"
-          >
-            <History className="size-3 text-emerald-400" />
-            <span className="hidden sm:inline">History</span>
-            {unreadCount > 0 && (
-              <span className="absolute -top-1 -right-1 size-3.5 rounded-full bg-emerald-500 text-zinc-950 font-bold text-[9px] flex items-center justify-center">
-                {unreadCount > 9 ? "9+" : unreadCount}
-              </span>
-            )}
-          </button>
+              {/* Query History Drawer Button (PRD F9) */}
+              <button
+                onClick={handleOpenHistory}
+                className="relative flex items-center gap-1 px-2.5 py-1 rounded-md bg-[#050505] hover:bg-zinc-900 border border-zinc-800 text-[11px] font-mono text-zinc-400 hover:text-emerald-300 transition-colors cursor-pointer"
+                title="Open Query Execution History"
+              >
+                <HugeiconsIcon icon={Time04Icon} className="size-3 text-emerald-400" />
+                <span className="hidden sm:inline">History</span>
+                {unreadCount > 0 && (
+                  <span className="absolute -top-1 -right-1 size-3.5 rounded-full bg-emerald-500 text-zinc-950 font-bold text-[9px] flex items-center justify-center">
+                    {unreadCount > 9 ? "9+" : unreadCount}
+                  </span>
+                )}
+              </button>
+            </>
+          )}
 
           {/* Global Command Palette Trigger Button (PRD F13: Cmd+K) */}
           {onOpenCommandPalette && (
@@ -146,26 +164,28 @@ export function WorkspaceTabs({ onOpenCommandPalette }: WorkspaceTabsProps = {})
               className="hidden lg:flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#050505] hover:bg-zinc-900 border border-zinc-800 text-[11px] font-mono text-zinc-400 hover:text-white transition-colors cursor-pointer"
               title="Open Command Palette (⌘K)"
             >
-              <Search className="size-3 text-zinc-500" />
+              <HugeiconsIcon icon={Search01Icon} className="size-3 text-zinc-500" />
               <span>Commands</span>
               <kbd className="px-1 py-0.2 rounded bg-zinc-800 text-[9px] text-zinc-400">⌘K</kbd>
             </button>
           )}
 
           {/* New SQL Tab Button */}
-          <button
-            onClick={() => {
-              if (activeConnectionId) {
-                openSqlTab(activeConnectionId);
-              }
-            }}
-            disabled={!activeConnectionId}
-            className="flex items-center gap-1 px-2.5 py-1 rounded-md bg-[#050505] hover:bg-zinc-900 border border-zinc-800 text-[11px] font-mono text-zinc-400 hover:text-emerald-300 transition-colors shrink-0 disabled:opacity-40 cursor-pointer"
-            title="Open new SQL Query tab"
-          >
-            <Plus className="size-3 text-emerald-400" />
-            <span className="hidden sm:inline">New Query</span>
-          </button>
+          {(!filterType || filterType === "sql") && (
+            <button
+              onClick={() => {
+                if (activeConnectionId) {
+                  openSqlTab(activeConnectionId);
+                }
+              }}
+              disabled={!activeConnectionId}
+              className="flex items-center gap-1 px-2.5 py-1 rounded-md bg-[#050505] hover:bg-zinc-900 border border-zinc-800 text-[11px] font-mono text-zinc-400 hover:text-emerald-300 transition-colors shrink-0 disabled:opacity-40 cursor-pointer"
+              title="Open new SQL Query tab"
+            >
+              <HugeiconsIcon icon={PlusSignIcon} className="size-3 text-emerald-400" />
+              <span className="hidden sm:inline">New Query</span>
+            </button>
+          )}
         </div>
       </div>
 

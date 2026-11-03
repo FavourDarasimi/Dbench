@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   AiSparklesIcon,
@@ -79,6 +80,7 @@ export function BrowseToolbar({
   onBulkDelete,
 }: BrowseToolbarProps) {
   const { openSqlTab } = useWorkspaceStore();
+  const router = useRouter();
 
   // Filter creation modal / popover state
   const [filterModalOpen, setFilterModalOpen] = useState(false);
@@ -229,12 +231,14 @@ export function BrowseToolbar({
       const fullSql = `${headerComment}${res.sql}\n`;
 
       openSqlTab(connectionId, fullSql, `${table} (SQL)`);
+      router.push("/sql");
     } catch {
       // Fallback: local SQL generator
       const fallbackSql = `-- Generated from Data Browser\nSELECT *\nFROM "${schema}"."${table}"\nLIMIT ${pageSize} OFFSET ${
         (page - 1) * pageSize
       };\n`;
       openSqlTab(connectionId, fallbackSql, `${table} (SQL)`);
+      router.push("/sql");
     } finally {
       setIsPreviewingSql(false);
     }

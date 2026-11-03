@@ -26,12 +26,16 @@ interface WorkspaceState {
   activeConnectionId: string | null;
   tabs: WorkspaceTab[];
   activeTabId: string | null;
+  activeView: "table" | "visualizer" | "sql";
+  selectedTable: { schema: string; table: string } | null;
   sidebarCollapsed: boolean;
   navCollapsed: boolean;
   navOpen: boolean;
 
   // Actions
   setActiveConnectionId: (id: string | null) => void;
+  setActiveView: (view: "table" | "visualizer" | "sql") => void;
+  setSelectedTable: (table: { schema: string; table: string } | null) => void;
   openBrowserTab: (
     connectionId: string,
     schema: string,
@@ -53,6 +57,8 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
   activeConnectionId: null,
   tabs: [],
   activeTabId: null,
+  activeView: "table",
+  selectedTable: null,
   sidebarCollapsed: false,
   navCollapsed: readNavCollapsed(),
   navOpen: false,
@@ -60,6 +66,10 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
   setActiveConnectionId: (id) => {
     set({ activeConnectionId: id });
   },
+
+  setActiveView: (view) => set({ activeView: view }),
+
+  setSelectedTable: (table) => set({ selectedTable: table }),
 
   openBrowserTab: (connectionId, schema, table, initialFilter) => {
     const { tabs } = get();
@@ -77,9 +87,16 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
           tabs: tabs.map((t) => (t.id === existing.id ? { ...t, initialFilter } : t)),
           activeTabId: existing.id,
           activeConnectionId: connectionId,
+          activeView: "table",
+          selectedTable: { schema, table },
         });
       } else {
-        set({ activeTabId: existing.id, activeConnectionId: connectionId });
+        set({
+          activeTabId: existing.id,
+          activeConnectionId: connectionId,
+          activeView: "table",
+          selectedTable: { schema, table },
+        });
       }
       return;
     }
@@ -100,6 +117,8 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
       tabs: [...tabs, newTab],
       activeTabId: tabId,
       activeConnectionId: connectionId,
+      activeView: "table",
+      selectedTable: { schema, table },
     });
   },
 
@@ -122,6 +141,7 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
       tabs: [...tabs, newTab],
       activeTabId: tabId,
       activeConnectionId: connectionId,
+      activeView: "sql",
     });
   },
 
@@ -143,19 +163,36 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
       }
     }
 
+    const nextTab = remaining.find((t) => t.id === nextActiveId);
     set({
       tabs: remaining,
       activeTabId: nextActiveId,
+      selectedTable:
+        nextTab && nextTab.type === "browser" && nextTab.schema && nextTab.table
+          ? { schema: nextTab.schema, table: nextTab.table }
+          : remaining.length === 0 || !remaining.some((t) => t.type === "browser")
+          ? null
+          : get().selectedTable,
     });
   },
 
   setActiveTab: (tabId) => {
     const tab = get().tabs.find((t) => t.id === tabId);
     if (tab) {
-      set({
-        activeTabId: tabId,
-        activeConnectionId: tab.connectionId,
-      });
+      if (tab.type === "browser") {
+        set({
+          activeTabId: tabId,
+          activeConnectionId: tab.connectionId,
+          activeView: "table",
+          selectedTable: tab.schema && tab.table ? { schema: tab.schema, table: tab.table } : get().selectedTable,
+        });
+      } else {
+        set({
+          activeTabId: tabId,
+          activeConnectionId: tab.connectionId,
+          activeView: "sql",
+        });
+      }
     }
   },
 
