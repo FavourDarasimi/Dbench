@@ -314,3 +314,88 @@ def test_saved_test_uses_ssh_tunnel_when_configured(auth_client, connection_fact
     assert seen["host"] == "127.0.0.1"
     assert seen["port"] == 54321
     assert seen["password"] == "db-pass-123"
+
+
+# --- database_url support ----------------------------------------------------
+
+
+def test_create_connection_via_database_url(auth_client):
+    payload = {
+        "database_url": "postgresql://dbuser:supersecret@postgres.internal.net:5432/finance_db?sslmode=require",
+    }
+    resp = auth_client.post("/api/connections/", payload)
+    assert resp.status_code == 201, resp.data
+    conn = Connection.objects.get(pk=resp.data["id"])
+    assert conn.engine == "postgres"
+    assert conn.host == "postgres.internal.net"
+    assert conn.port == 5432
+    assert conn.db_name == "finance_db"
+    assert conn.username == "dbuser"
+    assert conn.ssl_mode == "require"
+    assert decrypt(conn.encrypted_password) == "supersecret"
+    # Verify password and database_url are never leaked in serialized response
+    assert "password" not in resp.data
+    assert "database_url" not in resp.data
+    assert resp.data["has_password"] is True
+
+
+def test_create_connection_via_database_url_with_custom_name(auth_client):
+    payload = {
+        "name": "Custom Production DB",
+        "database_url": "mysql://root:secret@127.0.0.1:3306/shop",
+    }
+    resp = auth_client.post("/api/connections/", payload)
+    assert resp.status_code == 201, resp.data
+    conn = Connection.objects.get(pk=resp.data["id"])
+    assert conn.name == "Custom Production DB"
+    assert conn.engine == "mysql"
+    assert conn.db_name == "shop"
+
+
+def test_draft_test_via_database_url(auth_client, monkeypatch):
+    seen = {}
+
+    def fake_connect(**kwargs):
+        seen.update(kwargs)
+        return FakePgConnection()
+
+    monkeypatch.setattr("apps.connections.services.psycopg", SimpleNamespace(connect=fake_connect))
+    payload = {
+        "database_url": "postgresql://testuser:testpass@db.example.com:5432/testdb",
+    }
+    resp = auth_client.post("/api/connections/test/", payload)
+    assert resp.status_code == 200, resp.data
+    assert resp.data["ok"] is True
+    assert seen["host"] == "db.example.com"
+    assert seen["user"] == "testuser"
+    assert seen["password"] == "testpass"
+    assert seen["dbname"] == "testdb"
+
+
+def test_parse_database_url_endpoint(auth_client):
+    payload = {
+        "url": "postgresql://admin:mypassword@localhost:5432/analytics?sslmode=verify-full"
+    }
+    resp = auth_client.post("/api/connections/parse-url/", payload)
+    assert resp.status_code == 200, resp.data
+    assert resp.data == {
+        "engine": "postgres",
+        "host": "localhost",
+        "port": 5432,
+        "db_name": "analytics",
+        "username": "admin",
+        "password": "mypassword",
+        "ssl_mode": "verify-full",
+    }
+
+
+def test_parse_database_url_endpoint_validation_errors(auth_client):
+    # Missing url
+    resp = auth_client.post("/api/connections/parse-url/", {})
+    assert resp.status_code == 400
+
+    # Unsupported scheme
+    resp = auth_client.post("/api/connections/parse-url/", {"url": "mongodb://localhost:27017/db"})
+    assert resp.status_code == 400
+    assert "Unsupported database scheme" in str(resp.data)
+

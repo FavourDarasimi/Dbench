@@ -1,7 +1,13 @@
 "use client";
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Pencil, Play, Plus, Trash2 } from "lucide-react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  PencilIcon,
+  PlayIcon,
+  PlusSignIcon,
+  TrashIcon,
+} from "@hugeicons/core-free-icons";
 import { useState } from "react";
 
 import { ConnectionForm } from "@/components/connection-form";
@@ -75,14 +81,14 @@ export default function ConnectionsPage() {
   }
 
   return (
-    <div className="grid gap-6">
+    <div className="mx-auto grid w-full max-w-6xl gap-6 px-4 py-8 sm:px-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Connections</h1>
           <p className="text-sm text-muted-foreground">Databases you can browse and query from this workspace.</p>
         </div>
         <Button onClick={openCreate}>
-          <Plus />
+          <HugeiconsIcon icon={PlusSignIcon} />
           New connection
         </Button>
       </div>
@@ -106,7 +112,7 @@ export default function ConnectionsPage() {
               <p className="font-medium">No connections yet</p>
               <p className="text-sm text-muted-foreground">Add your first database to start exploring schemas.</p>
               <Button onClick={openCreate} className="mt-2">
-                <Plus />
+                <HugeiconsIcon icon={PlusSignIcon} />
                 New connection
               </Button>
             </div>
@@ -149,11 +155,11 @@ export default function ConnectionsPage() {
                             disabled={testingId === connection.id}
                             aria-label={`Test ${connection.name}`}
                           >
-                            {testingId === connection.id ? <Spinner /> : <Play />}
+                            {testingId === connection.id ? <Spinner /> : <HugeiconsIcon icon={PlayIcon} />}
                             Test
                           </Button>
                           <Button variant="ghost" size="sm" onClick={() => openEdit(connection)} aria-label={`Edit ${connection.name}`}>
-                            <Pencil />
+                            <HugeiconsIcon icon={PencilIcon} />
                             Edit
                           </Button>
                           <Button
@@ -163,7 +169,7 @@ export default function ConnectionsPage() {
                             aria-label={`Delete ${connection.name}`}
                             className="text-destructive hover:bg-destructive/10 hover:text-destructive"
                           >
-                            <Trash2 />
+                            <HugeiconsIcon icon={TrashIcon} />
                             Delete
                           </Button>
                         </div>

@@ -2,21 +2,21 @@
 
 import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { HugeiconsIcon } from "@hugeicons/react";
 import {
-  Database,
-  Folder,
-  FolderOpen,
-  Table as TableIcon,
-  Eye,
-  KeyRound,
-  ArrowUpRight,
-  ChevronRight,
-  ChevronDown,
-  Search,
-  RefreshCw,
-  Code2,
-  TableProperties,
-} from "lucide-react";
+  ArrowUpRightIcon,
+  ChevronDownIcon,
+  ChevronRightIcon,
+  CodeIcon,
+  EyeIcon,
+  FolderIcon,
+  FolderOpenIcon,
+  KeyRoundIcon,
+  ReloadIcon,
+  Search01Icon,
+  TableIcon,
+  TablePropertiesIcon,
+} from "@hugeicons/core-free-icons";
 
 import { api, apiPost } from "@/lib/api";
 import type {
@@ -143,7 +143,7 @@ export function SchemaExplorer({ connections }: SchemaExplorerProps) {
             className="p-1.5 rounded-lg border border-zinc-800 bg-[#030303] hover:bg-zinc-900 hover:border-zinc-700 text-zinc-400 hover:text-zinc-200 transition-colors disabled:opacity-50 cursor-pointer"
             title="Refresh schema cache"
           >
-            <RefreshCw
+            <HugeiconsIcon icon={ReloadIcon}
               className={`size-3.5 ${
                 refreshMutation.isPending || treeRefetching ? "animate-spin text-emerald-400" : ""
               }`}
@@ -153,7 +153,7 @@ export function SchemaExplorer({ connections }: SchemaExplorerProps) {
 
         {/* Search input */}
         <div className="relative flex items-center">
-          <Search className="size-3.5 text-zinc-500 absolute left-2.5 pointer-events-none" />
+          <HugeiconsIcon icon={Search01Icon} className="size-3.5 text-zinc-500 absolute left-2.5 pointer-events-none" />
           <input
             type="text"
             value={searchFilter}
@@ -188,14 +188,14 @@ export function SchemaExplorer({ connections }: SchemaExplorerProps) {
                 >
                   <div className="flex items-center gap-1.5 truncate">
                     {isExpanded ? (
-                      <ChevronDown className="size-3.5 text-zinc-500" />
+                      <HugeiconsIcon icon={ChevronDownIcon} className="size-3.5 text-zinc-500" />
                     ) : (
-                      <ChevronRight className="size-3.5 text-zinc-500" />
+                      <HugeiconsIcon icon={ChevronRightIcon} className="size-3.5 text-zinc-500" />
                     )}
                     {isExpanded ? (
-                      <FolderOpen className="size-3.5 text-emerald-400" />
+                      <HugeiconsIcon icon={FolderOpenIcon} className="size-3.5 text-emerald-400" />
                     ) : (
-                      <Folder className="size-3.5 text-zinc-400" />
+                      <HugeiconsIcon icon={FolderIcon} className="size-3.5 text-zinc-400" />
                     )}
                     <span className="font-semibold text-zinc-200 truncate">{item.schema}</span>
                   </div>
@@ -222,15 +222,15 @@ export function SchemaExplorer({ connections }: SchemaExplorerProps) {
                             <div className="flex items-center gap-1.5 truncate flex-1 min-w-0">
                               <span className="text-zinc-600">
                                 {isTableExpanded ? (
-                                  <ChevronDown className="size-3" />
+                                  <HugeiconsIcon icon={ChevronDownIcon} className="size-3" />
                                 ) : (
-                                  <ChevronRight className="size-3" />
+                                  <HugeiconsIcon icon={ChevronRightIcon} className="size-3" />
                                 )}
                               </span>
                               {isView ? (
-                                <Eye className="size-3.5 text-amber-400/90 shrink-0" />
+                                <HugeiconsIcon icon={EyeIcon} className="size-3.5 text-amber-400/90 shrink-0" />
                               ) : (
-                                <TableIcon className="size-3.5 text-emerald-400/90 shrink-0" />
+                                <HugeiconsIcon icon={TableIcon} className="size-3.5 text-emerald-400/90 shrink-0" />
                               )}
                               <span
                                 className="truncate text-zinc-300 hover:text-white"
@@ -259,7 +259,7 @@ export function SchemaExplorer({ connections }: SchemaExplorerProps) {
                                 className="hidden group-hover/item:flex items-center justify-center size-5 rounded hover:bg-emerald-950/60 text-zinc-400 hover:text-emerald-300"
                                 title="Browse table data"
                               >
-                                <TableProperties className="size-3" />
+                                <HugeiconsIcon icon={TablePropertiesIcon} className="size-3" />
                               </button>
 
                               {/* Quick Action: Query in SQL */}
@@ -277,7 +277,7 @@ export function SchemaExplorer({ connections }: SchemaExplorerProps) {
                                 className="hidden group-hover/item:flex items-center justify-center size-5 rounded hover:bg-emerald-950/60 text-zinc-400 hover:text-emerald-300"
                                 title="Query in SQL editor"
                               >
-                                <Code2 className="size-3" />
+                                <HugeiconsIcon icon={CodeIcon} className="size-3" />
                               </button>
                             </div>
                           </div>
@@ -347,12 +347,12 @@ function TableColumnsList({
           <div className="flex items-center gap-1.5 truncate">
             {col.is_primary_key && (
               <span title="Primary Key">
-                <KeyRound className="size-2.5 text-emerald-400 shrink-0" />
+                <HugeiconsIcon icon={KeyRoundIcon} className="size-2.5 text-emerald-400 shrink-0" />
               </span>
             )}
             {col.foreign_key && (
               <span title={`FK ➔ ${col.foreign_key.target_table}.${col.foreign_key.target_column}`}>
-                <ArrowUpRight className="size-2.5 text-blue-400 shrink-0" />
+                <HugeiconsIcon icon={ArrowUpRightIcon} className="size-2.5 text-blue-400 shrink-0" />
               </span>
             )}
             <span className={`truncate ${col.is_primary_key ? "text-emerald-300 font-semibold" : ""}`}>

@@ -1,7 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { Database } from "lucide-react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  DatabaseIcon,
+} from "@hugeicons/core-free-icons";
 
 export function Footer() {
   return (
@@ -11,7 +14,7 @@ export function Footer() {
         <div className="flex items-center gap-2.5">
           <Link href="/" className="flex items-center gap-2 text-zinc-300 hover:text-white transition-colors group">
             <span className="flex size-6 items-center justify-center rounded-md bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 group-hover:bg-emerald-500/20 transition-colors">
-              <Database className="size-3.5" />
+              <HugeiconsIcon icon={DatabaseIcon} className="size-3.5" />
             </span>
             <span className="font-semibold text-zinc-200">Dbench</span>
           </Link>

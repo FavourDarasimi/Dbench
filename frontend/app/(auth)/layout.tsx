@@ -1,7 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { Database, ArrowLeft } from "lucide-react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  ArrowLeft01Icon,
+  DatabaseIcon,
+} from "@hugeicons/core-free-icons";
 import { RedirectIfAuthenticated } from "@/components/auth-guard";
 import { AuthIllustration } from "@/components/auth/auth-illustration";
 
@@ -24,7 +28,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
               className="inline-flex items-center gap-2.5 font-bold text-white tracking-tight group"
             >
               <span className="flex size-8 items-center justify-center rounded-lg bg-emerald-950/60 border border-emerald-500/30 text-emerald-400 shadow-md transition-transform group-hover:scale-105">
-                <Database className="size-4 text-emerald-400" />
+                <HugeiconsIcon icon={DatabaseIcon} className="size-4 text-emerald-400" />
               </span>
               <span className="text-lg font-bold tracking-tight">Dbench</span>
             </Link>
@@ -50,7 +54,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
             <div className="lg:hidden">
               <Link href="/" className="flex items-center gap-2 font-bold text-white tracking-tight">
                 <span className="flex size-7 items-center justify-center rounded-lg bg-emerald-950/60 border border-emerald-500/30 text-emerald-400">
-                  <Database className="size-3.5" />
+                  <HugeiconsIcon icon={DatabaseIcon} className="size-3.5" />
                 </span>
                 <span className="text-base font-bold">Dbench</span>
               </Link>
@@ -62,7 +66,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
                 href="/"
                 className="inline-flex items-center gap-1.5 text-xs font-mono text-zinc-400 hover:text-white transition-colors"
               >
-                <ArrowLeft className="size-3.5" />
+                <HugeiconsIcon icon={ArrowLeft01Icon} className="size-3.5" />
                 <span>Back to home</span>
               </Link>
             </div>

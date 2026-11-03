@@ -1,4 +1,10 @@
-import { CheckCircle2, Shield, Network, Clock, Database } from "lucide-react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  CheckmarkCircle01Icon,
+  Clock01Icon,
+  DatabaseIcon,
+  NetworkIcon,
+} from "@hugeicons/core-free-icons";
 
 export function DatabaseSupport() {
   const supported = [
@@ -40,7 +46,7 @@ export function DatabaseSupport() {
     <section className="w-full max-w-6xl px-4 sm:px-6 py-16 md:py-24 border-t border-zinc-800/80">
       <div className="text-center max-w-3xl mx-auto mb-14">
         <div className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/25 bg-emerald-950/40 px-3.5 py-1 text-xs font-mono text-emerald-300 mb-4">
-          <Database className="size-3.5 text-emerald-400" />
+          <HugeiconsIcon icon={DatabaseIcon} className="size-3.5 text-emerald-400" />
           <span>Engine Compatibility</span>
         </div>
         <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-white">
@@ -75,7 +81,7 @@ export function DatabaseSupport() {
               <div className="space-y-3 mt-6">
                 {engine.features.map((feat) => (
                   <div key={feat} className="flex items-start gap-2.5 text-sm text-zinc-300">
-                    <CheckCircle2 className="size-4 text-emerald-400 shrink-0 mt-0.5" />
+                    <HugeiconsIcon icon={CheckmarkCircle01Icon} className="size-4 text-emerald-400 shrink-0 mt-0.5" />
                     <span>{feat}</span>
                   </div>
                 ))}
@@ -84,7 +90,7 @@ export function DatabaseSupport() {
 
             <div className="mt-8 pt-4 border-t border-zinc-800/80 flex items-center justify-between text-xs font-mono text-zinc-500">
               <span className="flex items-center gap-1.5 text-zinc-400">
-                <Network className="size-3.5 text-emerald-400" />
+                <HugeiconsIcon icon={NetworkIcon} className="size-3.5 text-emerald-400" />
                 SSL & SSH Bastion Supported
               </span>
               <span className="text-emerald-300/90">{engine.tag}</span>
@@ -96,7 +102,7 @@ export function DatabaseSupport() {
       {/* Upcoming Engines Strip */}
       <div className="mt-8 rounded-xl border border-zinc-800/70 bg-zinc-950/60 p-4 sm:p-5 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-mono">
         <div className="flex items-center gap-2 text-zinc-400">
-          <Clock className="size-4 text-zinc-500" />
+          <HugeiconsIcon icon={Clock01Icon} className="size-4 text-zinc-500" />
           <span className="text-zinc-300 font-medium">Planned for v2:</span>
           <span>We strictly differentiate today's supported engines from upcoming integrations.</span>
         </div>

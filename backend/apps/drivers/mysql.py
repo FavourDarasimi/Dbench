@@ -367,6 +367,80 @@ class MySQLDriver(BaseDriver):
         finally:
             conn.close()
 
+    def describe_schema_erd(self, schema: str) -> dict[str, Any]:
+        """Batch-optimized ERD schema introspection for MySQL."""
+        tables_meta = self.list_tables(schema)
+
+        all_cols_sql = """
+            SELECT table_name, column_name, data_type, is_nullable, column_default, column_key
+            FROM information_schema.columns
+            WHERE table_schema = %s
+            ORDER BY table_name, ordinal_position;
+        """
+        all_fks_sql = """
+            SELECT table_name, column_name, referenced_table_schema, referenced_table_name, referenced_column_name, constraint_name
+            FROM information_schema.key_column_usage
+            WHERE table_schema = %s AND referenced_table_name IS NOT NULL;
+        """
+
+        conn = self._open_direct_connection()
+        try:
+            with conn.cursor() as cur:
+                cur.execute(all_cols_sql, (schema,))
+                cols_rows = cur.fetchall()
+
+                cur.execute(all_fks_sql, (schema,))
+                fks_by_table: dict[str, dict[str, ForeignKeyMeta]] = {}
+                relations: list[dict[str, Any]] = []
+                for s_table, s_col, r_schema, r_table, r_col, constr in cur.fetchall():
+                    fk_meta = ForeignKeyMeta(
+                        target_schema=r_schema,
+                        target_table=r_table,
+                        target_column=r_col,
+                        constraint_name=constr,
+                    )
+                    fks_by_table.setdefault(s_table, {})[s_col] = fk_meta
+                    relations.append({
+                        "id": f"rel-{s_table}-{s_col}-{r_table}-{r_col}",
+                        "source_schema": schema,
+                        "source_table": s_table,
+                        "source_column": s_col,
+                        "target_schema": r_schema,
+                        "target_table": r_table,
+                        "target_column": r_col,
+                        "constraint_name": constr,
+                    })
+        finally:
+            conn.close()
+
+        tables_dict: dict[str, list[dict[str, Any]]] = {}
+        for t_name, c_name, dtype, is_null, default, key in cols_rows:
+            col_meta = ColumnMeta(
+                name=c_name,
+                data_type=dtype,
+                generic_type=generic_type_from_name(dtype),
+                nullable=(is_null.upper() == "YES"),
+                default=default,
+                is_primary_key=(key.upper() == "PRI"),
+                foreign_key=fks_by_table.get(t_name, {}).get(c_name),
+            )
+            tables_dict.setdefault(t_name, []).append(col_meta.to_dict())
+
+        tables_result = []
+        for t in tables_meta:
+            tables_result.append({
+                "name": t.name,
+                "schema": schema,
+                "type": t.type,
+                "columns": tables_dict.get(t.name, []),
+            })
+
+        return {
+            "schema": schema,
+            "tables": tables_result,
+            "relations": relations,
+        }
+
     def close(self):
         if self._direct_tunnel is not None:
             self._direct_tunnel.stop()

@@ -36,3 +36,28 @@ class SchemaTreeItemSerializer(serializers.Serializer):
 class RefreshSchemaResponseSerializer(serializers.Serializer):
     status = serializers.CharField()
     message = serializers.CharField()
+
+
+class ERDTableSerializer(serializers.Serializer):
+    name = serializers.CharField()
+    schema = serializers.CharField()
+    type = serializers.CharField(default="BASE TABLE")
+    columns = ColumnSerializer(many=True)
+
+
+class ERDRelationSerializer(serializers.Serializer):
+    id = serializers.CharField()
+    source_schema = serializers.CharField()
+    source_table = serializers.CharField()
+    source_column = serializers.CharField()
+    target_schema = serializers.CharField()
+    target_table = serializers.CharField()
+    target_column = serializers.CharField()
+    constraint_name = serializers.CharField(allow_null=True, required=False)
+
+
+class ERDResponseSerializer(serializers.Serializer):
+    schema = serializers.CharField()
+    tables = ERDTableSerializer(many=True)
+    relations = ERDRelationSerializer(many=True)
+

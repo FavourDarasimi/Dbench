@@ -1,21 +1,21 @@
 "use client";
 
 import { useState } from "react";
+import { HugeiconsIcon } from "@hugeicons/react";
 import {
-  Play,
-  Database,
-  ChevronRight,
-  ChevronDown,
-  Table as TableIcon,
-  Columns,
-  Download,
-  Activity,
-  CheckCircle2,
-  Lock,
-  Clock,
-  Sparkles,
-  ShieldAlert,
-} from "lucide-react";
+  ActivityIcon,
+  AiSparklesIcon,
+  CheckmarkCircle01Icon,
+  ChevronDownIcon,
+  ChevronRightIcon,
+  DatabaseIcon,
+  DownloadIcon,
+  KanbanIcon,
+  LockIcon,
+  PlayIcon,
+  ShieldAlertIcon,
+  TableIcon,
+} from "@hugeicons/core-free-icons";
 
 export function ProductHeroMockup() {
   const [activeTab, setActiveTab] = useState<"query1" | "query2">("query1");
@@ -38,19 +38,19 @@ export function ProductHeroMockup() {
       <div className="hidden lg:block">
         {/* Top-left: Schema Explorer Callout */}
         <div className="absolute -top-5 -left-4 z-20 flex items-center gap-2 rounded-full border border-emerald-500/30 bg-zinc-950/90 px-3 py-1 text-xs text-emerald-300 shadow-xl backdrop-blur-md">
-          <Database className="size-3 text-emerald-400" />
+          <HugeiconsIcon icon={DatabaseIcon} className="size-3 text-emerald-400" />
           <span><strong className="text-white">Schema Explorer:</strong> Live introspection</span>
         </div>
 
         {/* Top-right: Query Protection Callout */}
         <div className="absolute -top-5 -right-4 z-20 flex items-center gap-2 rounded-full border border-amber-500/30 bg-zinc-950/90 px-3 py-1 text-xs text-amber-300 shadow-xl backdrop-blur-md">
-          <ShieldAlert className="size-3 text-amber-400" />
+          <HugeiconsIcon icon={ShieldAlertIcon} className="size-3 text-amber-400" />
           <span><strong className="text-white">Guardrails:</strong> Intercepts risky operations</span>
         </div>
 
         {/* Bottom-right: Virtualized Grid Callout */}
         <div className="absolute -bottom-5 right-6 z-20 flex items-center gap-2 rounded-full border border-teal-500/30 bg-zinc-950/90 px-3 py-1 text-xs text-teal-300 shadow-xl backdrop-blur-md">
-          <Sparkles className="size-3 text-teal-400" />
+          <HugeiconsIcon icon={AiSparklesIcon} className="size-3 text-teal-400" />
           <span><strong className="text-white">Results Grid:</strong> Streamed CSV/JSON export</span>
         </div>
       </div>
@@ -79,7 +79,7 @@ export function ProductHeroMockup() {
               PostgreSQL 16.2
             </span>
             <span className="inline-flex items-center gap-1 text-[11px] text-emerald-400 font-mono">
-              <Lock className="size-3" /> Sealed at Rest
+              <HugeiconsIcon icon={LockIcon} className="size-3" /> Sealed at Rest
             </span>
           </div>
         </div>
@@ -90,7 +90,7 @@ export function ProductHeroMockup() {
           <div className="hidden md:flex md:col-span-3 flex-col border-r border-zinc-800/90 bg-[#09090c] text-xs">
             <div className="flex items-center justify-between border-b border-zinc-800/70 p-3">
               <span className="font-semibold text-zinc-200 flex items-center gap-1.5">
-                <Database className="size-3.5 text-emerald-400" />
+                <HugeiconsIcon icon={DatabaseIcon} className="size-3.5 text-emerald-400" />
                 Schema Explorer
               </span>
               <span className="text-[10px] text-zinc-500 font-mono uppercase bg-zinc-900 px-1.5 py-0.5 rounded">
@@ -100,7 +100,7 @@ export function ProductHeroMockup() {
 
             <div className="p-2.5 space-y-1 font-mono text-[11px] text-zinc-400 overflow-y-auto">
               <div className="flex items-center gap-1 text-zinc-300 font-medium py-1">
-                <ChevronDown className="size-3 text-zinc-500" />
+                <HugeiconsIcon icon={ChevronDownIcon} className="size-3 text-zinc-500" />
                 <span>public (schema)</span>
               </div>
 
@@ -109,8 +109,8 @@ export function ProductHeroMockup() {
                 <div>
                   <div className="flex items-center justify-between group cursor-pointer text-emerald-300 py-1 px-2 rounded-md bg-emerald-950/40 border border-emerald-800/50">
                     <span className="flex items-center gap-1.5 font-semibold">
-                      <ChevronDown className="size-3 text-emerald-400" />
-                      <TableIcon className="size-3 text-emerald-400" />
+                      <HugeiconsIcon icon={ChevronDownIcon} className="size-3 text-emerald-400" />
+                      <HugeiconsIcon icon={TableIcon} className="size-3 text-emerald-400" />
                       accounts
                     </span>
                     <span className="text-[10px] text-emerald-400/80">14,280 rows</span>
@@ -118,25 +118,25 @@ export function ProductHeroMockup() {
                   <div className="pl-4 py-1.5 space-y-1 text-[11px] text-zinc-400">
                     <div className="flex items-center justify-between">
                       <span className="flex items-center gap-1.5">
-                        <Columns className="size-2.5 text-zinc-500" /> id
+                        <HugeiconsIcon icon={KanbanIcon} className="size-2.5 text-zinc-500" /> id
                       </span>
                       <span className="text-zinc-500 text-[10px]">uuid (PK)</span>
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="flex items-center gap-1.5">
-                        <Columns className="size-2.5 text-zinc-500" /> plan
+                        <HugeiconsIcon icon={KanbanIcon} className="size-2.5 text-zinc-500" /> plan
                       </span>
                       <span className="text-zinc-500 text-[10px]">varchar</span>
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="flex items-center gap-1.5">
-                        <Columns className="size-2.5 text-zinc-500" /> mrr
+                        <HugeiconsIcon icon={KanbanIcon} className="size-2.5 text-zinc-500" /> mrr
                       </span>
                       <span className="text-zinc-500 text-[10px]">numeric</span>
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="flex items-center gap-1.5">
-                        <Columns className="size-2.5 text-zinc-500" /> created_at
+                        <HugeiconsIcon icon={KanbanIcon} className="size-2.5 text-zinc-500" /> created_at
                       </span>
                       <span className="text-zinc-500 text-[10px]">timestamptz</span>
                     </div>
@@ -146,8 +146,8 @@ export function ProductHeroMockup() {
                 {/* Table subscriptions */}
                 <div className="flex items-center justify-between py-1 px-2 text-zinc-400 hover:text-zinc-200 cursor-pointer rounded hover:bg-zinc-900/60 transition">
                   <span className="flex items-center gap-1.5">
-                    <ChevronRight className="size-3 text-zinc-600" />
-                    <TableIcon className="size-3 text-zinc-500" />
+                    <HugeiconsIcon icon={ChevronRightIcon} className="size-3 text-zinc-600" />
+                    <HugeiconsIcon icon={TableIcon} className="size-3 text-zinc-500" />
                     subscriptions
                   </span>
                   <span className="text-[10px] text-zinc-600">8,921 rows</span>
@@ -156,8 +156,8 @@ export function ProductHeroMockup() {
                 {/* Table audit_logs */}
                 <div className="flex items-center justify-between py-1 px-2 text-zinc-400 hover:text-zinc-200 cursor-pointer rounded hover:bg-zinc-900/60 transition">
                   <span className="flex items-center gap-1.5">
-                    <ChevronRight className="size-3 text-zinc-600" />
-                    <TableIcon className="size-3 text-zinc-500" />
+                    <HugeiconsIcon icon={ChevronRightIcon} className="size-3 text-zinc-600" />
+                    <HugeiconsIcon icon={TableIcon} className="size-3 text-zinc-500" />
                     audit_logs
                   </span>
                   <span className="text-[10px] text-zinc-600">182,900 rows</span>
@@ -205,7 +205,7 @@ export function ProductHeroMockup() {
                   disabled={isRunning}
                   className="inline-flex items-center gap-1.5 rounded-md bg-emerald-500 hover:bg-emerald-400 active:scale-95 text-zinc-950 px-3.5 py-1.5 text-xs font-bold shadow-md shadow-emerald-500/20 transition"
                 >
-                  <Play className={`size-3 fill-current ${isRunning ? "animate-spin" : ""}`} />
+                  <HugeiconsIcon icon={PlayIcon} className={`size-3 fill-current ${isRunning ? "animate-spin" : ""}`} />
                   <span>{isRunning ? "Running..." : "Run (⌘Enter)"}</span>
                 </button>
               </div>
@@ -324,7 +324,7 @@ export function ProductHeroMockup() {
               <div className="flex items-center justify-between border-t border-zinc-800 bg-[#09090d] px-3.5 py-2.5 text-[11px] font-mono text-zinc-400">
                 <div className="flex items-center gap-3">
                   <span className="flex items-center gap-1.5 text-emerald-400 font-medium">
-                    <CheckCircle2 className="size-3.5" />
+                    <HugeiconsIcon icon={CheckmarkCircle01Icon} className="size-3.5" />
                     {runSuccess ? "Query re-executed in 12ms" : "Query executed in 14ms"}
                   </span>
                   <span className="text-zinc-700">|</span>
@@ -333,14 +333,14 @@ export function ProductHeroMockup() {
 
                 <div className="flex items-center gap-4">
                   <span className="hidden sm:inline-flex items-center gap-1.5 text-zinc-400">
-                    <Activity className="size-3 text-emerald-400" />
+                    <HugeiconsIcon icon={ActivityIcon} className="size-3 text-emerald-400" />
                     Live sync active
                   </span>
                   <button
                     type="button"
                     className="inline-flex items-center gap-1.5 text-zinc-300 hover:text-white transition font-medium"
                   >
-                    <Download className="size-3 text-emerald-400" />
+                    <HugeiconsIcon icon={DownloadIcon} className="size-3 text-emerald-400" />
                     Export CSV
                   </button>
                 </div>

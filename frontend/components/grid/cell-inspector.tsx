@@ -1,21 +1,22 @@
 "use client";
 
 import { useState } from "react";
+import { HugeiconsIcon } from "@hugeicons/react";
 import {
-  X,
-  Copy,
-  Check,
-  Maximize2,
-  Table as TableIcon,
-  KeyRound,
-  Link2,
-  ExternalLink,
-  Layers,
-  FileCode,
-  List,
-  Pencil,
-  Trash2,
-} from "lucide-react";
+  Cancel01Icon,
+  CheckIcon,
+  Copy01Icon,
+  ExpandIcon,
+  ExternalLinkIcon,
+  FileCodeIcon,
+  KeyRoundIcon,
+  LayersIcon,
+  Link02Icon,
+  ListIcon,
+  PencilIcon,
+  TableIcon,
+  TrashIcon,
+} from "@hugeicons/core-free-icons";
 import { useQuery } from "@tanstack/react-query";
 import { apiGet } from "@/lib/api";
 import { useWorkspaceStore } from "@/lib/stores/workspace-store";
@@ -117,7 +118,7 @@ export function CellInspector({
       <div className="flex items-center justify-between px-5 py-3.5 border-b border-zinc-800/80 bg-[#0a0a0c]">
         <div className="flex items-center gap-2">
           <div className="size-7 rounded-lg bg-emerald-950/60 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
-            <Maximize2 className="size-4" />
+            <HugeiconsIcon icon={ExpandIcon} className="size-4" />
           </div>
           <div>
             <div className="text-xs font-mono font-bold text-white flex items-center gap-1.5">
@@ -136,7 +137,7 @@ export function CellInspector({
               className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[#141416] hover:bg-zinc-800 border border-zinc-800 text-xs font-mono text-zinc-300 hover:text-blue-400 transition-colors cursor-pointer"
               title="Edit record"
             >
-              <Pencil className="size-3 text-blue-400" />
+              <HugeiconsIcon icon={PencilIcon} className="size-3 text-blue-400" />
               <span>Edit</span>
             </button>
           )}
@@ -147,7 +148,7 @@ export function CellInspector({
               className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[#141416] hover:bg-zinc-800 border border-zinc-800 text-xs font-mono text-zinc-300 hover:text-red-400 transition-colors cursor-pointer"
               title="Delete record"
             >
-              <Trash2 className="size-3 text-red-400" />
+              <HugeiconsIcon icon={TrashIcon} className="size-3 text-red-400" />
               <span>Delete</span>
             </button>
           )}
@@ -157,7 +158,7 @@ export function CellInspector({
             className="size-7 rounded-md hover:bg-zinc-800 text-zinc-400 hover:text-white flex items-center justify-center transition-colors cursor-pointer"
             title="Close inspector (Esc)"
           >
-            <X className="size-4" />
+            <HugeiconsIcon icon={Cancel01Icon} className="size-4" />
           </button>
         </div>
       </div>
@@ -172,7 +173,7 @@ export function CellInspector({
               : "border-transparent text-zinc-400 hover:text-zinc-200"
           }`}
         >
-          <FileCode className="size-3.5" />
+          <HugeiconsIcon icon={FileCodeIcon} className="size-3.5" />
           <span>Cell Value</span>
         </button>
 
@@ -184,7 +185,7 @@ export function CellInspector({
               : "border-transparent text-zinc-400 hover:text-zinc-200"
           }`}
         >
-          <List className="size-3.5" />
+          <HugeiconsIcon icon={ListIcon} className="size-3.5" />
           <span>Full Record ({columns.length})</span>
         </button>
 
@@ -197,7 +198,7 @@ export function CellInspector({
                 : "border-transparent text-zinc-400 hover:text-zinc-200"
             }`}
           >
-            <Layers className="size-3.5" />
+            <HugeiconsIcon icon={LayersIcon} className="size-3.5" />
             <span>Related Tables</span>
           </button>
         )}
@@ -233,12 +234,12 @@ export function CellInspector({
               >
                 {copied ? (
                   <>
-                    <Check className="size-3.5 text-emerald-400" />
+                    <HugeiconsIcon icon={CheckIcon} className="size-3.5 text-emerald-400" />
                     <span className="text-emerald-400">Copied</span>
                   </>
                 ) : (
                   <>
-                    <Copy className="size-3.5 text-zinc-400" />
+                    <HugeiconsIcon icon={Copy01Icon} className="size-3.5 text-zinc-400" />
                     <span>Copy</span>
                   </>
                 )}
@@ -257,13 +258,13 @@ export function CellInspector({
               </span>
               {currentColumn.is_primary_key && (
                 <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-amber-950/40 border border-amber-500/30 text-amber-300">
-                  <KeyRound className="size-3 text-amber-400" />
+                  <HugeiconsIcon icon={KeyRoundIcon} className="size-3 text-amber-400" />
                   Primary Key
                 </span>
               )}
               {currentColumn.foreign_key && (
                 <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-blue-950/40 border border-blue-500/30 text-blue-300">
-                  <Link2 className="size-3 text-blue-400" />
+                  <HugeiconsIcon icon={Link02Icon} className="size-3 text-blue-400" />
                   → {currentColumn.foreign_key.target_schema}.
                   {currentColumn.foreign_key.target_table}.
                   {currentColumn.foreign_key.target_column}
@@ -305,7 +306,7 @@ export function CellInspector({
               }}
               className="flex items-center gap-1 text-[11px] font-mono text-zinc-400 hover:text-emerald-400 transition-colors"
             >
-              {copied ? <Check className="size-3 text-emerald-400" /> : <Copy className="size-3" />}
+              {copied ? <HugeiconsIcon icon={CheckIcon} className="size-3 text-emerald-400" /> : <HugeiconsIcon icon={Copy01Icon} className="size-3" />}
               <span>Copy Full Record JSON</span>
             </button>
           </div>
@@ -331,8 +332,8 @@ export function CellInspector({
                 >
                   <div className="flex items-center justify-between text-xs font-mono mb-1">
                     <div className="flex items-center gap-1.5">
-                      {col.is_primary_key && <KeyRound className="size-3 text-amber-400" />}
-                      {col.foreign_key && <Link2 className="size-3 text-blue-400" />}
+                      {col.is_primary_key && <HugeiconsIcon icon={KeyRoundIcon} className="size-3 text-amber-400" />}
+                      {col.foreign_key && <HugeiconsIcon icon={Link02Icon} className="size-3 text-blue-400" />}
                       <span className="font-semibold text-zinc-200 group-hover:text-emerald-300 transition-colors">
                         {col.name}
                       </span>
@@ -379,7 +380,7 @@ export function CellInspector({
                 >
                   <div>
                     <div className="text-xs font-mono font-semibold text-white flex items-center gap-1.5">
-                      <TableIcon className="size-3.5 text-emerald-400" />
+                      <HugeiconsIcon icon={TableIcon} className="size-3.5 text-emerald-400" />
                       <span>{rel.schema}</span>
                       <span className="text-zinc-600">/</span>
                       <span>{rel.table}</span>
@@ -407,7 +408,7 @@ export function CellInspector({
                       className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-950/60 hover:bg-emerald-900/80 border border-emerald-500/30 text-emerald-300 text-xs font-mono transition-colors disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
                     >
                       <span>View</span>
-                      <ExternalLink className="size-3" />
+                      <HugeiconsIcon icon={ExternalLinkIcon} className="size-3" />
                     </button>
                   </div>
                 </div>

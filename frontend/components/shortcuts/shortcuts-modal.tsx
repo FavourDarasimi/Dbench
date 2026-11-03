@@ -1,6 +1,10 @@
 "use client";
 
-import { Keyboard, X } from "lucide-react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  Cancel01Icon,
+  KeyboardIcon,
+} from "@hugeicons/core-free-icons";
 
 interface ShortcutsModalProps {
   isOpen: boolean;
@@ -55,7 +59,7 @@ export function ShortcutsModal({ isOpen, onClose }: ShortcutsModalProps) {
         <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-800 bg-[#0e0e11]">
           <div className="flex items-center gap-2.5">
             <div className="size-8 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
-              <Keyboard className="size-4" />
+              <HugeiconsIcon icon={KeyboardIcon} className="size-4" />
             </div>
             <div>
               <h3 className="text-sm font-bold text-white">Keyboard Shortcuts</h3>
@@ -67,7 +71,7 @@ export function ShortcutsModal({ isOpen, onClose }: ShortcutsModalProps) {
             onClick={onClose}
             className="p-1.5 rounded-lg hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors cursor-pointer"
           >
-            <X className="size-4" />
+            <HugeiconsIcon icon={Cancel01Icon} className="size-4" />
           </button>
         </div>
 

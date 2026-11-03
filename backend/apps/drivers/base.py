@@ -247,6 +247,47 @@ class BaseDriver(ABC):
     def describe_table(self, schema: str, table: str) -> list[ColumnMeta]:
         """Introspect column types, primary keys, and foreign keys for a table."""
 
+    def describe_schema_erd(self, schema: str) -> dict[str, Any]:
+        """
+        Return the complete schema structure and relations for ER diagrams:
+        {
+            "schema": schema,
+            "tables": [...],
+            "relations": [...]
+        }
+        """
+        tables = self.list_tables(schema)
+        table_list = []
+        relations = []
+
+        for tbl in tables:
+            cols = self.describe_table(schema, tbl.name)
+            table_list.append({
+                "name": tbl.name,
+                "schema": schema,
+                "type": tbl.type,
+                "columns": [c.to_dict() for c in cols],
+            })
+            for col in cols:
+                if col.foreign_key:
+                    fk = col.foreign_key
+                    relations.append({
+                        "id": f"rel-{tbl.name}-{col.name}-{fk.target_table}-{fk.target_column}",
+                        "source_schema": schema,
+                        "source_table": tbl.name,
+                        "source_column": col.name,
+                        "target_schema": fk.target_schema,
+                        "target_table": fk.target_table,
+                        "target_column": fk.target_column,
+                        "constraint_name": fk.constraint_name,
+                    })
+
+        return {
+            "schema": schema,
+            "tables": table_list,
+            "relations": relations,
+        }
+
     @abstractmethod
     def cancel(self, run_id: str) -> bool:
         """Cancel a running query given its run_id."""

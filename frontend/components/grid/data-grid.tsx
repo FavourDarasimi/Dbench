@@ -8,17 +8,18 @@ import {
   type ColumnDef,
 } from "@tanstack/react-table";
 import { useVirtualizer } from "@tanstack/react-virtual";
+import { HugeiconsIcon } from "@hugeicons/react";
 import {
-  ArrowUpDown,
-  ArrowUp,
-  ArrowDown,
-  KeyRound,
-  Maximize2,
-  Copy,
-  Check,
-  Pencil,
-  Trash2,
-} from "lucide-react";
+  ArrowDataTransferVerticalIcon,
+  ArrowDown01Icon,
+  ArrowUp01Icon,
+  CheckIcon,
+  Copy01Icon,
+  ExpandIcon,
+  KeyRoundIcon,
+  PencilIcon,
+  TrashIcon,
+} from "@hugeicons/core-free-icons";
 import { ForeignKeyBadge } from "@/components/browser/foreign-key-badge";
 import { CellInspector } from "./cell-inspector";
 import type { ColumnInfo } from "@/lib/types";
@@ -173,7 +174,7 @@ export function DataGrid({
               <div className="flex items-center gap-1.5 truncate">
                 {col.is_primary_key && (
                   <span title="Primary Key">
-                    <KeyRound className="size-3 text-amber-400 shrink-0" />
+                    <HugeiconsIcon icon={KeyRoundIcon} className="size-3 text-amber-400 shrink-0" />
                   </span>
                 )}
                 <span className="truncate font-semibold text-zinc-200 group-hover:text-white">
@@ -186,13 +187,13 @@ export function DataGrid({
 
               <div className="shrink-0 text-zinc-400 group-hover:text-zinc-200">
                 {isSorted && currentSortDir === "asc" && (
-                  <ArrowUp className="size-3 text-emerald-400" />
+                  <HugeiconsIcon icon={ArrowUp01Icon} className="size-3 text-emerald-400" />
                 )}
                 {isSorted && currentSortDir === "desc" && (
-                  <ArrowDown className="size-3 text-emerald-400" />
+                  <HugeiconsIcon icon={ArrowDown01Icon} className="size-3 text-emerald-400" />
                 )}
                 {!isSorted && (
-                  <ArrowUpDown className="size-2.5 opacity-0 group-hover:opacity-100 transition-opacity" />
+                  <HugeiconsIcon icon={ArrowDataTransferVerticalIcon} className="size-2.5 opacity-0 group-hover:opacity-100 transition-opacity" />
                 )}
               </div>
             </div>
@@ -251,7 +252,7 @@ export function DataGrid({
                   className="opacity-0 group-hover/cell:opacity-100 size-5 rounded hover:bg-zinc-800 text-zinc-400 hover:text-white flex items-center justify-center transition-opacity shrink-0 cursor-pointer"
                   title="Expand JSON in inspector"
                 >
-                  <Maximize2 className="size-3" />
+                  <HugeiconsIcon icon={ExpandIcon} className="size-3" />
                 </button>
               </div>
             );
@@ -282,9 +283,9 @@ export function DataGrid({
                   title="Copy cell value"
                 >
                   {isCopied ? (
-                    <Check className="size-3 text-emerald-400" />
+                    <HugeiconsIcon icon={CheckIcon} className="size-3 text-emerald-400" />
                   ) : (
-                    <Copy className="size-3" />
+                    <HugeiconsIcon icon={Copy01Icon} className="size-3" />
                   )}
                 </button>
 
@@ -299,7 +300,7 @@ export function DataGrid({
                     className="size-5 rounded hover:bg-zinc-800 text-zinc-400 hover:text-white flex items-center justify-center cursor-pointer"
                     title="View full text in inspector"
                   >
-                    <Maximize2 className="size-3" />
+                    <HugeiconsIcon icon={ExpandIcon} className="size-3" />
                   </button>
                 )}
               </div>
@@ -332,7 +333,7 @@ export function DataGrid({
                   className="size-6 rounded hover:bg-zinc-800 text-zinc-400 hover:text-blue-400 flex items-center justify-center transition-colors cursor-pointer"
                   title="Edit record"
                 >
-                  <Pencil className="size-3" />
+                  <HugeiconsIcon icon={PencilIcon} className="size-3" />
                 </button>
               )}
 
@@ -346,7 +347,7 @@ export function DataGrid({
                   className="size-6 rounded hover:bg-zinc-800 text-zinc-400 hover:text-red-400 flex items-center justify-center transition-colors cursor-pointer"
                   title="Delete record"
                 >
-                  <Trash2 className="size-3" />
+                  <HugeiconsIcon icon={TrashIcon} className="size-3" />
                 </button>
               )}
             </div>

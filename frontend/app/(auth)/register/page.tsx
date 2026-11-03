@@ -7,7 +7,15 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useQueryClient } from "@tanstack/react-query";
-import { Mail, Lock, KeyRound, Eye, EyeOff, ArrowRight } from "lucide-react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  ArrowRight01Icon,
+  EyeIcon,
+  EyeOffIcon,
+  KeyRoundIcon,
+  LockIcon,
+  Mail01Icon,
+} from "@hugeicons/core-free-icons";
 
 import { Alert } from "@/components/ui/alert";
 import { Spinner } from "@/components/ui/badge";
@@ -83,7 +91,7 @@ export default function RegisterPage() {
             </label>
             <div className="relative flex items-center rounded-xl border border-zinc-800 bg-[#070707] transition-all focus-within:border-emerald-500/70 focus-within:ring-2 focus-within:ring-emerald-500/20">
               <span className="pl-4 text-zinc-500 select-none">
-                <Mail className="size-4" />
+                <HugeiconsIcon icon={Mail01Icon} className="size-4" />
               </span>
               <input
                 id="email"
@@ -107,7 +115,7 @@ export default function RegisterPage() {
             </div>
             <div className="relative flex items-center rounded-xl border border-zinc-800 bg-[#070707] transition-all focus-within:border-emerald-500/70 focus-within:ring-2 focus-within:ring-emerald-500/20">
               <span className="pl-4 text-zinc-500 select-none">
-                <Lock className="size-4" />
+                <HugeiconsIcon icon={LockIcon} className="size-4" />
               </span>
               <input
                 id="password"
@@ -123,7 +131,7 @@ export default function RegisterPage() {
                 className="absolute right-3.5 text-zinc-500 hover:text-zinc-300 transition-colors p-1"
                 aria-label={showPassword ? "Hide password" : "Show password"}
               >
-                {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                {showPassword ? <HugeiconsIcon icon={EyeOffIcon} className="size-4" /> : <HugeiconsIcon icon={EyeIcon} className="size-4" />}
               </button>
             </div>
             <FieldError message={formState.errors.password?.message} />
@@ -136,7 +144,7 @@ export default function RegisterPage() {
             </label>
             <div className="relative flex items-center rounded-xl border border-zinc-800 bg-[#070707] transition-all focus-within:border-emerald-500/70 focus-within:ring-2 focus-within:ring-emerald-500/20">
               <span className="pl-4 text-zinc-500 select-none">
-                <KeyRound className="size-4" />
+                <HugeiconsIcon icon={KeyRoundIcon} className="size-4" />
               </span>
               <input
                 id="password2"
@@ -152,7 +160,7 @@ export default function RegisterPage() {
                 className="absolute right-3.5 text-zinc-500 hover:text-zinc-300 transition-colors p-1"
                 aria-label={showPassword2 ? "Hide password" : "Show password"}
               >
-                {showPassword2 ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                {showPassword2 ? <HugeiconsIcon icon={EyeOffIcon} className="size-4" /> : <HugeiconsIcon icon={EyeIcon} className="size-4" />}
               </button>
             </div>
             <FieldError message={formState.errors.password2?.message} />
@@ -172,7 +180,7 @@ export default function RegisterPage() {
             ) : (
               <>
                 <span>Create account</span>
-                <ArrowRight className="size-4" />
+                <HugeiconsIcon icon={ArrowRight01Icon} className="size-4" />
               </>
             )}
           </button>
@@ -186,7 +194,7 @@ export default function RegisterPage() {
             className="font-mono text-emerald-400 hover:text-emerald-300 transition-colors font-medium flex items-center gap-1"
           >
             <span>Sign in</span>
-            <ArrowRight className="size-3" />
+            <HugeiconsIcon icon={ArrowRight01Icon} className="size-3" />
           </Link>
         </div>
       </div>

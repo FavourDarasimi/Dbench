@@ -2,19 +2,19 @@
 
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { HugeiconsIcon } from "@hugeicons/react";
 import {
-  Bookmark,
-  Search,
-  Tag,
-  Copy,
-  Check,
-  ExternalLink,
-  Trash2,
-  X,
-  RotateCcw,
-  Sparkles,
-  Database,
-} from "lucide-react";
+  Bookmark01Icon,
+  Cancel01Icon,
+  CheckIcon,
+  Copy01Icon,
+  DatabaseIcon,
+  ExternalLinkIcon,
+  RotateCcwIcon,
+  Search01Icon,
+  Tag01Icon,
+  TrashIcon,
+} from "@hugeicons/core-free-icons";
 import { apiGet, apiDelete } from "@/lib/api";
 import { useWorkspaceStore } from "@/lib/stores/workspace-store";
 import type { SavedQuery } from "@/lib/types";
@@ -110,7 +110,7 @@ export function SavedQueriesDrawer({
         <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-800 bg-[#0d0d10]">
           <div className="flex items-center gap-3">
             <div className="size-9 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
-              <Bookmark className="size-4" />
+              <HugeiconsIcon icon={Bookmark01Icon} className="size-4" />
             </div>
             <div>
               <h2 className="text-sm font-bold text-white tracking-tight">Saved Queries</h2>
@@ -124,13 +124,13 @@ export function SavedQueriesDrawer({
               className="p-1.5 rounded-lg hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors cursor-pointer"
               title="Refresh saved queries"
             >
-              <RotateCcw className="size-3.5" />
+              <HugeiconsIcon icon={RotateCcwIcon} className="size-3.5" />
             </button>
             <button
               onClick={onClose}
               className="p-1.5 rounded-lg hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors cursor-pointer"
             >
-              <X className="size-4" />
+              <HugeiconsIcon icon={Cancel01Icon} className="size-4" />
             </button>
           </div>
         </div>
@@ -138,7 +138,7 @@ export function SavedQueriesDrawer({
         {/* Search & Tags Bar */}
         <div className="p-4 border-b border-zinc-800/80 bg-[#0c0c0e] flex flex-col gap-3">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-zinc-500" />
+            <HugeiconsIcon icon={Search01Icon} className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-zinc-500" />
             <input
               type="text"
               value={search}
@@ -171,7 +171,7 @@ export function SavedQueriesDrawer({
                       : "bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-zinc-200"
                   }`}
                 >
-                  <Tag className="size-2.5" />
+                  <HugeiconsIcon icon={Tag01Icon} className="size-2.5" />
                   <span>{tag}</span>
                 </button>
               ))}
@@ -183,12 +183,12 @@ export function SavedQueriesDrawer({
         <div className="flex-1 overflow-y-auto p-4 space-y-3">
           {isLoading ? (
             <div className="flex items-center justify-center p-12 text-zinc-500">
-              <RotateCcw className="size-4 animate-spin mr-2" />
+              <HugeiconsIcon icon={RotateCcwIcon} className="size-4 animate-spin mr-2" />
               <span>Loading saved queries...</span>
             </div>
           ) : filtered.length === 0 ? (
             <div className="flex flex-col items-center justify-center p-12 text-center text-zinc-500">
-              <Bookmark className="size-8 text-zinc-700 mb-2" />
+              <HugeiconsIcon icon={Bookmark01Icon} className="size-8 text-zinc-700 mb-2" />
               <p className="text-zinc-400 font-semibold">No saved queries found</p>
               <p className="text-[11px] text-zinc-600 mt-1">
                 Use the &quot;Save Query&quot; button in the SQL editor toolbar to save queries.
@@ -206,7 +206,7 @@ export function SavedQueriesDrawer({
                     <h4 className="font-bold text-white text-xs">{item.title}</h4>
                     {item.connection_name && (
                       <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-zinc-900 border border-zinc-800 text-[10px] text-zinc-400">
-                        <Database className="size-2.5" />
+                        <HugeiconsIcon icon={DatabaseIcon} className="size-2.5" />
                         <span>{item.connection_name}</span>
                       </span>
                     )}
@@ -217,7 +217,7 @@ export function SavedQueriesDrawer({
                     className="p-1 rounded hover:bg-red-950/40 text-zinc-600 hover:text-red-400 transition-colors cursor-pointer"
                     title="Delete saved query"
                   >
-                    <Trash2 className="size-3.5" />
+                    <HugeiconsIcon icon={TrashIcon} className="size-3.5" />
                   </button>
                 </div>
 
@@ -254,12 +254,12 @@ export function SavedQueriesDrawer({
                     >
                       {copiedId === item.id ? (
                         <>
-                          <Check className="size-3 text-emerald-400" />
+                          <HugeiconsIcon icon={CheckIcon} className="size-3 text-emerald-400" />
                           <span className="text-emerald-400">Copied</span>
                         </>
                       ) : (
                         <>
-                          <Copy className="size-3" />
+                          <HugeiconsIcon icon={Copy01Icon} className="size-3" />
                           <span>Copy</span>
                         </>
                       )}
@@ -270,7 +270,7 @@ export function SavedQueriesDrawer({
                       className="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-bold text-[10px] transition-all shadow-sm shadow-emerald-500/20 cursor-pointer"
                       title="Open query in SQL editor"
                     >
-                      <ExternalLink className="size-3" />
+                      <HugeiconsIcon icon={ExternalLinkIcon} className="size-3" />
                       <span>Run Query</span>
                     </button>
                   </div>

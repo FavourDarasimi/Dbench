@@ -1,7 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { Database, Menu, X } from "lucide-react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  Cancel01Icon,
+  DatabaseIcon,
+  Menu01Icon,
+} from "@hugeicons/core-free-icons";
 import { useState } from "react";
 import { useCurrentUser } from "@/components/auth-guard";
 
@@ -16,7 +21,7 @@ export function LandingNav() {
         <div className="flex items-center gap-3 shrink-0">
           <Link href="/" className="group flex items-center gap-2.5 font-bold text-white tracking-tight whitespace-nowrap">
             <span className="flex size-8 items-center justify-center rounded-lg bg-emerald-950/60 border border-emerald-500/30 text-emerald-400 shadow-md transition-transform group-hover:scale-105">
-              <Database className="size-4 text-emerald-400" />
+              <HugeiconsIcon icon={DatabaseIcon} className="size-4 text-emerald-400" />
             </span>
             <span className="text-lg font-bold tracking-tight">Dbench</span>
           </Link>
@@ -67,7 +72,7 @@ export function LandingNav() {
             className="p-1.5 text-zinc-400 hover:text-zinc-100 focus:outline-none"
             aria-label="Toggle menu"
           >
-            {mobileMenuOpen ? <X className="size-5" /> : <Menu className="size-5" />}
+            {mobileMenuOpen ? <HugeiconsIcon icon={Cancel01Icon} className="size-5" /> : <HugeiconsIcon icon={Menu01Icon} className="size-5" />}
           </button>
         </div>
       </div>

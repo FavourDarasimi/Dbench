@@ -1,17 +1,15 @@
 "use client";
 
 import { useState } from "react";
+import { HugeiconsIcon } from "@hugeicons/react";
 import {
-  ShieldAlert,
-  AlertTriangle,
-  CheckCircle2,
-  XCircle,
-  Play,
-  RotateCcw,
-  Lock,
-  FileCode,
-  Sparkles,
-} from "lucide-react";
+  AiSparklesIcon,
+  AlertDiamondIcon,
+  CheckmarkCircle01Icon,
+  FileCodeIcon,
+  PlayIcon,
+  ShieldAlertIcon,
+} from "@hugeicons/core-free-icons";
 
 export function SafetyGuardrails() {
   const [selectedQuery, setSelectedQuery] = useState<"delete" | "drop" | "safe">("delete");
@@ -59,7 +57,7 @@ export function SafetyGuardrails() {
     <section id="guardrails" className="w-full max-w-6xl px-4 sm:px-6 py-16 md:py-24 border-t border-zinc-800/80">
       <div className="text-center max-w-3xl mx-auto mb-14">
         <div className="inline-flex items-center gap-1.5 rounded-full border border-amber-500/20 bg-amber-500/10 px-3.5 py-1 text-xs font-mono text-amber-300 mb-4">
-          <ShieldAlert className="size-3.5 text-amber-400" />
+          <HugeiconsIcon icon={ShieldAlertIcon} className="size-3.5 text-amber-400" />
           <span>Core Differentiator</span>
         </div>
         <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-white">
@@ -136,7 +134,7 @@ export function SafetyGuardrails() {
               <div className="rounded-xl border border-zinc-800 bg-[#09090d] p-4 font-mono text-sm shadow-inner">
                 <div className="flex items-center justify-between text-xs text-zinc-500 mb-2 border-b border-zinc-800/80 pb-2">
                   <span className="flex items-center gap-1.5">
-                    <FileCode className="size-3.5 text-emerald-400" />
+                    <HugeiconsIcon icon={FileCodeIcon} className="size-3.5 text-emerald-400" />
                     SQL Editor Input
                   </span>
                   <span>Target: production-db</span>
@@ -161,12 +159,12 @@ export function SafetyGuardrails() {
                 onClick={handleExecute}
                 className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-lg bg-emerald-500 hover:bg-emerald-400 active:scale-95 text-zinc-950 px-5 py-2.5 text-xs font-bold shadow-md shadow-emerald-500/20 transition"
               >
-                <Play className="size-3.5 fill-current" />
+                <HugeiconsIcon icon={PlayIcon} className="size-3.5 fill-current" />
                 Simulate Execution
               </button>
               {simulatedStatus && (
                 <span className="text-xs font-mono text-emerald-400 flex items-center gap-1.5">
-                  <CheckCircle2 className="size-4" />
+                  <HugeiconsIcon icon={CheckmarkCircle01Icon} className="size-4" />
                   {simulatedStatus}
                 </span>
               )}
@@ -178,7 +176,7 @@ export function SafetyGuardrails() {
             <div>
               <div className="flex items-center justify-between mb-4">
                 <span className="text-xs font-mono font-medium text-zinc-400 uppercase tracking-wider flex items-center gap-1.5">
-                  <Sparkles className="size-3.5 text-emerald-400" />
+                  <HugeiconsIcon icon={AiSparklesIcon} className="size-3.5 text-emerald-400" />
                   Protection Pipeline
                 </span>
                 <span className="inline-flex items-center gap-1 rounded bg-zinc-900 border border-zinc-800 px-2 py-0.5 text-[10px] font-mono text-zinc-400">
@@ -189,7 +187,7 @@ export function SafetyGuardrails() {
               {modalOpen ? (
                 <div className="rounded-lg border border-amber-500/40 bg-amber-950/30 p-4 space-y-3 animate-in fade-in duration-200">
                   <div className="flex items-center gap-2 text-amber-400 font-bold text-sm">
-                    <AlertTriangle className="size-5" />
+                    <HugeiconsIcon icon={AlertDiamondIcon} className="size-5" />
                     <span>⚠️ Destructive Query Intercepted</span>
                   </div>
                   <p className="text-xs text-zinc-300 leading-relaxed font-sans">

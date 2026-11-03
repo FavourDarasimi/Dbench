@@ -2,7 +2,14 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Terminal, Copy, Check, ArrowRight, Database } from "lucide-react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  ArrowRight01Icon,
+  CheckIcon,
+  Copy01Icon,
+  DatabaseIcon,
+  TerminalIcon,
+} from "@hugeicons/core-free-icons";
 import { useCurrentUser } from "@/components/auth-guard";
 
 export function QuickstartCta() {
@@ -22,7 +29,7 @@ export function QuickstartCta() {
       <div className="rounded-3xl border border-zinc-800 bg-[#0a0a0a] p-8 sm:p-12 text-center relative overflow-hidden shadow-2xl">
         <div className="relative z-10 max-w-3xl mx-auto flex flex-col items-center">
           <div className="inline-flex items-center gap-2 rounded-full border border-emerald-500/25 bg-emerald-950/50 px-3.5 py-1 text-xs font-mono text-emerald-300 mb-6">
-            <Database className="size-3.5 text-emerald-400" />
+            <HugeiconsIcon icon={DatabaseIcon} className="size-3.5 text-emerald-400" />
             <span>Ready for your team</span>
           </div>
 
@@ -36,7 +43,7 @@ export function QuickstartCta() {
 
           {/* Quickstart Command Container */}
           <div className="mt-8 flex items-center gap-3 rounded-xl border border-emerald-900/50 bg-black/60 px-5 py-3 font-mono text-sm text-zinc-200 shadow-inner">
-            <Terminal className="size-4 text-emerald-400" />
+            <HugeiconsIcon icon={TerminalIcon} className="size-4 text-emerald-400" />
             <span className="text-zinc-500 select-none">$</span>
             <span className="select-all font-semibold text-emerald-100">{command}</span>
             <button
@@ -47,12 +54,12 @@ export function QuickstartCta() {
             >
               {copied ? (
                 <>
-                  <Check className="size-3.5 text-emerald-400" />
+                  <HugeiconsIcon icon={CheckIcon} className="size-3.5 text-emerald-400" />
                   <span className="text-emerald-400 font-medium">Copied!</span>
                 </>
               ) : (
                 <>
-                  <Copy className="size-3.5" />
+                  <HugeiconsIcon icon={Copy01Icon} className="size-3.5" />
                   <span>Copy</span>
                 </>
               )}
@@ -67,7 +74,7 @@ export function QuickstartCta() {
                 className="inline-flex items-center gap-2 rounded-lg bg-emerald-500 hover:bg-emerald-400 px-6 py-3 text-sm font-bold text-zinc-950 transition shadow-lg shadow-emerald-500/20"
               >
                 Open Workspace
-                <ArrowRight className="size-4" />
+                <HugeiconsIcon icon={ArrowRight01Icon} className="size-4" />
               </Link>
             ) : (
               <>
@@ -76,7 +83,7 @@ export function QuickstartCta() {
                   className="inline-flex items-center gap-2 rounded-lg bg-emerald-500 hover:bg-emerald-400 px-6 py-3 text-sm font-bold text-zinc-950 transition shadow-lg shadow-emerald-500/20"
                 >
                   Create Free Account
-                  <ArrowRight className="size-4" />
+                  <HugeiconsIcon icon={ArrowRight01Icon} className="size-4" />
                 </Link>
                 <Link
                   href="/login"

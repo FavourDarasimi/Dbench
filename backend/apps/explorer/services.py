@@ -48,6 +48,10 @@ class SchemaCacheManager:
         return f"explorer:tree:{conn_id}"
 
     @staticmethod
+    def _key_erd(conn_id: str, schema: str) -> str:
+        return f"explorer:erd:{conn_id}:{schema}"
+
+    @staticmethod
     def _key_registry(conn_id: str) -> str:
         return f"explorer:keys:{conn_id}"
 
@@ -161,6 +165,29 @@ class SchemaCacheManager:
         cache.set(tree_key, tree, timeout=CACHE_TTL)
         self._register_key(conn_id, tree_key)
         return tree
+
+    def get_erd(self, connection: Connection, schema: str, force_refresh: bool = False) -> dict[str, Any]:
+        conn_id = str(connection.id)
+        erd_key = self._key_erd(conn_id, schema)
+
+        if not force_refresh:
+            cached = cache.get(erd_key)
+            if cached is not None:
+                return cached
+
+        driver = self._get_driver_for_connection(connection)
+        try:
+            erd = driver.describe_schema_erd(schema)
+            cache.set(erd_key, erd, timeout=CACHE_TTL)
+            self._register_key(conn_id, erd_key)
+            return erd
+        except Exception as exc:
+            logger.error(
+                "Error retrieving ERD metadata for connection %s (schema %s): %s", conn_id, schema, exc
+            )
+            raise DatabaseUnavailableException(f"Failed to generate ERD schema: {exc}") from exc
+        finally:
+            driver.close()
 
     def invalidate_connection(self, conn_id: str):
         reg_key = self._key_registry(conn_id)

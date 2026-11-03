@@ -37,6 +37,7 @@ class MockDriver:
         self.list_schemas_calls = 0
         self.list_tables_calls = 0
         self.describe_table_calls = 0
+        self.describe_schema_erd_calls = 0
         self.closed = False
 
     def list_schemas(self):
@@ -83,6 +84,38 @@ class MockDriver:
             ),
         ]
 
+    def describe_schema_erd(self, schema):
+        self.describe_schema_erd_calls += 1
+        return {
+            "schema": schema,
+            "tables": [
+                {
+                    "name": "users",
+                    "schema": schema,
+                    "type": "table",
+                    "columns": [c.to_dict() for c in self.describe_table(schema, "users")],
+                },
+                {
+                    "name": "orders",
+                    "schema": schema,
+                    "type": "table",
+                    "columns": [c.to_dict() for c in self.describe_table(schema, "orders")],
+                },
+            ],
+            "relations": [
+                {
+                    "id": "rel-users-org_id-organizations-id",
+                    "source_schema": schema,
+                    "source_table": "users",
+                    "source_column": "org_id",
+                    "target_schema": "public",
+                    "target_table": "organizations",
+                    "target_column": "id",
+                    "constraint_name": "fk_users_org",
+                }
+            ],
+        }
+
     def close(self):
         self.closed = True
 
@@ -96,6 +129,7 @@ def test_explorer_requires_authentication(api_client, test_connection):
     assert api_client.get(f"/api/connections/{conn_id}/schemas/public/tables/").status_code == 403
     assert api_client.get(f"/api/connections/{conn_id}/tables/users/columns/").status_code == 403
     assert api_client.get(f"/api/connections/{conn_id}/schema-tree/").status_code == 403
+    assert api_client.get(f"/api/connections/{conn_id}/erd/").status_code == 403
     assert api_client.post(f"/api/connections/{conn_id}/refresh-schema/").status_code == 403
 
 
@@ -112,6 +146,7 @@ def test_explorer_cannot_access_other_users_connection(auth_client, user_factory
     )
     assert auth_client.get(f"/api/connections/{theirs.id}/schemas/").status_code == 404
     assert auth_client.get(f"/api/connections/{theirs.id}/schema-tree/").status_code == 404
+    assert auth_client.get(f"/api/connections/{theirs.id}/erd/").status_code == 404
     assert auth_client.post(f"/api/connections/{theirs.id}/refresh-schema/").status_code == 404
 
 
@@ -240,3 +275,55 @@ def test_driver_error_returns_503(auth_client, test_connection, monkeypatch):
     resp = auth_client.get(f"/api/connections/{test_connection.id}/schemas/")
     assert resp.status_code == 503
     assert "Connection refused" in resp.data["detail"]
+
+
+# --- ERD Schema Graph ---
+
+
+def test_get_erd_default_schema(auth_client, test_connection, monkeypatch):
+    mock = MockDriver()
+    monkeypatch.setattr("apps.explorer.services.get_driver", lambda config: mock)
+
+    resp = auth_client.get(f"/api/connections/{test_connection.id}/erd/")
+    assert resp.status_code == 200, resp.data
+    assert resp.data["schema"] == "public"
+    assert len(resp.data["tables"]) == 2
+    assert len(resp.data["relations"]) == 1
+    rel = resp.data["relations"][0]
+    assert rel["source_table"] == "users"
+    assert rel["source_column"] == "org_id"
+    assert rel["target_table"] == "organizations"
+    assert rel["target_column"] == "id"
+
+
+def test_get_erd_explicit_schema(auth_client, test_connection, monkeypatch):
+    mock = MockDriver()
+    monkeypatch.setattr("apps.explorer.services.get_driver", lambda config: mock)
+
+    # Test via query param ?schema=analytics
+    resp = auth_client.get(f"/api/connections/{test_connection.id}/erd/?schema=analytics")
+    assert resp.status_code == 200, resp.data
+    assert resp.data["schema"] == "analytics"
+
+    # Test via path /schemas/analytics/erd/
+    resp_path = auth_client.get(f"/api/connections/{test_connection.id}/schemas/analytics/erd/")
+    assert resp_path.status_code == 200, resp_path.data
+    assert resp_path.data["schema"] == "analytics"
+
+
+def test_erd_caching_and_refresh(auth_client, test_connection, monkeypatch):
+    mock = MockDriver()
+    monkeypatch.setattr("apps.explorer.services.get_driver", lambda config: mock)
+
+    # 1. First fetch populates cache
+    auth_client.get(f"/api/connections/{test_connection.id}/erd/")
+    assert mock.describe_schema_erd_calls == 1
+
+    # 2. Second fetch hits cache
+    auth_client.get(f"/api/connections/{test_connection.id}/erd/")
+    assert mock.describe_schema_erd_calls == 1
+
+    # 3. Force refresh via ?refresh=true hits driver
+    auth_client.get(f"/api/connections/{test_connection.id}/erd/?refresh=true")
+    assert mock.describe_schema_erd_calls == 2
+

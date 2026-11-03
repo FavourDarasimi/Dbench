@@ -1,6 +1,10 @@
 "use client";
 
-import { Check, ShieldCheck } from "lucide-react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  CheckIcon,
+  ShieldCheckIcon,
+} from "@hugeicons/core-free-icons";
 
 export function AuthIllustration() {
   return (
@@ -60,11 +64,11 @@ export function AuthIllustration() {
       {/* 2 Simple Value Badges */}
       <div className="pt-1 flex flex-wrap gap-2 text-xs font-mono text-zinc-400">
         <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-zinc-900 border border-zinc-800 text-zinc-300">
-          <Check className="size-3 text-emerald-400" />
+          <HugeiconsIcon icon={CheckIcon} className="size-3 text-emerald-400" />
           <span>No SQL required to browse</span>
         </div>
         <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-zinc-900 border border-zinc-800 text-zinc-300">
-          <ShieldCheck className="size-3 text-emerald-400" />
+          <HugeiconsIcon icon={ShieldCheckIcon} className="size-3 text-emerald-400" />
           <span>AES-256 encrypted</span>
         </div>
       </div>

@@ -1,13 +1,20 @@
 "use client";
 
-import { Database, FolderTree, Code2, Table, ShieldCheck } from "lucide-react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  CodeIcon,
+  DatabaseIcon,
+  FolderTreeIcon,
+  ShieldCheckIcon,
+  TableIcon,
+} from "@hugeicons/core-free-icons";
 
 export function HeroDatabaseIllustration() {
   return (
     <div className="w-full max-w-2xl mt-8 sm:mt-10 flex flex-col items-center">
       {/* Central Database Icon Node */}
       <div className="flex items-center gap-2 rounded-full border border-zinc-800 bg-[#0a0a0a] px-3.5 py-1.5 shadow-md">
-        <Database className="size-3.5 text-emerald-400" />
+        <HugeiconsIcon icon={DatabaseIcon} className="size-3.5 text-emerald-400" />
         <span className="text-xs font-mono text-zinc-300">database</span>
         <span className="size-1.5 rounded-full bg-emerald-400 animate-pulse" />
       </div>
@@ -72,7 +79,7 @@ export function HeroDatabaseIllustration() {
         {/* Wireframe 1: Schema */}
         <div className="rounded-lg border border-zinc-800/80 bg-[#0a0a0a] p-3 space-y-2 hover:border-zinc-700 transition">
           <div className="flex items-center gap-1.5 text-zinc-400 text-[11px] font-mono">
-            <FolderTree className="size-3 text-emerald-400" />
+            <HugeiconsIcon icon={FolderTreeIcon} className="size-3 text-emerald-400" />
             <span>schema</span>
           </div>
           <div className="space-y-1.5 pt-0.5">
@@ -85,7 +92,7 @@ export function HeroDatabaseIllustration() {
         {/* Wireframe 2: Data Browser (No-SQL) */}
         <div className="rounded-lg border border-zinc-800/80 bg-[#0a0a0a] p-3 space-y-2 hover:border-zinc-700 transition">
           <div className="flex items-center gap-1.5 text-zinc-400 text-[11px] font-mono">
-            <Table className="size-3 text-emerald-400" />
+            <HugeiconsIcon icon={TableIcon} className="size-3 text-emerald-400" />
             <span>browse</span>
           </div>
           <div className="space-y-1.5 pt-0.5">
@@ -110,7 +117,7 @@ export function HeroDatabaseIllustration() {
         {/* Wireframe 3: SQL Editor (Advanced Mode) */}
         <div className="rounded-lg border border-zinc-800/80 bg-[#0a0a0a] p-3 space-y-2 hover:border-zinc-700 transition">
           <div className="flex items-center gap-1.5 text-zinc-400 text-[11px] font-mono">
-            <Code2 className="size-3 text-teal-400" />
+            <HugeiconsIcon icon={CodeIcon} className="size-3 text-teal-400" />
             <span>query</span>
           </div>
           <div className="space-y-1.5 pt-0.5">
@@ -123,7 +130,7 @@ export function HeroDatabaseIllustration() {
         {/* Wireframe 4: Guardrail */}
         <div className="rounded-lg border border-zinc-800/80 bg-[#0a0a0a] p-3 space-y-2 hover:border-zinc-700 transition">
           <div className="flex items-center gap-1.5 text-zinc-400 text-[11px] font-mono">
-            <ShieldCheck className="size-3 text-amber-400" />
+            <HugeiconsIcon icon={ShieldCheckIcon} className="size-3 text-amber-400" />
             <span>guardrail</span>
           </div>
           <div className="space-y-1.5 pt-0.5">

@@ -1,18 +1,19 @@
 "use client";
 
 import { useState } from "react";
+import { HugeiconsIcon } from "@hugeicons/react";
 import {
-  Play,
-  Square,
-  Clock,
-  Layers,
-  Copy,
-  Check,
-  ShieldCheck,
-  Bookmark,
-  Download,
-  ChevronDown,
-} from "lucide-react";
+  Bookmark01Icon,
+  CheckIcon,
+  ChevronDownIcon,
+  Clock01Icon,
+  Copy01Icon,
+  DownloadIcon,
+  LayersIcon,
+  PlayIcon,
+  ShieldCheckIcon,
+  SquareIcon,
+} from "@hugeicons/core-free-icons";
 
 interface QueryToolbarProps {
   onRun: () => void;
@@ -71,7 +72,7 @@ export function QueryToolbar({
             className="flex items-center gap-2 px-3.5 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-bold transition-all shadow-sm shadow-emerald-500/20 cursor-pointer active:scale-95"
             title="Execute query (Cmd+Enter or Ctrl+Enter)"
           >
-            <Play className="size-3.5 fill-current" />
+            <HugeiconsIcon icon={PlayIcon} className="size-3.5 fill-current" />
             <span>Run</span>
             <span className="text-[10px] bg-emerald-600/50 text-zinc-950 px-1 py-0.2 rounded font-sans font-medium">
               ⌘↵
@@ -84,7 +85,7 @@ export function QueryToolbar({
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-950/80 hover:bg-red-900 border border-red-500/40 text-red-300 font-semibold transition-all cursor-pointer animate-pulse"
             title="Cancel running query"
           >
-            <Square className="size-3 fill-current" />
+            <HugeiconsIcon icon={SquareIcon} className="size-3 fill-current" />
             <span>Cancel</span>
             <span className="text-[10px] text-red-300/80">({(elapsedMs / 1000).toFixed(1)}s)</span>
           </button>
@@ -92,7 +93,7 @@ export function QueryToolbar({
 
         {/* Row Limit Selector */}
         <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#121214] border border-zinc-800 text-zinc-400">
-          <Layers className="size-3 text-zinc-500" />
+          <HugeiconsIcon icon={LayersIcon} className="size-3 text-zinc-500" />
           <span className="text-[11px]">Limit:</span>
           <select
             value={limit}
@@ -109,7 +110,7 @@ export function QueryToolbar({
 
         {/* Timeout Selector */}
         <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#121214] border border-zinc-800 text-zinc-400">
-          <Clock className="size-3 text-zinc-500" />
+          <HugeiconsIcon icon={Clock01Icon} className="size-3 text-zinc-500" />
           <span className="text-[11px]">Timeout:</span>
           <select
             value={timeoutSec}
@@ -130,7 +131,7 @@ export function QueryToolbar({
         {/* Read-Only Badge */}
         {isReadOnly && (
           <div className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-amber-950/40 border border-amber-500/30 text-amber-300 text-[11px]">
-            <ShieldCheck className="size-3 text-amber-400" />
+            <HugeiconsIcon icon={ShieldCheckIcon} className="size-3 text-amber-400" />
             <span>Read-Only Mode</span>
           </div>
         )}
@@ -159,9 +160,9 @@ export function QueryToolbar({
           title="Copy query to clipboard"
         >
           {copied ? (
-            <Check className="size-3.5 text-emerald-400" />
+            <HugeiconsIcon icon={CheckIcon} className="size-3.5 text-emerald-400" />
           ) : (
-            <Copy className="size-3.5" />
+            <HugeiconsIcon icon={Copy01Icon} className="size-3.5" />
           )}
         </button>
 
@@ -173,7 +174,7 @@ export function QueryToolbar({
             className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-300 hover:text-white transition-colors cursor-pointer disabled:opacity-40"
             title="Save query to snippets"
           >
-            <Bookmark className="size-3.5 text-emerald-400" />
+            <HugeiconsIcon icon={Bookmark01Icon} className="size-3.5 text-emerald-400" />
             <span className="hidden sm:inline">Save</span>
           </button>
         )}
@@ -187,9 +188,9 @@ export function QueryToolbar({
               className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-300 hover:text-white transition-colors cursor-pointer disabled:opacity-40"
               title="Export query results"
             >
-              <Download className="size-3.5 text-emerald-400" />
+              <HugeiconsIcon icon={DownloadIcon} className="size-3.5 text-emerald-400" />
               <span>Export</span>
-              <ChevronDown className="size-3 text-zinc-500" />
+              <HugeiconsIcon icon={ChevronDownIcon} className="size-3 text-zinc-500" />
             </button>
 
             {exportMenuOpen && (

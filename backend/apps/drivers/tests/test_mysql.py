@@ -227,6 +227,42 @@ def test_mysql_describe_table_columns_and_fks(monkeypatch):
     assert columns[2].foreign_key.constraint_name == "fk_users_org"
 
 
+def test_mysql_describe_schema_erd(monkeypatch):
+    tables_data = [("users", "BASE TABLE", 200)]
+    cols_data = [
+        ("users", "id", "int", "NO", None, "PRI"),
+        ("users", "org_id", "int", "YES", None, "MUL"),
+    ]
+    fks_data = [
+        ("users", "org_id", "app_db", "organizations", "id", "fk_users_org"),
+    ]
+
+    class MultiQueryCursor(FakeMySqlCursor):
+        def execute(self, query, params=None):
+            super().execute(query, params)
+            if "information_schema.tables" in query:
+                self._rows = tables_data
+            elif "information_schema.columns" in query:
+                self._rows = cols_data
+            elif "information_schema.key_column_usage" in query:
+                self._rows = fks_data
+
+    cursor = MultiQueryCursor()
+    conn = FakeMySqlConnection(cursor_obj=cursor)
+    monkeypatch.setattr("apps.drivers.mysql.pymysql.connect", lambda **kwargs: conn)
+
+    driver = MySQLDriver(CONFIG)
+    erd = driver.describe_schema_erd("app_db")
+
+    assert erd["schema"] == "app_db"
+    assert len(erd["tables"]) == 1
+    assert erd["tables"][0]["name"] == "users"
+    assert len(erd["relations"]) == 1
+    assert erd["relations"][0]["source_table"] == "users"
+    assert erd["relations"][0]["target_table"] == "organizations"
+
+
+
 def test_mysql_stream_query(monkeypatch):
     rows = [(1, "Product 1"), (2, "Product 2"), (3, "Product 3")]
     desc = [("id",), ("name",)]

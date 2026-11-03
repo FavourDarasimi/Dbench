@@ -7,6 +7,7 @@ from apps.connections.views import (
     ConnectionTestDraftView,
     ConnectionTestSavedView,
     ConnectionViewSet,
+    ParseDatabaseURLView,
 )
 from config.views import HealthView
 
@@ -21,6 +22,7 @@ urlpatterns = [
     # POST /api/connections/test/ can never collide with the router's
     # /api/connections/{pk}/ detail route.
     path("api/connections/test/", ConnectionTestDraftView.as_view()),
+    path("api/connections/parse-url/", ParseDatabaseURLView.as_view()),
     path("api/connections/<uuid:pk>/test/", ConnectionTestSavedView.as_view()),
     path("api/", include("apps.explorer.urls")),
     path("api/", include("apps.queries.urls")),

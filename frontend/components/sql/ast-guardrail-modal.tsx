@@ -1,6 +1,13 @@
 "use client";
 
-import { AlertTriangle, ShieldAlert, X, Play, RotateCcw } from "lucide-react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  AlertDiamondIcon,
+  Cancel01Icon,
+  PlayIcon,
+  RotateCcwIcon,
+  ShieldAlertIcon,
+} from "@hugeicons/core-free-icons";
 
 interface AstGuardrailModalProps {
   isOpen: boolean;
@@ -28,7 +35,7 @@ export function AstGuardrailModal({
         <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-800 bg-[#0e0a08]">
           <div className="flex items-center gap-2.5">
             <div className="size-8 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400">
-              <ShieldAlert className="size-4" />
+              <HugeiconsIcon icon={ShieldAlertIcon} className="size-4" />
             </div>
             <div>
               <div className="flex items-center gap-2">
@@ -48,7 +55,7 @@ export function AstGuardrailModal({
             disabled={isSubmitting}
             className="size-7 rounded-lg hover:bg-zinc-800 text-zinc-400 hover:text-white flex items-center justify-center transition-colors cursor-pointer"
           >
-            <X className="size-4" />
+            <HugeiconsIcon icon={Cancel01Icon} className="size-4" />
           </button>
         </div>
 
@@ -57,7 +64,7 @@ export function AstGuardrailModal({
           {/* Warning List */}
           <div className="p-3.5 rounded-xl bg-amber-950/20 border border-amber-500/30 text-amber-300 space-y-2">
             <div className="flex items-center gap-1.5 font-bold text-xs text-amber-200">
-              <AlertTriangle className="size-3.5 text-amber-400 shrink-0" />
+              <HugeiconsIcon icon={AlertDiamondIcon} className="size-3.5 text-amber-400 shrink-0" />
               <span>Warnings Detected:</span>
             </div>
             <ul className="list-disc list-inside space-y-1 text-[11px] text-amber-300/90 pl-1 leading-relaxed">
@@ -97,12 +104,12 @@ export function AstGuardrailModal({
           >
             {isSubmitting ? (
               <>
-                <RotateCcw className="size-3.5 animate-spin" />
+                <HugeiconsIcon icon={RotateCcwIcon} className="size-3.5 animate-spin" />
                 <span>Executing...</span>
               </>
             ) : (
               <>
-                <Play className="size-3.5 fill-current" />
+                <HugeiconsIcon icon={PlayIcon} className="size-3.5 fill-current" />
                 <span>Execute Anyway</span>
               </>
             )}

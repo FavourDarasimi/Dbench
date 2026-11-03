@@ -1,7 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { Bookmark, X, Tag, RotateCcw } from "lucide-react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  Bookmark01Icon,
+  Cancel01Icon,
+  RotateCcwIcon,
+  Tag01Icon,
+} from "@hugeicons/core-free-icons";
 import { apiPost } from "@/lib/api";
 import type { SavedQuery, SavedQueryPayload } from "@/lib/types";
 
@@ -79,7 +85,7 @@ export function SaveQueryModal({
         <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-800 bg-[#0e0e11]">
           <div className="flex items-center gap-2.5">
             <div className="size-8 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
-              <Bookmark className="size-4" />
+              <HugeiconsIcon icon={Bookmark01Icon} className="size-4" />
             </div>
             <div>
               <h3 className="text-sm font-bold text-white">Save SQL Query</h3>
@@ -91,7 +97,7 @@ export function SaveQueryModal({
             onClick={onClose}
             className="p-1.5 rounded-lg hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors cursor-pointer"
           >
-            <X className="size-4" />
+            <HugeiconsIcon icon={Cancel01Icon} className="size-4" />
           </button>
         </div>
 
@@ -121,7 +127,7 @@ export function SaveQueryModal({
             <label className="text-[11px] font-semibold text-zinc-300">Tags (optional)</label>
             <div className="flex items-center gap-2">
               <div className="relative flex-1">
-                <Tag className="absolute left-3 top-1/2 -translate-y-1/2 size-3 text-zinc-500" />
+                <HugeiconsIcon icon={Tag01Icon} className="absolute left-3 top-1/2 -translate-y-1/2 size-3 text-zinc-500" />
                 <input
                   type="text"
                   value={tagInput}
@@ -159,7 +165,7 @@ export function SaveQueryModal({
                       onClick={() => handleRemoveTag(t)}
                       className="hover:text-white"
                     >
-                      <X className="size-2.5" />
+                      <HugeiconsIcon icon={Cancel01Icon} className="size-2.5" />
                     </button>
                   </span>
                 ))}
@@ -195,7 +201,7 @@ export function SaveQueryModal({
             >
               {isSubmitting ? (
                 <>
-                  <RotateCcw className="size-3.5 animate-spin" />
+                  <HugeiconsIcon icon={RotateCcwIcon} className="size-3.5 animate-spin" />
                   <span>Saving...</span>
                 </>
               ) : (

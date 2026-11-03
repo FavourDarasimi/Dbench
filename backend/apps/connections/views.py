@@ -7,6 +7,7 @@ from rest_framework.exceptions import NotFound
 from .models import Connection
 from .serializers import ConnectionSerializer, ConnectionTestSerializer
 from .services import config_from_connection, run_connection_test
+from .url_parser import parse_database_url
 
 
 class ConnectionViewSet(viewsets.ModelViewSet):
@@ -42,3 +43,19 @@ class ConnectionTestSavedView(APIView):
         except ValueError as exc:
             return Response({"ok": False, "error": str(exc), "latency_ms": None, "server_version": None})
         return Response(run_connection_test(config))
+
+
+class ParseDatabaseURLView(APIView):
+    """POST /api/connections/parse-url/ - parse a database URL into structured connection coordinates."""
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        url = request.data.get("url") or request.data.get("database_url")
+        if not url:
+            return Response(
+                {"database_url": ["This field is required."]},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        parsed = parse_database_url(url)
+        return Response(parsed)
+

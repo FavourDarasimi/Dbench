@@ -1,7 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  ArrowRight01Icon,
+} from "@hugeicons/core-free-icons";
 import { useCurrentUser } from "@/components/auth-guard";
 import { HeroDatabaseIllustration } from "./hero-database-illustration";
 
@@ -31,7 +34,7 @@ export function HeroSection() {
             className="inline-flex items-center gap-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 px-8 py-4 text-base font-bold text-zinc-950 transition shadow-xl shadow-emerald-500/20 hover:scale-[1.02]"
           >
             Open Workspace
-            <ArrowRight className="size-5" />
+            <HugeiconsIcon icon={ArrowRight01Icon} className="size-5" />
           </Link>
         ) : (
           <Link
@@ -39,7 +42,7 @@ export function HeroSection() {
             className="inline-flex items-center gap-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 px-8 py-4 text-base font-bold text-zinc-950 transition shadow-xl shadow-emerald-500/20 hover:scale-[1.02]"
           >
             Get Started
-            <ArrowRight className="size-5" />
+            <HugeiconsIcon icon={ArrowRight01Icon} className="size-5" />
           </Link>
         )}
       </div>

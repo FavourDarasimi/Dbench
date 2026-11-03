@@ -2,23 +2,23 @@
 
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { HugeiconsIcon } from "@hugeicons/react";
 import {
-  History,
-  Clock,
-  CheckCircle2,
-  XCircle,
-  AlertTriangle,
-  Ban,
-  Search,
-  Copy,
-  Check,
-  ExternalLink,
-  Download,
-  X,
-  RotateCcw,
-  Code2,
-  TableProperties,
-} from "lucide-react";
+  AlertDiamondIcon,
+  BanIcon,
+  Cancel01Icon,
+  CancelCircleIcon,
+  CheckIcon,
+  CheckmarkCircle01Icon,
+  CodeIcon,
+  Copy01Icon,
+  DownloadIcon,
+  ExternalLinkIcon,
+  HistoryIcon,
+  RotateCcwIcon,
+  Search01Icon,
+  TablePropertiesIcon,
+} from "@hugeicons/core-free-icons";
 import { apiGet } from "@/lib/api";
 import { useWorkspaceStore } from "@/lib/stores/workspace-store";
 import { downloadExportByRunId } from "@/lib/export";
@@ -99,35 +99,35 @@ export function QueryHistoryDrawer({
       case "success":
         return (
           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-emerald-950/60 text-emerald-400 border border-emerald-500/30">
-            <CheckCircle2 className="size-2.5" />
+            <HugeiconsIcon icon={CheckmarkCircle01Icon} className="size-2.5" />
             <span>Success</span>
           </span>
         );
       case "failed":
         return (
           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-red-950/60 text-red-400 border border-red-500/30">
-            <XCircle className="size-2.5" />
+            <HugeiconsIcon icon={CancelCircleIcon} className="size-2.5" />
             <span>Failed</span>
           </span>
         );
       case "timeout":
         return (
           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-amber-950/60 text-amber-300 border border-amber-500/30">
-            <AlertTriangle className="size-2.5" />
+            <HugeiconsIcon icon={AlertDiamondIcon} className="size-2.5" />
             <span>Timeout</span>
           </span>
         );
       case "cancelled":
         return (
           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-zinc-900 text-zinc-400 border border-zinc-800">
-            <Ban className="size-2.5" />
+            <HugeiconsIcon icon={BanIcon} className="size-2.5" />
             <span>Cancelled</span>
           </span>
         );
       case "blocked":
         return (
           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-purple-950/60 text-purple-300 border border-purple-500/30">
-            <Ban className="size-2.5" />
+            <HugeiconsIcon icon={BanIcon} className="size-2.5" />
             <span>Blocked (RO)</span>
           </span>
         );
@@ -143,7 +143,7 @@ export function QueryHistoryDrawer({
         <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-800 bg-[#0d0d10]">
           <div className="flex items-center gap-3">
             <div className="size-9 rounded-xl bg-zinc-800/80 border border-zinc-700/60 flex items-center justify-center text-zinc-300">
-              <History className="size-4 text-emerald-400" />
+              <HugeiconsIcon icon={HistoryIcon} className="size-4 text-emerald-400" />
             </div>
             <div>
               <h2 className="text-sm font-mono font-bold text-white tracking-tight">
@@ -161,13 +161,13 @@ export function QueryHistoryDrawer({
               className="p-1.5 rounded-lg hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors cursor-pointer"
               title="Refresh history"
             >
-              <RotateCcw className="size-3.5" />
+              <HugeiconsIcon icon={RotateCcwIcon} className="size-3.5" />
             </button>
             <button
               onClick={onClose}
               className="p-1.5 rounded-lg hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors cursor-pointer"
             >
-              <X className="size-4" />
+              <HugeiconsIcon icon={Cancel01Icon} className="size-4" />
             </button>
           </div>
         </div>
@@ -175,7 +175,7 @@ export function QueryHistoryDrawer({
         {/* Filters Bar */}
         <div className="p-4 border-b border-zinc-800/80 bg-[#0c0c0e] flex flex-col gap-3 font-mono text-xs">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-zinc-500" />
+            <HugeiconsIcon icon={Search01Icon} className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-zinc-500" />
             <input
               type="text"
               value={search}
@@ -222,12 +222,12 @@ export function QueryHistoryDrawer({
         <div className="flex-1 overflow-y-auto p-4 space-y-3 font-mono text-xs">
           {isLoading ? (
             <div className="flex items-center justify-center p-12 text-zinc-500">
-              <RotateCcw className="size-4 animate-spin mr-2" />
+              <HugeiconsIcon icon={RotateCcwIcon} className="size-4 animate-spin mr-2" />
               <span>Loading query history...</span>
             </div>
           ) : filtered.length === 0 ? (
             <div className="flex flex-col items-center justify-center p-12 text-center text-zinc-500">
-              <History className="size-8 text-zinc-700 mb-2" />
+              <HugeiconsIcon icon={HistoryIcon} className="size-8 text-zinc-700 mb-2" />
               <p className="text-zinc-400 text-xs font-semibold">No query history records found</p>
               <p className="text-[11px] text-zinc-600 mt-1">
                 Executed SQL statements will automatically appear here.
@@ -249,12 +249,12 @@ export function QueryHistoryDrawer({
                     <span className="inline-flex items-center gap-1 text-[10px] text-zinc-500 bg-zinc-900 px-1.5 py-0.5 rounded">
                       {item.source === "editor" ? (
                         <>
-                          <Code2 className="size-2.5" />
+                          <HugeiconsIcon icon={CodeIcon} className="size-2.5" />
                           <span>Editor</span>
                         </>
                       ) : (
                         <>
-                          <TableProperties className="size-2.5" />
+                          <HugeiconsIcon icon={TablePropertiesIcon} className="size-2.5" />
                           <span>Browser</span>
                         </>
                       )}
@@ -298,7 +298,7 @@ export function QueryHistoryDrawer({
                         className="inline-flex items-center gap-1 px-2 py-1 rounded hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors cursor-pointer text-[10px]"
                         title="Download CSV export"
                       >
-                        <Download className="size-3" />
+                        <HugeiconsIcon icon={DownloadIcon} className="size-3" />
                         <span>Export CSV</span>
                       </button>
                     )}
@@ -310,12 +310,12 @@ export function QueryHistoryDrawer({
                     >
                       {copiedId === item.id ? (
                         <>
-                          <Check className="size-3 text-emerald-400" />
+                          <HugeiconsIcon icon={CheckIcon} className="size-3 text-emerald-400" />
                           <span className="text-emerald-400">Copied</span>
                         </>
                       ) : (
                         <>
-                          <Copy className="size-3" />
+                          <HugeiconsIcon icon={Copy01Icon} className="size-3" />
                           <span>Copy</span>
                         </>
                       )}
@@ -326,7 +326,7 @@ export function QueryHistoryDrawer({
                       className="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-[10px] font-bold transition-colors cursor-pointer"
                       title="Open query in a new SQL tab"
                     >
-                      <ExternalLink className="size-3 text-emerald-400" />
+                      <HugeiconsIcon icon={ExternalLinkIcon} className="size-3 text-emerald-400" />
                       <span>Open in Tab</span>
                     </button>
                   </div>

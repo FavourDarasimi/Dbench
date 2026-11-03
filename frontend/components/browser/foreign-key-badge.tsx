@@ -1,6 +1,9 @@
 "use client";
 
-import { Link2 } from "lucide-react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  Link02Icon,
+} from "@hugeicons/core-free-icons";
 import { useWorkspaceStore } from "@/lib/stores/workspace-store";
 import type { ForeignKeyInfo } from "@/lib/types";
 
@@ -53,7 +56,7 @@ export function ForeignKeyBadge({
       className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] font-mono bg-blue-950/40 hover:bg-blue-900/60 text-blue-300 hover:text-blue-200 border border-blue-800/40 hover:border-blue-700/60 transition-colors group cursor-pointer max-w-full"
       title={`Foreign key → ${foreignKey.target_schema}.${foreignKey.target_table}.${foreignKey.target_column} (click to view)`}
     >
-      <Link2 className="size-3 text-blue-400 group-hover:scale-110 shrink-0 transition-transform" />
+      <HugeiconsIcon icon={Link02Icon} className="size-3 text-blue-400 group-hover:scale-110 shrink-0 transition-transform" />
       <span className="truncate">{strValue}</span>
     </button>
   );

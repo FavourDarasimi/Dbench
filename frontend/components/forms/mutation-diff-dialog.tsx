@@ -1,18 +1,18 @@
 "use client";
 
 import { useState } from "react";
+import { HugeiconsIcon } from "@hugeicons/react";
 import {
-  AlertTriangle,
-  ArrowRight,
-  Check,
-  Copy,
-  FileCode,
-  Lock,
-  Plus,
-  RefreshCw,
-  Trash2,
-  X,
-} from "lucide-react";
+  AlertDiamondIcon,
+  ArrowRight01Icon,
+  Cancel01Icon,
+  CheckIcon,
+  Copy01Icon,
+  FileCodeIcon,
+  PlusSignIcon,
+  ReloadIcon,
+  TrashIcon,
+} from "@hugeicons/core-free-icons";
 import type { RowMutationAction } from "@/lib/types";
 
 interface MutationDiffDialogProps {
@@ -111,7 +111,7 @@ export function MutationDiffDialog({
                   : "bg-emerald-950/40 border-emerald-500/30 text-emerald-400"
               }`}
             >
-              {isDelete ? <Trash2 className="size-4" /> : <AlertTriangle className="size-4" />}
+              {isDelete ? <HugeiconsIcon icon={TrashIcon} className="size-4" /> : <HugeiconsIcon icon={AlertDiamondIcon} className="size-4" />}
             </div>
             <div>
               <div className="flex items-center gap-2">
@@ -136,7 +136,7 @@ export function MutationDiffDialog({
             disabled={isSubmitting}
             className="size-7 rounded-lg hover:bg-zinc-800 text-zinc-400 hover:text-white flex items-center justify-center transition-colors cursor-pointer"
           >
-            <X className="size-4" />
+            <HugeiconsIcon icon={Cancel01Icon} className="size-4" />
           </button>
         </div>
 
@@ -146,7 +146,7 @@ export function MutationDiffDialog({
           {isDelete && (
             <div className="p-3.5 rounded-xl bg-red-950/30 border border-red-500/30 text-red-300 space-y-1">
               <div className="flex items-center gap-2 font-bold text-xs text-red-200">
-                <AlertTriangle className="size-4 text-red-400 shrink-0" />
+                <HugeiconsIcon icon={AlertDiamondIcon} className="size-4 text-red-400 shrink-0" />
                 <span>Destructive Operation Warning</span>
               </div>
               <p className="text-[11px] text-red-300/90 leading-relaxed pl-6">
@@ -185,7 +185,7 @@ export function MutationDiffDialog({
                           <span className="text-zinc-500 line-through truncate max-w-[140px]" title={bStr}>
                             {bStr}
                           </span>
-                          <ArrowRight className="size-3 text-zinc-600 shrink-0" />
+                          <HugeiconsIcon icon={ArrowRight01Icon} className="size-3 text-zinc-600 shrink-0" />
                           <span className="text-emerald-400 font-semibold truncate max-w-[160px]" title={aStr}>
                             {aStr}
                           </span>
@@ -225,7 +225,7 @@ export function MutationDiffDialog({
           <div className="space-y-1.5">
             <div className="flex items-center justify-between text-[11px] text-zinc-400">
               <span className="flex items-center gap-1.5">
-                <FileCode className="size-3.5 text-zinc-400" />
+                <HugeiconsIcon icon={FileCodeIcon} className="size-3.5 text-zinc-400" />
                 <span>Generated SQL Statement</span>
               </span>
 
@@ -236,12 +236,12 @@ export function MutationDiffDialog({
               >
                 {copiedSql ? (
                   <>
-                    <Check className="size-3 text-emerald-400" />
+                    <HugeiconsIcon icon={CheckIcon} className="size-3 text-emerald-400" />
                     <span className="text-emerald-400">Copied</span>
                   </>
                 ) : (
                   <>
-                    <Copy className="size-3" />
+                    <HugeiconsIcon icon={Copy01Icon} className="size-3" />
                     <span>Copy SQL</span>
                   </>
                 )}
@@ -277,22 +277,22 @@ export function MutationDiffDialog({
           >
             {isSubmitting ? (
               <>
-                <RefreshCw className="size-3.5 animate-spin" />
+                <HugeiconsIcon icon={ReloadIcon} className="size-3.5 animate-spin" />
                 <span>Committing...</span>
               </>
             ) : isDelete ? (
               <>
-                <Trash2 className="size-3.5" />
+                <HugeiconsIcon icon={TrashIcon} className="size-3.5" />
                 <span>Confirm & Delete</span>
               </>
             ) : action === "update" ? (
               <>
-                <Check className="size-3.5" />
+                <HugeiconsIcon icon={CheckIcon} className="size-3.5" />
                 <span>Confirm & Update</span>
               </>
             ) : (
               <>
-                <Plus className="size-3.5" />
+                <HugeiconsIcon icon={PlusSignIcon} className="size-3.5" />
                 <span>Confirm & Insert</span>
               </>
             )}

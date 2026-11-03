@@ -1,6 +1,10 @@
 "use client";
 
-import { Database, Code2 } from "lucide-react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  CodeIcon,
+  DatabaseIcon,
+} from "@hugeicons/core-free-icons";
 import { useWorkspaceStore } from "@/lib/stores/workspace-store";
 import { DataBrowserView } from "@/components/browser/data-browser-view";
 import { SqlEditorView } from "@/components/sql/sql-editor-view";
@@ -27,7 +31,7 @@ export function WorkspaceCanvas({ connections }: WorkspaceCanvasProps) {
       <div className="flex-1 flex flex-col items-center justify-center p-8 text-center bg-[#050505] text-zinc-400 select-none">
         <div className="relative mb-6">
           <div className="size-16 rounded-2xl bg-emerald-950/40 border border-emerald-500/20 flex items-center justify-center text-emerald-400 shadow-[0_0_24px_rgba(16,185,129,0.15)]">
-            <Database className="size-8" />
+            <HugeiconsIcon icon={DatabaseIcon} className="size-8" />
           </div>
           <span className="absolute -top-1 -right-1 size-3 rounded-full bg-emerald-400 animate-ping opacity-30" />
         </div>
@@ -49,7 +53,7 @@ export function WorkspaceCanvas({ connections }: WorkspaceCanvasProps) {
             disabled={!activeConnectionId}
             className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-xs font-mono font-bold text-zinc-950 transition-all shadow-lg shadow-emerald-500/20 disabled:opacity-50 cursor-pointer"
           >
-            <Code2 className="size-4" />
+            <HugeiconsIcon icon={CodeIcon} className="size-4" />
             <span>New SQL Query</span>
           </button>
         </div>

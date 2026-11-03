@@ -1,21 +1,20 @@
 "use client";
 
 import { useState } from "react";
+import { HugeiconsIcon } from "@hugeicons/react";
 import {
-  Search,
-  Filter,
-  Plus,
-  X,
-  Code2,
-  RotateCw,
-  ChevronLeft,
-  ChevronRight,
-  Hash,
-  Sparkles,
-  Check,
-  Download,
-  ChevronDown,
-} from "lucide-react";
+  AiSparklesIcon,
+  Cancel01Icon,
+  ChevronDownIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  DownloadIcon,
+  FilterIcon,
+  HashIcon,
+  PlusSignIcon,
+  RotateCwIcon,
+  Search01Icon,
+} from "@hugeicons/core-free-icons";
 import { apiGet, apiPost } from "@/lib/api";
 import { useWorkspaceStore } from "@/lib/stores/workspace-store";
 import type {
@@ -249,7 +248,7 @@ export function BrowseToolbar({
         <div className="flex items-center gap-2 flex-1 min-w-[280px] max-w-xl">
           {/* Global Search Bar */}
           <div className="relative flex-1">
-            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-zinc-400" />
+            <HugeiconsIcon icon={Search01Icon} className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-zinc-400" />
             <input
               type="text"
               value={search}
@@ -262,7 +261,7 @@ export function BrowseToolbar({
                 onClick={() => onSearchChange("")}
                 className="absolute right-2 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300 p-0.5"
               >
-                <X className="size-3" />
+                <HugeiconsIcon icon={Cancel01Icon} className="size-3" />
               </button>
             )}
           </div>
@@ -272,7 +271,7 @@ export function BrowseToolbar({
             onClick={() => setFilterModalOpen(true)}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#121214] hover:bg-zinc-800 border border-zinc-800 text-xs font-mono text-zinc-300 hover:text-emerald-400 transition-colors shrink-0 cursor-pointer"
           >
-            <Filter className="size-3 text-emerald-400" />
+            <HugeiconsIcon icon={FilterIcon} className="size-3 text-emerald-400" />
             <span>Filter</span>
             {filters.length > 0 && (
               <span className="size-4 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 text-[10px] flex items-center justify-center font-bold">
@@ -286,7 +285,7 @@ export function BrowseToolbar({
         <div className="flex items-center gap-2">
           {/* Row Count Badge (F20) */}
           <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#121214] border border-zinc-800 text-[11px] font-mono text-zinc-400">
-            <Hash className="size-3 text-zinc-500" />
+            <HugeiconsIcon icon={HashIcon} className="size-3 text-zinc-500" />
             {exactCount !== null ? (
               <span className="text-white font-semibold">{exactCount.toLocaleString()} rows</span>
             ) : totalRows !== null ? (
@@ -315,7 +314,7 @@ export function BrowseToolbar({
             className="p-1.5 rounded-md hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors cursor-pointer"
             title="Refresh rows"
           >
-            <RotateCw className={`size-3.5 ${isLoading ? "animate-spin text-emerald-400" : ""}`} />
+            <HugeiconsIcon icon={RotateCwIcon} className={`size-3.5 ${isLoading ? "animate-spin text-emerald-400" : ""}`} />
           </button>
 
           {/* Bulk Delete Action (F22) */}
@@ -325,7 +324,7 @@ export function BrowseToolbar({
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-950/60 hover:bg-red-900/80 border border-red-500/40 text-red-300 text-xs font-mono font-medium transition-colors cursor-pointer shadow-sm shadow-red-500/10"
               title={`Delete ${selectedCount} selected rows`}
             >
-              <X className="size-3 text-red-400" />
+              <HugeiconsIcon icon={Cancel01Icon} className="size-3 text-red-400" />
               <span>Delete ({selectedCount})</span>
             </button>
           )}
@@ -344,7 +343,7 @@ export function BrowseToolbar({
                   : "Add new record to this table"
               }
             >
-              <Plus className="size-3.5 stroke-[2.5]" />
+              <HugeiconsIcon icon={PlusSignIcon} className="size-3.5 stroke-[2.5]" />
               <span>Add Record</span>
             </button>
           )}
@@ -356,7 +355,7 @@ export function BrowseToolbar({
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-950/60 hover:bg-emerald-900/80 border border-emerald-500/30 text-emerald-300 text-xs font-mono font-medium transition-all shadow-sm shadow-emerald-500/10 cursor-pointer"
             title="Convert active filters & parameters into raw SQL query"
           >
-            <Sparkles className="size-3 text-emerald-400" />
+            <HugeiconsIcon icon={AiSparklesIcon} className="size-3 text-emerald-400" />
             <span>Show SQL</span>
           </button>
 
@@ -367,9 +366,9 @@ export function BrowseToolbar({
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#121214] hover:bg-zinc-800 border border-zinc-800 text-zinc-300 text-xs font-mono font-medium transition-colors cursor-pointer"
               title="Export current table view"
             >
-              <Download className="size-3 text-emerald-400" />
+              <HugeiconsIcon icon={DownloadIcon} className="size-3 text-emerald-400" />
               <span>Export</span>
-              <ChevronDown className="size-3 text-zinc-500" />
+              <HugeiconsIcon icon={ChevronDownIcon} className="size-3 text-zinc-500" />
             </button>
 
             {exportMenuOpen && (
@@ -424,7 +423,7 @@ export function BrowseToolbar({
                 className="hover:text-red-400 p-0.5 rounded text-zinc-500"
                 title="Remove filter"
               >
-                <X className="size-3" />
+                <HugeiconsIcon icon={Cancel01Icon} className="size-3" />
               </button>
             </div>
           ))}
@@ -461,7 +460,7 @@ export function BrowseToolbar({
             className="p-1 rounded hover:bg-zinc-800 disabled:opacity-30 disabled:cursor-not-allowed text-zinc-300 cursor-pointer"
             title="Previous page"
           >
-            <ChevronLeft className="size-4" />
+            <HugeiconsIcon icon={ChevronLeftIcon} className="size-4" />
           </button>
 
           <button
@@ -470,7 +469,7 @@ export function BrowseToolbar({
             className="p-1 rounded hover:bg-zinc-800 disabled:opacity-30 disabled:cursor-not-allowed text-zinc-300 cursor-pointer"
             title="Next page"
           >
-            <ChevronRight className="size-4" />
+            <HugeiconsIcon icon={ChevronRightIcon} className="size-4" />
           </button>
         </div>
       </div>
@@ -481,14 +480,14 @@ export function BrowseToolbar({
           <div className="w-full max-w-md bg-[#0e0e11] border border-zinc-800 rounded-xl p-5 shadow-2xl space-y-4">
             <div className="flex items-center justify-between pb-2 border-b border-zinc-800">
               <h3 className="text-sm font-mono font-bold text-white flex items-center gap-2">
-                <Filter className="size-4 text-emerald-400" />
+                <HugeiconsIcon icon={FilterIcon} className="size-4 text-emerald-400" />
                 <span>Add Column Filter</span>
               </h3>
               <button
                 onClick={() => setFilterModalOpen(false)}
                 className="text-zinc-500 hover:text-white"
               >
-                <X className="size-4" />
+                <HugeiconsIcon icon={Cancel01Icon} className="size-4" />
               </button>
             </div>
 

@@ -11,6 +11,7 @@ from apps.connections.models import Connection
 from apps.notifications.events import notify_schema_updated
 from .serializers import (
     ColumnSerializer,
+    ERDResponseSerializer,
     RefreshSchemaResponseSerializer,
     SchemaTreeItemSerializer,
     TableSerializer,
@@ -129,3 +130,35 @@ class ConnectionRefreshSchemaView(APIView):
             {"status": "ok", "message": f"Schema cache for '{connection.name}' cleared successfully."},
             status=status.HTTP_200_OK,
         )
+
+
+class ConnectionERDView(APIView):
+    """
+    GET /api/connections/{id}/erd/?schema=public
+    or
+    GET /api/connections/{id}/schemas/{schema}/erd/
+    
+    Returns complete tables (columns, data types, PKs) and relations for interactive ER diagrams.
+    """
+
+    permission_classes = [IsAuthenticated]
+
+    @extend_schema(
+        summary="Get Schema ERD",
+        description="Retrieve complete tables, columns, primary keys, and foreign key relations for ER diagrams.",
+        parameters=[
+            OpenApiParameter("schema", str, description="Schema name (defaults to public or db_name)"),
+            OpenApiParameter("refresh", bool, description="Force refresh cache"),
+        ],
+        responses={200: ERDResponseSerializer},
+    )
+    def get(self, request, connection_id, schema=None):
+        connection = _get_connection(request, connection_id)
+        target_schema = schema or request.query_params.get("schema")
+        if not target_schema:
+            target_schema = "public" if connection.engine == Connection.Engine.POSTGRES else connection.db_name
+
+        force_refresh = request.query_params.get("refresh", "").lower() in ("1", "true")
+        erd_data = schema_cache.get_erd(connection, schema=target_schema, force_refresh=force_refresh)
+        return Response(erd_data)
+

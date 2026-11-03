@@ -2,14 +2,14 @@
 
 import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { HugeiconsIcon } from "@hugeicons/react";
 import {
-  Table as TableIcon,
-  ShieldCheck,
-  AlertCircle,
-  Database,
-  CheckCircle2,
-  X,
-} from "lucide-react";
+  AlertCircleIcon,
+  Cancel01Icon,
+  CheckmarkCircle01Icon,
+  DatabaseIcon,
+  ShieldCheckIcon,
+} from "@hugeicons/core-free-icons";
 import { apiGet, apiPost } from "@/lib/api";
 import { BrowseToolbar } from "./browse-toolbar";
 import { DataGrid } from "@/components/grid/data-grid";
@@ -314,7 +314,7 @@ export function DataBrowserView({ tab, connection }: DataBrowserViewProps) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center p-12 bg-[#050505] text-center font-mono">
         <div className="size-10 rounded-full bg-red-950/40 border border-red-500/30 flex items-center justify-center text-red-400 mb-3">
-          <AlertCircle className="size-5" />
+          <HugeiconsIcon icon={AlertCircleIcon} className="size-5" />
         </div>
         <h4 className="text-sm font-bold text-white mb-1">Failed to load table</h4>
         <p className="text-xs text-zinc-400 max-w-md mb-4">
@@ -336,16 +336,16 @@ export function DataBrowserView({ tab, connection }: DataBrowserViewProps) {
           }`}
         >
           {toastMessage.type === "success" ? (
-            <CheckCircle2 className="size-4 text-emerald-400 shrink-0" />
+            <HugeiconsIcon icon={CheckmarkCircle01Icon} className="size-4 text-emerald-400 shrink-0" />
           ) : (
-            <AlertCircle className="size-4 text-red-400 shrink-0" />
+            <HugeiconsIcon icon={AlertCircleIcon} className="size-4 text-red-400 shrink-0" />
           )}
           <span>{toastMessage.text}</span>
           <button
             onClick={() => setToastMessage(null)}
             className="ml-2 hover:opacity-75 p-0.5"
           >
-            <X className="size-3" />
+            <HugeiconsIcon icon={Cancel01Icon} className="size-3" />
           </button>
         </div>
       )}
@@ -381,7 +381,7 @@ export function DataBrowserView({ tab, connection }: DataBrowserViewProps) {
       {/* Primary Key Absence Warning for Mutations */}
       {!hasPrimaryKey && !isReadOnly && !isView && (
         <div className="px-4 py-1.5 bg-amber-950/30 border-b border-amber-500/20 text-amber-300 text-[11px] font-mono flex items-center gap-2">
-          <ShieldCheck className="size-3.5 text-amber-400 shrink-0" />
+          <HugeiconsIcon icon={ShieldCheckIcon} className="size-3.5 text-amber-400 shrink-0" />
           <span>
             Table has no primary key. Direct mutations are locked in the Data Browser (PRD Decision 11). Use the SQL Editor for modifications.
           </span>
@@ -428,7 +428,7 @@ export function DataBrowserView({ tab, connection }: DataBrowserViewProps) {
       <div className="flex items-center justify-between px-3 py-1.5 bg-[#08080a] border-t border-zinc-800/80 text-[11px] font-mono text-zinc-500">
         <div className="flex items-center gap-2">
           <span className="flex items-center gap-1 text-zinc-400">
-            <Database className="size-3 text-emerald-400" />
+            <HugeiconsIcon icon={DatabaseIcon} className="size-3 text-emerald-400" />
             <span>{connection?.name || "Active DB"}</span>
           </span>
           <span>·</span>
@@ -437,7 +437,7 @@ export function DataBrowserView({ tab, connection }: DataBrowserViewProps) {
             <>
               <span>·</span>
               <span className="text-amber-400/90 flex items-center gap-1">
-                <ShieldCheck className="size-3" />
+                <HugeiconsIcon icon={ShieldCheckIcon} className="size-3" />
                 Read-Only Connection
               </span>
             </>

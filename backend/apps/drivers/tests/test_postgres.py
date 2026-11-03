@@ -283,3 +283,61 @@ def test_postgres_describe_table(monkeypatch):
     assert org_col.foreign_key is not None
     assert org_col.foreign_key.target_table == "organizations"
     assert org_col.foreign_key.target_column == "id"
+
+
+def test_postgres_describe_schema_erd(monkeypatch):
+    tables_rows = [("users", "BASE TABLE", 100), ("orders", "BASE TABLE", 500)]
+    all_cols_rows = [
+        ("users", "id", "integer", "int4", "NO", None, 1),
+        ("users", "name", "varchar", "varchar", "NO", None, 2),
+        ("orders", "id", "integer", "int4", "NO", None, 1),
+        ("orders", "user_id", "integer", "int4", "YES", None, 2),
+    ]
+    pks_rows = [("users", "id"), ("orders", "id")]
+    fks_rows = [("orders", "user_id", "public", "users", "id", "fk_orders_user")]
+
+    class ErdCursor:
+        def __init__(self):
+            self.step = 0
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            return False
+
+        def execute(self, q, params=None):
+            pass
+
+        def fetchall(self):
+            self.step += 1
+            if self.step == 1:
+                return tables_rows
+            if self.step == 2:
+                return all_cols_rows
+            if self.step == 3:
+                return pks_rows
+            if self.step == 4:
+                return fks_rows
+            return []
+
+    conn = FakeConnection(cursor_obj=ErdCursor())
+    monkeypatch.setattr("apps.drivers.postgres.psycopg.connect", lambda **kwargs: conn)
+
+    driver = PostgresDriver(CONFIG)
+    erd = driver.describe_schema_erd("public")
+
+    assert erd["schema"] == "public"
+    assert len(erd["tables"]) == 2
+    assert len(erd["relations"]) == 1
+
+    users_tbl = next(t for t in erd["tables"] if t["name"] == "users")
+    assert len(users_tbl["columns"]) == 2
+    assert users_tbl["columns"][0]["is_primary_key"] is True
+
+    rel = erd["relations"][0]
+    assert rel["source_table"] == "orders"
+    assert rel["source_column"] == "user_id"
+    assert rel["target_table"] == "users"
+    assert rel["target_column"] == "id"
+

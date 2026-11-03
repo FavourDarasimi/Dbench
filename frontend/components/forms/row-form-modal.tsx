@@ -1,17 +1,17 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { HugeiconsIcon } from "@hugeicons/react";
 import {
-  X,
-  Plus,
-  Pencil,
-  KeyRound,
-  Link2,
-  Lock,
-  Sparkles,
-  AlertCircle,
-  Check,
-} from "lucide-react";
+  AiSparklesIcon,
+  AlertCircleIcon,
+  Cancel01Icon,
+  KeyRoundIcon,
+  Link02Icon,
+  LockIcon,
+  PencilIcon,
+  PlusSignIcon,
+} from "@hugeicons/core-free-icons";
 import { apiPost } from "@/lib/api";
 import { MutationDiffDialog } from "./mutation-diff-dialog";
 import type {
@@ -239,7 +239,7 @@ export function RowFormModal({
                     : "bg-blue-950/40 border-blue-500/30 text-blue-400"
                 }`}
               >
-                {mode === "insert" ? <Plus className="size-4" /> : <Pencil className="size-4" />}
+                {mode === "insert" ? <HugeiconsIcon icon={PlusSignIcon} className="size-4" /> : <HugeiconsIcon icon={PencilIcon} className="size-4" />}
               </div>
               <div>
                 <h3 className="text-sm font-mono font-bold text-white">
@@ -256,14 +256,14 @@ export function RowFormModal({
               disabled={isSubmitting}
               className="size-7 rounded-lg hover:bg-zinc-800 text-zinc-400 hover:text-white flex items-center justify-center transition-colors cursor-pointer"
             >
-              <X className="size-4" />
+              <HugeiconsIcon icon={Cancel01Icon} className="size-4" />
             </button>
           </div>
 
           {/* Error Banner */}
           {errorMessage && (
             <div className="mx-6 mt-4 p-3 rounded-xl bg-red-950/40 border border-red-500/30 text-red-300 text-xs font-mono flex items-center gap-2">
-              <AlertCircle className="size-4 text-red-400 shrink-0" />
+              <HugeiconsIcon icon={AlertCircleIcon} className="size-4 text-red-400 shrink-0" />
               <span>{errorMessage}</span>
             </div>
           )}
@@ -292,8 +292,8 @@ export function RowFormModal({
                     {/* Label & Metadata Badges */}
                     <div className="flex items-center justify-between gap-2">
                       <label className="flex items-center gap-1.5 font-semibold text-zinc-200 truncate">
-                        {isPk && <KeyRound className="size-3 text-amber-400 shrink-0" />}
-                        {col.foreign_key && <Link2 className="size-3 text-blue-400 shrink-0" />}
+                        {isPk && <HugeiconsIcon icon={KeyRoundIcon} className="size-3 text-amber-400 shrink-0" />}
+                        {col.foreign_key && <HugeiconsIcon icon={Link02Icon} className="size-3 text-blue-400 shrink-0" />}
                         <span className="truncate" title={col.name}>{col.name}</span>
                         {!col.nullable && !col.default && !isPk && (
                           <span className="text-red-400">*</span>
@@ -332,7 +332,7 @@ export function RowFormModal({
                       <div className="flex items-center justify-between px-3 py-2 rounded-lg bg-[#08080a] border border-zinc-800 text-zinc-400">
                         <span>{strVal}</span>
                         <div className="flex items-center gap-1 text-[10px] text-zinc-500">
-                          <Lock className="size-3" />
+                          <HugeiconsIcon icon={LockIcon} className="size-3" />
                           <span>Primary key locked</span>
                         </div>
                       </div>
@@ -395,7 +395,7 @@ export function RowFormModal({
               disabled={isSubmitting}
               className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-xs font-mono font-bold text-zinc-950 transition-all shadow-lg shadow-emerald-500/20 cursor-pointer disabled:opacity-40"
             >
-              <Sparkles className="size-3.5 text-zinc-950" />
+              <HugeiconsIcon icon={AiSparklesIcon} className="size-3.5 text-zinc-950" />
               <span>Review Changes (Diff)</span>
             </button>
           </div>

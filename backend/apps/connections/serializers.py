@@ -4,6 +4,7 @@ from rest_framework import serializers
 
 from .crypto import decrypt, encrypt
 from .models import Connection
+from .url_parser import parse_database_url
 
 
 class SSHConfigSerializer(serializers.Serializer):
@@ -26,6 +27,9 @@ class SSHConfigSerializer(serializers.Serializer):
 
 class ConnectionSerializer(serializers.ModelSerializer):
     # Write-only secrets: never present in any response payload (F2).
+    database_url = serializers.CharField(
+        write_only=True, required=False, allow_blank=True,
+    )
     password = serializers.CharField(
         write_only=True, required=False, allow_blank=True, max_length=255,
         style={"input_type": "password"},
@@ -38,10 +42,22 @@ class ConnectionSerializer(serializers.ModelSerializer):
         model = Connection
         fields = [
             "id", "name", "engine", "host", "port", "db_name", "username",
-            "password", "ssl_mode", "ssh_config", "read_only",
+            "password", "database_url", "ssl_mode", "ssh_config", "read_only",
             "has_password", "has_ssh_password", "created_at", "updated_at",
         ]
         read_only_fields = ["id", "created_at", "updated_at"]
+
+    def to_internal_value(self, data):
+        database_url = data.get("database_url")
+        if database_url and isinstance(database_url, str) and database_url.strip():
+            parsed = parse_database_url(database_url)
+            data = data.copy() if hasattr(data, "copy") else dict(data)
+            for key, val in parsed.items():
+                if key not in data or data[key] in (None, ""):
+                    data[key] = val
+            if not data.get("name") and parsed.get("db_name"):
+                data["name"] = f"{parsed['db_name']} ({parsed['host']})"
+        return super().to_internal_value(data)
 
     def get_has_password(self, obj) -> bool:
         return bool(obj.encrypted_password)
@@ -73,6 +89,7 @@ class ConnectionSerializer(serializers.ModelSerializer):
         return encrypt(json.dumps(secret))
 
     def create(self, validated_data):
+        validated_data.pop("database_url", None)
         password = validated_data.pop("password", "")
         ssh = validated_data.pop("ssh_config", None)
         connection = Connection.objects.create(**validated_data)
@@ -84,6 +101,7 @@ class ConnectionSerializer(serializers.ModelSerializer):
 
     def update(self, instance, validated_data):
         # An omitted or blank password/ssh_config means "keep the stored one".
+        validated_data.pop("database_url", None)
         password = validated_data.pop("password", None)
         ssh = validated_data.pop("ssh_config", serializers.empty)
         for attr, value in validated_data.items():
@@ -99,18 +117,42 @@ class ConnectionSerializer(serializers.ModelSerializer):
 class ConnectionTestSerializer(serializers.Serializer):
     """Config for testing an unsaved connection draft."""
 
-    engine = serializers.ChoiceField(choices=Connection.Engine.choices)
-    host = serializers.CharField(max_length=255)
+    database_url = serializers.CharField(write_only=True, required=False, allow_blank=True)
+    engine = serializers.ChoiceField(choices=Connection.Engine.choices, required=False)
+    host = serializers.CharField(max_length=255, required=False)
     port = serializers.IntegerField(min_value=1, max_value=65535, required=False)
-    db_name = serializers.CharField(max_length=120)
-    username = serializers.CharField(max_length=120, allow_blank=True, default="")
+    db_name = serializers.CharField(max_length=120, required=False)
+    username = serializers.CharField(max_length=120, allow_blank=True, default="", required=False)
     password = serializers.CharField(write_only=True, required=False, allow_blank=True, default="", max_length=255)
-    ssl_mode = serializers.ChoiceField(choices=Connection.SslMode.choices, default=Connection.SslMode.PREFER)
+    ssl_mode = serializers.ChoiceField(choices=Connection.SslMode.choices, default=Connection.SslMode.PREFER, required=False)
     ssh_config = SSHConfigSerializer(required=False)
+
+    def to_internal_value(self, data):
+        database_url = data.get("database_url")
+        if database_url and isinstance(database_url, str) and database_url.strip():
+            parsed = parse_database_url(database_url)
+            data = data.copy() if hasattr(data, "copy") else dict(data)
+            for key, val in parsed.items():
+                if key not in data or data[key] in (None, ""):
+                    data[key] = val
+        return super().to_internal_value(data)
+
+    def validate(self, attrs):
+        missing = {}
+        if not attrs.get("engine"):
+            missing["engine"] = "Engine is required (specify engine or provide database_url)."
+        if not attrs.get("host"):
+            missing["host"] = "Host is required (specify host or provide database_url)."
+        if not attrs.get("db_name"):
+            missing["db_name"] = "Database name is required (specify db_name or provide database_url)."
+        if missing:
+            raise serializers.ValidationError(missing)
+        return attrs
 
     def to_config(self) -> dict:
         data = dict(self.validated_data)
+        data.pop("database_url", None)
         ssh = data.pop("ssh_config", None)
-        if "port" not in data:
+        if "port" not in data or not data["port"]:
             data["port"] = 5432 if data.get("engine") == Connection.Engine.POSTGRES else 3306
         return {**data, "ssh_config": ssh}

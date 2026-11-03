@@ -1,11 +1,12 @@
 "use client";
 
+import { HugeiconsIcon } from "@hugeicons/react";
 import {
-  Table as TableIcon,
-  AlertCircle,
-  ChevronDown,
-  ChevronUp,
-} from "lucide-react";
+  AlertCircleIcon,
+  ChevronDownIcon,
+  ChevronUpIcon,
+  TableIcon,
+} from "@hugeicons/core-free-icons";
 import { DataGrid } from "@/components/grid/data-grid";
 import type { ColumnInfo } from "@/lib/types";
 
@@ -46,7 +47,7 @@ export function QueryResultsPanel({
         className="flex items-center justify-between px-4 py-2 bg-[#09090b] border-b border-zinc-800/60 font-mono text-xs text-zinc-400 cursor-pointer select-none hover:text-zinc-200"
       >
         <div className="flex items-center gap-2">
-          <TableIcon className="size-3.5 text-emerald-400" />
+          <HugeiconsIcon icon={TableIcon} className="size-3.5 text-emerald-400" />
           <span className="font-semibold text-zinc-200">Results</span>
           {rowCount !== null && !isRunning && (
             <span className="text-[11px] text-zinc-400">({rowCount} rows)</span>
@@ -63,7 +64,7 @@ export function QueryResultsPanel({
 
         <div className="flex items-center gap-2 text-zinc-400 hover:text-zinc-300">
           <span className="text-[10px]">{isCollapsed ? "Expand" : "Collapse"}</span>
-          {isCollapsed ? <ChevronUp className="size-3.5" /> : <ChevronDown className="size-3.5" />}
+          {isCollapsed ? <HugeiconsIcon icon={ChevronUpIcon} className="size-3.5" /> : <HugeiconsIcon icon={ChevronDownIcon} className="size-3.5" />}
         </div>
       </div>
 
@@ -82,7 +83,7 @@ export function QueryResultsPanel({
             /* Error Display */
             <div className="flex-1 overflow-auto p-6 bg-[#0a0505] flex flex-col items-center justify-center text-center font-mono text-xs">
               <div className="size-10 rounded-full bg-red-950/60 border border-red-500/30 flex items-center justify-center text-red-400 mb-3">
-                <AlertCircle className="size-5" />
+                <HugeiconsIcon icon={AlertCircleIcon} className="size-5" />
               </div>
               <h4 className="text-sm font-bold text-red-300 mb-1">Query Execution Error</h4>
               <p className="max-w-xl text-xs text-red-300/80 leading-relaxed whitespace-pre-wrap bg-red-950/20 border border-red-500/20 p-3 rounded-xl mt-2 select-text">
@@ -93,7 +94,7 @@ export function QueryResultsPanel({
             /* Zero State */
             <div className="flex-1 flex flex-col items-center justify-center p-8 text-center text-zinc-400 font-mono text-xs select-none">
               <div className="size-10 rounded-xl bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-400 mb-2">
-                <TableIcon className="size-5" />
+                <HugeiconsIcon icon={TableIcon} className="size-5" />
               </div>
               <p className="text-zinc-400">Run a query (⌘↵) to view result records.</p>
             </div>

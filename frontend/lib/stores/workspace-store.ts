@@ -1,11 +1,34 @@
 import { create } from "zustand";
 import type { WorkspaceTab } from "@/lib/types";
 
+const NAV_STORAGE_KEY = "dbench:nav-collapsed";
+
+/** The rail collapses to an icon strip on desktop; the choice survives reloads. */
+function readNavCollapsed(): boolean {
+  if (typeof window === "undefined") return false;
+  try {
+    return window.localStorage.getItem(NAV_STORAGE_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+function writeNavCollapsed(collapsed: boolean) {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(NAV_STORAGE_KEY, collapsed ? "1" : "0");
+  } catch {
+    // Private mode / quota — the preference simply does not persist.
+  }
+}
+
 interface WorkspaceState {
   activeConnectionId: string | null;
   tabs: WorkspaceTab[];
   activeTabId: string | null;
   sidebarCollapsed: boolean;
+  navCollapsed: boolean;
+  navOpen: boolean;
 
   // Actions
   setActiveConnectionId: (id: string | null) => void;
@@ -21,6 +44,9 @@ interface WorkspaceState {
   updateTabSql: (tabId: string, sql: string) => void;
   markTabClean: (tabId: string) => void;
   toggleSidebar: () => void;
+  toggleNav: () => void;
+  openNav: () => void;
+  closeNav: () => void;
 }
 
 export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
@@ -28,6 +54,8 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
   tabs: [],
   activeTabId: null,
   sidebarCollapsed: false,
+  navCollapsed: readNavCollapsed(),
+  navOpen: false,
 
   setActiveConnectionId: (id) => {
     set({ activeConnectionId: id });
@@ -150,4 +178,16 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
   toggleSidebar: () => {
     set((state) => ({ sidebarCollapsed: !state.sidebarCollapsed }));
   },
+
+  toggleNav: () => {
+    set((state) => {
+      const next = !state.navCollapsed;
+      writeNavCollapsed(next);
+      return { navCollapsed: next };
+    });
+  },
+
+  openNav: () => set({ navOpen: true }),
+
+  closeNav: () => set({ navOpen: false }),
 }));

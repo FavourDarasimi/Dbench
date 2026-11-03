@@ -3,7 +3,12 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
-import { Database, Plus } from "lucide-react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  ChevronRightIcon,
+  DatabaseIcon,
+  PlusSignIcon,
+} from "@hugeicons/core-free-icons";
 
 import { api } from "@/lib/api";
 import type { Connection } from "@/lib/types";
@@ -17,7 +22,7 @@ import { useKeyboardShortcuts } from "@/lib/hooks/use-keyboard-shortcuts";
 import { Spinner } from "@/components/ui/badge";
 
 export default function WorkspacePage() {
-  const { activeConnectionId, setActiveConnectionId } = useWorkspaceStore();
+  const { activeConnectionId, setActiveConnectionId, sidebarCollapsed, toggleSidebar } = useWorkspaceStore();
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
 
@@ -42,7 +47,7 @@ export default function WorkspacePage() {
 
   if (isLoading) {
     return (
-      <div className="flex h-[calc(100vh-8rem)] items-center justify-center">
+      <div className="flex h-full items-center justify-center">
         <Spinner className="size-6 text-emerald-400" />
       </div>
     );
@@ -51,9 +56,9 @@ export default function WorkspacePage() {
   // If user has no connections yet
   if (!connections || connections.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[calc(100vh-10rem)] p-8 text-center text-zinc-400 select-none">
+      <div className="flex h-full flex-col items-center justify-center p-8 text-center text-zinc-400 select-none">
         <div className="size-16 rounded-2xl bg-emerald-950/40 border border-emerald-500/20 flex items-center justify-center text-emerald-400 shadow-[0_0_24px_rgba(16,185,129,0.15)] mb-6">
-          <Database className="size-8" />
+          <HugeiconsIcon icon={DatabaseIcon} className="size-8" />
         </div>
         <h2 className="text-2xl font-bold tracking-tight text-white mb-2">
           Connect your first database
@@ -65,7 +70,7 @@ export default function WorkspacePage() {
           href="/connections"
           className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-xs font-mono font-bold text-zinc-950 transition-all shadow-lg shadow-emerald-500/20"
         >
-          <Plus className="size-4" />
+          <HugeiconsIcon icon={PlusSignIcon} className="size-4" />
           <span>Add Connection</span>
         </Link>
       </div>
@@ -73,11 +78,23 @@ export default function WorkspacePage() {
   }
 
   return (
-    <div className="-mx-4 -my-8 flex h-[calc(100vh-3.5rem)] overflow-hidden bg-black text-zinc-100">
-      {/* Left Pane: Schema Explorer Sidebar */}
-      <div className="w-64 sm:w-72 lg:w-80 shrink-0 h-full">
-        <SchemaExplorer connections={connections} />
-      </div>
+    <div className="flex h-full overflow-hidden bg-black text-zinc-100">
+      {/* Left Pane: Schema Explorer Sidebar (Cmd+B) */}
+      {sidebarCollapsed ? (
+        <button
+          type="button"
+          onClick={toggleSidebar}
+          aria-label="Show schema explorer"
+          title="Show schema explorer (⌘B)"
+          className="flex h-full w-8 shrink-0 items-center justify-center border-r border-zinc-800/80 bg-[#080808] text-zinc-500 transition-colors hover:border-emerald-500/25 hover:text-emerald-400"
+        >
+          <HugeiconsIcon icon={ChevronRightIcon} className="size-3.5" />
+        </button>
+      ) : (
+        <div className="h-full shrink-0 w-64 sm:w-72 lg:w-80">
+          <SchemaExplorer connections={connections} />
+        </div>
+      )}
 
       {/* Center & Right Pane: Tabbed Workspace Canvas */}
       <div className="flex-1 flex flex-col h-full min-w-0 overflow-hidden">
