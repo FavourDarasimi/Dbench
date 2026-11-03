@@ -9,7 +9,7 @@ import {
   DatabaseIcon,
   KeyRoundIcon,
   Link02Icon,
-  RotateCwIcon,
+  ReloadIcon,
   Search01Icon,
   TableIcon,
   ViewIcon,
@@ -116,9 +116,9 @@ export function SchemaVisualizerView({ connectionId, connection }: SchemaVisuali
         <p className="text-red-400 font-semibold mb-2">Failed to load schema visualizer</p>
         <button
           onClick={() => refetch()}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-zinc-900 border border-zinc-800 text-zinc-200 hover:text-white transition-colors cursor-pointer"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[3px] bg-zinc-900 border border-zinc-700 text-zinc-200 hover:text-white transition-colors cursor-pointer"
         >
-          <HugeiconsIcon icon={RotateCwIcon} className="size-3.5" />
+          <HugeiconsIcon icon={ReloadIcon} className="size-3.5" />
           <span>Retry</span>
         </button>
       </div>
@@ -167,9 +167,9 @@ export function SchemaVisualizerView({ connectionId, connection }: SchemaVisuali
             onClick={() => refetch()}
             disabled={isFetching}
             title="Refresh schema and foreign keys"
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-zinc-900 border border-zinc-800 text-xs text-zinc-400 hover:text-white transition-colors cursor-pointer disabled:opacity-50"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-[3px] bg-zinc-900 border border-zinc-700 text-xs sm:text-sm text-zinc-300 hover:text-white transition-colors cursor-pointer disabled:opacity-50"
           >
-            <HugeiconsIcon icon={RotateCwIcon} className={`size-3.5 ${isFetching ? "animate-spin text-emerald-400" : ""}`} />
+            <HugeiconsIcon icon={ReloadIcon} className={`size-3.5 ${isFetching ? "animate-spin text-emerald-400" : ""}`} />
             <span className="hidden sm:inline">Refresh</span>
           </button>
         </div>
@@ -232,7 +232,7 @@ export function SchemaVisualizerView({ connectionId, connection }: SchemaVisuali
                 <div
                   key={tbl.name}
                   onClick={() => setSelectedTable(isSelected ? null : tbl.name)}
-                  className={`flex flex-col rounded-xl border transition-all cursor-pointer overflow-hidden ${
+                  className={`flex flex-col rounded-[3px] border transition-all cursor-pointer overflow-hidden ${
                     isSelected
                       ? "bg-[#111115] border-emerald-500/50 shadow-lg shadow-emerald-500/10"
                       : "bg-[#0b0b0e] border-zinc-800 hover:border-zinc-700"
@@ -245,7 +245,7 @@ export function SchemaVisualizerView({ connectionId, connection }: SchemaVisuali
                         icon={TableIcon}
                         className={`size-4 shrink-0 ${isSelected ? "text-emerald-400" : "text-zinc-400"}`}
                       />
-                      <span className="font-bold text-xs text-white truncate" title={tbl.name}>
+                      <span className="font-bold text-xs sm:text-sm text-white truncate" title={tbl.name}>
                         {tbl.name}
                       </span>
                     </div>
@@ -259,7 +259,7 @@ export function SchemaVisualizerView({ connectionId, connection }: SchemaVisuali
                         router.push("/tables");
                       }}
                       title="Open in Data Browser"
-                      className="px-2 py-0.5 rounded text-[10px] font-medium bg-zinc-900 hover:bg-emerald-500 hover:text-black border border-zinc-800 hover:border-emerald-500 text-zinc-400 transition-colors cursor-pointer"
+                      className="px-2.5 py-1 rounded-[3px] text-xs font-medium bg-zinc-900 hover:bg-emerald-500 hover:text-black border border-zinc-700 hover:border-emerald-500 text-zinc-300 transition-colors cursor-pointer"
                     >
                       Browse
                     </button>

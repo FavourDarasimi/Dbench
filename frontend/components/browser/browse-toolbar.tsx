@@ -9,20 +9,24 @@ import {
   ChevronDownIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
+  Delete02Icon,
   DownloadIcon,
   FilterIcon,
-  HashIcon,
+  PanelLeftCloseIcon,
+  PanelLeftOpenIcon,
   PlusSignIcon,
-  RotateCwIcon,
+  ReloadIcon,
   Search01Icon,
+  Sorting01Icon,
+  TableIcon,
 } from "@hugeicons/core-free-icons";
-import { apiGet, apiPost } from "@/lib/api";
+import { apiPost } from "@/lib/api";
+import { cn } from "@/lib/utils";
 import { useWorkspaceStore } from "@/lib/stores/workspace-store";
 import type {
   BrowseFilter,
   ColumnInfo,
   FilterOperator,
-  RowCountResponse,
   SqlPreviewResponse,
 } from "@/lib/types";
 
@@ -51,6 +55,8 @@ interface BrowseToolbarProps {
   onAddRecord?: () => void;
   selectedCount?: number;
   onBulkDelete?: () => void;
+  onToggleRail?: () => void;
+  isRailCollapsed?: boolean;
 }
 
 export function BrowseToolbar({
@@ -78,6 +84,8 @@ export function BrowseToolbar({
   onAddRecord,
   selectedCount = 0,
   onBulkDelete,
+  onToggleRail,
+  isRailCollapsed = false,
 }: BrowseToolbarProps) {
   const { openSqlTab } = useWorkspaceStore();
   const router = useRouter();
@@ -88,10 +96,6 @@ export function BrowseToolbar({
   const [selectedOp, setSelectedOp] = useState<FilterOperator>("contains");
   const [filterVal, setFilterVal] = useState<string>("");
   const [filterVal2, setFilterVal2] = useState<string>("");
-
-  // Exact row count state
-  const [exactCount, setExactCount] = useState<number | null>(null);
-  const [isFetchingExact, setIsFetchingExact] = useState(false);
 
   // SQL Preview loading state
   const [isPreviewingSql, setIsPreviewingSql] = useState(false);
@@ -147,40 +151,42 @@ export function BrowseToolbar({
 
     if (gt === "boolean") {
       return [
-        { label: "is TRUE", op: "eq" },
-        { label: "is FALSE", op: "eq" },
+        { label: "is true", op: "eq" },
+        { label: "is false", op: "neq" },
         { label: "is NULL", op: "is_null" },
-        { label: "is not NULL", op: "is_not_null" },
       ];
     }
 
-    // Text / Default
+    // Default string / text
     return [
       { label: "contains", op: "contains" },
-      { label: "equals", op: "eq" },
+      { label: "equals (=)", op: "eq" },
       { label: "starts with", op: "startswith" },
-      { label: "not equals", op: "neq" },
+      { label: "not equals (≠)", op: "neq" },
       { label: "is NULL", op: "is_null" },
       { label: "is not NULL", op: "is_not_null" },
     ];
   }
 
   function handleAddFilter() {
-    if (!selectedCol) return;
+    if (!selectedColName) return;
 
-    let value: unknown = filterVal;
+    let parsedVal: string | number | boolean | [string, string] | null = filterVal;
     if (selectedOp === "is_null" || selectedOp === "is_not_null") {
-      value = null;
+      parsedVal = null;
     } else if (selectedOp === "between") {
-      value = [filterVal, filterVal2];
-    } else if (selectedCol.generic_type === "boolean") {
-      value = filterVal === "true";
+      parsedVal = [filterVal, filterVal2];
+    } else if (selectedCol?.generic_type === "number") {
+      const num = Number(filterVal);
+      if (!isNaN(num)) parsedVal = num;
+    } else if (selectedCol?.generic_type === "boolean") {
+      parsedVal = selectedOp === "eq";
     }
 
     const newFilter: BrowseFilter = {
-      column: selectedCol.name,
+      column: selectedColName,
       operator: selectedOp,
-      value: value as string,
+      value: parsedVal,
     };
 
     onFiltersChange([...filters, newFilter]);
@@ -191,21 +197,6 @@ export function BrowseToolbar({
 
   function handleRemoveFilter(index: number) {
     onFiltersChange(filters.filter((_, i) => i !== index));
-  }
-
-  // Exact row count calculation (F20)
-  async function fetchExactRowCount() {
-    setIsFetchingExact(true);
-    try {
-      const res = await apiGet<RowCountResponse>(
-        `/connections/${connectionId}/tables/${schema}.${table}/count/?exact=true`
-      );
-      setExactCount(res.count);
-    } catch {
-      // ignore
-    } finally {
-      setIsFetchingExact(false);
-    }
   }
 
   // Show SQL bridge (F19)
@@ -244,101 +235,51 @@ export function BrowseToolbar({
     }
   }
 
+  // Calculate range text for pagination
+  const startRow = rowCount > 0 ? (page - 1) * pageSize + 1 : 0;
+  const endRow = totalRows !== null
+    ? Math.min(page * pageSize, totalRows)
+    : (page - 1) * pageSize + rowCount;
+  const rangeLabel = totalRows !== null
+    ? `${startRow} - ${endRow} of ${totalRows}`
+    : `${startRow} - ${endRow} of ${rowCount}`;
+
   return (
-    <div className="flex flex-col gap-2 p-3 bg-[#0a0a0c] border-b border-zinc-800/80">
-      {/* Top Row: Search, Show SQL, Refresh, Actions */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        {/* Left Side: Search + Add Filter Trigger */}
-        <div className="flex items-center gap-2 flex-1 min-w-[280px] max-w-xl">
-          {/* Global Search Bar */}
-          <div className="relative flex-1">
-            <HugeiconsIcon icon={Search01Icon} className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-zinc-400" />
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => onSearchChange(e.target.value)}
-              placeholder="Search all text columns..."
-              className="w-full pl-8 pr-7 py-1.5 bg-[#121214] hover:bg-[#151518] focus:bg-[#151518] border border-zinc-800/80 focus:border-emerald-500/80 rounded-lg text-xs font-mono text-zinc-200 placeholder:text-zinc-500 focus:outline-none transition-colors"
-            />
-            {search && (
-              <button
-                onClick={() => onSearchChange("")}
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300 p-0.5"
-              >
-                <HugeiconsIcon icon={Cancel01Icon} className="size-3" />
-              </button>
-            )}
-          </div>
-
-          {/* Add Filter Button */}
-          <button
-            onClick={() => setFilterModalOpen(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#121214] hover:bg-zinc-800 border border-zinc-800 text-xs font-mono text-zinc-300 hover:text-emerald-400 transition-colors shrink-0 cursor-pointer"
-          >
-            <HugeiconsIcon icon={FilterIcon} className="size-3 text-emerald-400" />
-            <span>Filter</span>
-            {filters.length > 0 && (
-              <span className="size-4 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 text-[10px] flex items-center justify-center font-bold">
-                {filters.length}
-              </span>
-            )}
-          </button>
-        </div>
-
-        {/* Right Side: Row Count, Refresh, and "Show SQL" */}
-        <div className="flex items-center gap-2">
-          {/* Row Count Badge (F20) */}
-          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#121214] border border-zinc-800 text-[11px] font-mono text-zinc-400">
-            <HugeiconsIcon icon={HashIcon} className="size-3 text-zinc-500" />
-            {exactCount !== null ? (
-              <span className="text-white font-semibold">{exactCount.toLocaleString()} rows</span>
-            ) : totalRows !== null ? (
-              <span>
-                ~{totalRows.toLocaleString()} rows
-                <button
-                  onClick={fetchExactRowCount}
-                  disabled={isFetchingExact}
-                  className="ml-1.5 text-[10px] text-emerald-400 hover:underline cursor-pointer"
-                  title="Compute exact row count"
-                >
-                  {isFetchingExact ? "Counting..." : "Exact"}
-                </button>
-              </span>
-            ) : (
-              <span>{rowCount} rows</span>
-            )}
-            <span className="text-zinc-600">·</span>
-            <span className="text-zinc-500">{durationMs}ms</span>
-          </div>
-
-          {/* Refresh Data */}
-          <button
-            onClick={onRefresh}
-            disabled={isLoading}
-            className="p-1.5 rounded-md hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors cursor-pointer"
-            title="Refresh rows"
-          >
-            <HugeiconsIcon icon={RotateCwIcon} className={`size-3.5 ${isLoading ? "animate-spin text-emerald-400" : ""}`} />
-          </button>
-
-          {/* Bulk Delete Action (F22) */}
-          {selectedCount > 0 && onBulkDelete && !isReadOnly && !isView && (
+    <div className="flex flex-col gap-2 px-3 py-2 bg-[#09090b] border-b border-zinc-800">
+      {/* Top Header Bar */}
+      <div className="flex flex-wrap items-center justify-between gap-2.5">
+        {/* Left Side: Collapse Rail Button, DATA Tab, Actions */}
+        <div className="flex items-center gap-1.5 flex-wrap">
+          {/* Table Browser Pane Collapse/Expand Button */}
+          {onToggleRail && (
             <button
-              onClick={onBulkDelete}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-950/60 hover:bg-red-900/80 border border-red-500/40 text-red-300 text-xs font-mono font-medium transition-colors cursor-pointer shadow-sm shadow-red-500/10"
-              title={`Delete ${selectedCount} selected rows`}
+              type="button"
+              onClick={onToggleRail}
+              aria-label={isRailCollapsed ? "Expand tables" : "Collapse tables"}
+              title={isRailCollapsed ? "Expand tables" : "Collapse tables"}
+              className="flex size-7 items-center justify-center rounded-[3px] border border-zinc-700 bg-zinc-900/60 hover:bg-zinc-800 text-zinc-300 hover:text-white transition-colors cursor-pointer mr-1"
             >
-              <HugeiconsIcon icon={Cancel01Icon} className="size-3 text-red-400" />
-              <span>Delete ({selectedCount})</span>
+              <HugeiconsIcon
+                icon={isRailCollapsed ? PanelLeftOpenIcon : PanelLeftCloseIcon}
+                className="size-4"
+              />
             </button>
           )}
 
-          {/* Add Record Button (Phase 3 Mutation) */}
+          {/* DATA Mode Indicator */}
+          <div className="flex items-center gap-1">
+            <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-[3px] border border-emerald-500/60 bg-emerald-500/10 text-emerald-400 text-xs sm:text-sm font-semibold">
+              <HugeiconsIcon icon={TableIcon} className="size-3.5" />
+              <span>DATA</span>
+            </span>
+          </div>
+
+          {/* Add Record Button */}
           {onAddRecord && (
             <button
               onClick={onAddRecord}
               disabled={isReadOnly || isView}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-zinc-950 text-xs font-mono font-bold transition-all shadow-sm shadow-emerald-500/20 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+              className="flex items-center gap-1.5 px-3 py-1 rounded-[3px] bg-white hover:bg-zinc-200 text-zinc-950 text-xs sm:text-sm font-mono font-bold transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer shadow-sm"
               title={
                 isReadOnly
                   ? "Mutations disabled: Connection is read-only"
@@ -348,26 +289,120 @@ export function BrowseToolbar({
               }
             >
               <HugeiconsIcon icon={PlusSignIcon} className="size-3.5 stroke-[2.5]" />
-              <span>Add Record</span>
+              <span>Add record</span>
             </button>
           )}
 
-          {/* Show SQL Bridge (F19) */}
+          {/* Filters Button */}
           <button
-            onClick={handleShowSql}
-            disabled={isPreviewingSql}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-950/60 hover:bg-emerald-900/80 border border-emerald-500/30 text-emerald-300 text-xs font-mono font-medium transition-all shadow-sm shadow-emerald-500/10 cursor-pointer"
-            title="Convert active filters & parameters into raw SQL query"
+            onClick={() => setFilterModalOpen(true)}
+            className="flex items-center gap-1.5 px-2.5 py-1 rounded-[3px] bg-[#121214] hover:bg-zinc-800 border border-zinc-700 text-xs sm:text-sm font-mono text-zinc-300 hover:text-white transition-colors cursor-pointer"
           >
-            <HugeiconsIcon icon={AiSparklesIcon} className="size-3 text-emerald-400" />
-            <span>Show SQL</span>
+            <HugeiconsIcon icon={FilterIcon} className="size-3.5 text-zinc-400" />
+            <span>Filters</span>
+            {filters.length > 0 && (
+              <span className="size-4 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 text-[10px] flex items-center justify-center font-bold">
+                {filters.length}
+              </span>
+            )}
           </button>
 
-          {/* Streamed Table Export (PRD F8) */}
+          {/* Search Bar */}
+          <div className="relative min-w-[180px] max-w-[240px]">
+            <HugeiconsIcon icon={Search01Icon} className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-zinc-400" />
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => onSearchChange(e.target.value)}
+              placeholder="Search table..."
+              className="w-full pl-8 pr-6 py-1 bg-[#121214] hover:bg-[#161619] focus:bg-[#161619] border border-zinc-700 focus:border-emerald-500/80 rounded-[3px] text-xs sm:text-sm font-mono text-zinc-200 placeholder:text-zinc-500 focus:outline-none transition-colors"
+            />
+            {search && (
+              <button
+                onClick={() => onSearchChange("")}
+                className="absolute right-1.5 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300 p-0.5"
+              >
+                <HugeiconsIcon icon={Cancel01Icon} className="size-3" />
+              </button>
+            )}
+          </div>
+
+          {/* Bulk Delete Action */}
+          {selectedCount > 0 && onBulkDelete && !isReadOnly && !isView && (
+            <button
+              onClick={onBulkDelete}
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-[3px] bg-red-950/60 hover:bg-red-900/80 border border-red-500/40 text-red-300 text-xs sm:text-sm font-mono font-medium transition-colors cursor-pointer"
+              title={`Delete ${selectedCount} selected rows`}
+            >
+              <HugeiconsIcon icon={Delete02Icon} className="size-3.5 text-red-400" />
+              <span>Delete ({selectedCount})</span>
+            </button>
+          )}
+        </div>
+
+        {/* Right Side: Page Navigation, Page Size Selector, Refresh, Export, Show SQL */}
+        <div className="flex items-center gap-2">
+          {/* Page Range & Navigation (< 0 - 0 of 0 >) */}
+          <div className="flex items-center gap-1 text-xs sm:text-sm font-mono text-zinc-300">
+            <button
+              onClick={() => onPageChange(Math.max(1, page - 1))}
+              disabled={page <= 1 || isLoading}
+              className="size-7 flex items-center justify-center rounded-[3px] border border-zinc-700 bg-zinc-900/60 hover:bg-zinc-800 disabled:opacity-30 disabled:cursor-not-allowed text-zinc-300 hover:text-white transition-colors cursor-pointer"
+              title="Previous page"
+            >
+              <HugeiconsIcon icon={ChevronLeftIcon} className="size-3.5" />
+            </button>
+            <span className="px-2 py-0.5 text-xs sm:text-[13px] text-zinc-400 select-none">
+              {rangeLabel}
+            </span>
+            <button
+              onClick={() => onPageChange(page + 1)}
+              disabled={!hasMore || isLoading}
+              className="size-7 flex items-center justify-center rounded-[3px] border border-zinc-700 bg-zinc-900/60 hover:bg-zinc-800 disabled:opacity-30 disabled:cursor-not-allowed text-zinc-300 hover:text-white transition-colors cursor-pointer"
+              title="Next page"
+            >
+              <HugeiconsIcon icon={ChevronRightIcon} className="size-3.5" />
+            </button>
+          </div>
+
+          {/* Page Size Selector on head bar (NOT a dropdown) */}
+          <div className="flex items-center border border-zinc-700 rounded-[3px] overflow-hidden bg-zinc-900/60 text-xs font-mono">
+            {[50, 100, 250].map((sz) => (
+              <button
+                key={sz}
+                type="button"
+                onClick={() => onPageSizeChange(sz)}
+                className={cn(
+                  "px-2 py-1 transition-colors cursor-pointer",
+                  pageSize === sz
+                    ? "bg-zinc-800 text-white font-bold"
+                    : "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50"
+                )}
+                title={`Show ${sz} rows per page`}
+              >
+                {sz}
+              </button>
+            ))}
+          </div>
+
+          {/* Refresh Button with border and changed icon */}
+          <button
+            onClick={onRefresh}
+            disabled={isLoading}
+            className="size-7 flex items-center justify-center rounded-[3px] border border-zinc-700 bg-zinc-900/60 hover:bg-zinc-800 text-zinc-300 hover:text-white transition-colors cursor-pointer"
+            title="Refresh rows"
+          >
+            <HugeiconsIcon
+              icon={ReloadIcon}
+              className={cn("size-3.5", isLoading && "animate-spin text-emerald-400")}
+            />
+          </button>
+
+          {/* Streamed Table Export */}
           <div className="relative">
             <button
               onClick={() => setExportMenuOpen(!exportMenuOpen)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#121214] hover:bg-zinc-800 border border-zinc-800 text-zinc-300 text-xs font-mono font-medium transition-colors cursor-pointer"
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-[3px] bg-[#121214] hover:bg-zinc-800 border border-zinc-700 text-zinc-300 text-xs sm:text-sm font-mono font-medium transition-colors cursor-pointer"
               title="Export current table view"
             >
               <HugeiconsIcon icon={DownloadIcon} className="size-3 text-emerald-400" />
@@ -378,7 +413,7 @@ export function BrowseToolbar({
             {exportMenuOpen && (
               <div
                 onMouseLeave={() => setExportMenuOpen(false)}
-                className="absolute right-0 top-full mt-1 w-36 bg-[#0e0e11] border border-zinc-800 rounded-xl shadow-xl py-1 z-50 flex flex-col font-mono text-[11px]"
+                className="absolute right-0 top-full mt-1 w-36 bg-[#0e0e11] border border-zinc-800 rounded-[3px] shadow-xl py-1 z-50 flex flex-col font-mono text-xs"
               >
                 <button
                   onClick={() => {
@@ -401,30 +436,41 @@ export function BrowseToolbar({
               </div>
             )}
           </div>
+
+          {/* Show SQL Bridge */}
+          <button
+            onClick={handleShowSql}
+            disabled={isPreviewingSql}
+            className="flex items-center gap-1.5 px-2.5 py-1 rounded-[3px] bg-emerald-950/60 hover:bg-emerald-900/80 border border-emerald-500/30 text-emerald-300 text-xs sm:text-sm font-mono font-medium transition-all shadow-sm cursor-pointer"
+            title="Convert active filters into SQL editor"
+          >
+            <HugeiconsIcon icon={AiSparklesIcon} className="size-3 text-emerald-400" />
+            <span>Show SQL</span>
+          </button>
         </div>
       </div>
 
       {/* Active Filter Chips */}
       {filters.length > 0 && (
         <div className="flex flex-wrap items-center gap-1.5 pt-1">
-          <span className="text-[10px] font-mono text-zinc-400 mr-1 uppercase tracking-wider">
+          <span className="text-xs font-mono text-zinc-400 mr-1 uppercase tracking-wider">
             Active Filters:
           </span>
           {filters.map((f, i) => (
             <div
               key={`${f.column}-${f.operator}-${i}`}
-              className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-[#161619] border border-zinc-800 text-xs font-mono text-zinc-300"
+              className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-[3px] bg-[#161619] border border-zinc-800 text-xs sm:text-sm font-mono text-zinc-300"
             >
               <span className="font-semibold text-emerald-400">{f.column}</span>
-              <span className="text-zinc-500 text-[11px]">{f.operator}</span>
+              <span className="text-zinc-500 text-xs">{f.operator}</span>
               {f.value !== null && f.value !== undefined && (
-                <span className="text-zinc-200 bg-zinc-900 px-1 rounded text-[11px]">
+                <span className="text-zinc-200 bg-zinc-900 px-1 rounded-[3px] text-xs">
                   {Array.isArray(f.value) ? f.value.join(" and ") : String(f.value)}
                 </span>
               )}
               <button
                 onClick={() => handleRemoveFilter(i)}
-                className="hover:text-red-400 p-0.5 rounded text-zinc-500"
+                className="hover:text-red-400 p-0.5 rounded-[3px] text-zinc-500 cursor-pointer"
                 title="Remove filter"
               >
                 <HugeiconsIcon icon={Cancel01Icon} className="size-3" />
@@ -434,54 +480,17 @@ export function BrowseToolbar({
 
           <button
             onClick={() => onFiltersChange([])}
-            className="text-[11px] font-mono text-zinc-500 hover:text-red-400 underline ml-1 cursor-pointer"
+            className="text-xs font-mono text-zinc-500 hover:text-red-400 underline ml-1 cursor-pointer"
           >
             Clear all
           </button>
         </div>
       )}
 
-      {/* Bottom Pagination Bar */}
-      <div className="flex items-center justify-between pt-1 border-t border-zinc-800/40 text-xs font-mono text-zinc-400">
-        <div className="flex items-center gap-2">
-          <span>Page size:</span>
-          <select
-            value={pageSize}
-            onChange={(e) => onPageSizeChange(Number(e.target.value))}
-            className="bg-[#121214] border border-zinc-800 rounded px-2 py-0.5 text-xs font-mono text-zinc-200 focus:outline-none focus:border-emerald-500 cursor-pointer"
-          >
-            <option value={50}>50 / page</option>
-            <option value={100}>100 / page</option>
-            <option value={250}>250 / page</option>
-          </select>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <span>Page {page}</span>
-          <button
-            onClick={() => onPageChange(Math.max(1, page - 1))}
-            disabled={page <= 1 || isLoading}
-            className="p-1 rounded hover:bg-zinc-800 disabled:opacity-30 disabled:cursor-not-allowed text-zinc-300 cursor-pointer"
-            title="Previous page"
-          >
-            <HugeiconsIcon icon={ChevronLeftIcon} className="size-4" />
-          </button>
-
-          <button
-            onClick={() => onPageChange(page + 1)}
-            disabled={!hasMore || isLoading}
-            className="p-1 rounded hover:bg-zinc-800 disabled:opacity-30 disabled:cursor-not-allowed text-zinc-300 cursor-pointer"
-            title="Next page"
-          >
-            <HugeiconsIcon icon={ChevronRightIcon} className="size-4" />
-          </button>
-        </div>
-      </div>
-
       {/* Popover / Dialog: Add Filter */}
       {filterModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
-          <div className="w-full max-w-md bg-[#0e0e11] border border-zinc-800 rounded-xl p-5 shadow-2xl space-y-4">
+          <div className="w-full max-w-md bg-[#0e0e11] border border-zinc-800 rounded-[3px] p-5 shadow-2xl space-y-4">
             <div className="flex items-center justify-between pb-2 border-b border-zinc-800">
               <h3 className="text-sm font-mono font-bold text-white flex items-center gap-2">
                 <HugeiconsIcon icon={FilterIcon} className="size-4 text-emerald-400" />
@@ -489,26 +498,25 @@ export function BrowseToolbar({
               </h3>
               <button
                 onClick={() => setFilterModalOpen(false)}
-                className="text-zinc-500 hover:text-white"
+                className="text-zinc-500 hover:text-white rounded-[3px] cursor-pointer"
               >
                 <HugeiconsIcon icon={Cancel01Icon} className="size-4" />
               </button>
             </div>
 
-            <div className="space-y-3 font-mono text-xs">
+            <div className="space-y-3 font-mono text-xs sm:text-sm">
               {/* Column Select */}
               <div>
-                <label className="text-zinc-400 block mb-1">Column</label>
+                <label className="block text-zinc-400 mb-1">Column</label>
                 <select
                   value={selectedColName}
                   onChange={(e) => {
-                    const colName = e.target.value;
-                    setSelectedColName(colName);
-                    const col = columns.find((c) => c.name === colName);
+                    setSelectedColName(e.target.value);
+                    const col = columns.find((c) => c.name === e.target.value);
                     const ops = getOperatorsForColumn(col);
-                    setSelectedOp(ops[0]?.op || "eq");
+                    setSelectedOp(ops[0].op);
                   }}
-                  className="w-full bg-[#141416] border border-zinc-800 rounded-lg px-3 py-2 text-zinc-200 focus:outline-none focus:border-emerald-500"
+                  className="w-full px-2.5 py-1.5 rounded-[3px] bg-zinc-950 border border-zinc-800 text-zinc-200 focus:outline-none focus:border-emerald-500"
                 >
                   {columns.map((c) => (
                     <option key={c.name} value={c.name}>
@@ -520,15 +528,15 @@ export function BrowseToolbar({
 
               {/* Operator Select */}
               <div>
-                <label className="text-zinc-400 block mb-1">Condition</label>
+                <label className="block text-zinc-400 mb-1">Condition</label>
                 <select
                   value={selectedOp}
                   onChange={(e) => setSelectedOp(e.target.value as FilterOperator)}
-                  className="w-full bg-[#141416] border border-zinc-800 rounded-lg px-3 py-2 text-zinc-200 focus:outline-none focus:border-emerald-500"
+                  className="w-full px-2.5 py-1.5 rounded-[3px] bg-zinc-950 border border-zinc-800 text-zinc-200 focus:outline-none focus:border-emerald-500"
                 >
-                  {getOperatorsForColumn(selectedCol).map((o) => (
-                    <option key={o.op + o.label} value={o.op}>
-                      {o.label}
+                  {getOperatorsForColumn(selectedCol).map((op) => (
+                    <option key={op.op} value={op.op}>
+                      {op.label}
                     </option>
                   ))}
                 </select>
@@ -537,57 +545,46 @@ export function BrowseToolbar({
               {/* Value Input */}
               {selectedOp !== "is_null" && selectedOp !== "is_not_null" && (
                 <div>
-                  <label className="text-zinc-400 block mb-1">Value</label>
-                  {selectedCol?.generic_type === "boolean" ? (
-                    <select
-                      value={filterVal}
-                      onChange={(e) => setFilterVal(e.target.value)}
-                      className="w-full bg-[#141416] border border-zinc-800 rounded-lg px-3 py-2 text-zinc-200 focus:outline-none focus:border-emerald-500"
-                    >
-                      <option value="true">TRUE</option>
-                      <option value="false">FALSE</option>
-                    </select>
-                  ) : selectedOp === "between" ? (
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="text"
-                        value={filterVal}
-                        onChange={(e) => setFilterVal(e.target.value)}
-                        placeholder="Start value"
-                        className="flex-1 bg-[#141416] border border-zinc-800 rounded-lg px-3 py-2 text-zinc-200 focus:outline-none focus:border-emerald-500"
-                      />
-                      <span className="text-zinc-500">and</span>
-                      <input
-                        type="text"
-                        value={filterVal2}
-                        onChange={(e) => setFilterVal2(e.target.value)}
-                        placeholder="End value"
-                        className="flex-1 bg-[#141416] border border-zinc-800 rounded-lg px-3 py-2 text-zinc-200 focus:outline-none focus:border-emerald-500"
-                      />
-                    </div>
-                  ) : (
-                    <input
-                      type="text"
-                      value={filterVal}
-                      onChange={(e) => setFilterVal(e.target.value)}
-                      placeholder={`Enter filter value...`}
-                      className="w-full bg-[#141416] border border-zinc-800 rounded-lg px-3 py-2 text-zinc-200 focus:outline-none focus:border-emerald-500"
-                    />
-                  )}
+                  <label className="block text-zinc-400 mb-1">
+                    {selectedOp === "between" ? "From Value" : "Value"}
+                  </label>
+                  <input
+                    type="text"
+                    value={filterVal}
+                    onChange={(e) => setFilterVal(e.target.value)}
+                    placeholder="Enter value..."
+                    className="w-full px-2.5 py-1.5 rounded-[3px] bg-zinc-950 border border-zinc-800 text-zinc-200 focus:outline-none focus:border-emerald-500"
+                  />
+                </div>
+              )}
+
+              {/* Between Second Value */}
+              {selectedOp === "between" && (
+                <div>
+                  <label className="block text-zinc-400 mb-1">To Value</label>
+                  <input
+                    type="text"
+                    value={filterVal2}
+                    onChange={(e) => setFilterVal2(e.target.value)}
+                    placeholder="Enter upper bound..."
+                    className="w-full px-2.5 py-1.5 rounded-[3px] bg-zinc-950 border border-zinc-800 text-zinc-200 focus:outline-none focus:border-emerald-500"
+                  />
                 </div>
               )}
             </div>
 
-            <div className="flex items-center justify-end gap-2 pt-3 border-t border-zinc-800">
+            <div className="flex items-center justify-end gap-2 pt-3 border-t border-zinc-800/80">
               <button
+                type="button"
                 onClick={() => setFilterModalOpen(false)}
-                className="px-3 py-1.5 rounded-lg hover:bg-zinc-800 text-xs font-mono text-zinc-400 hover:text-white"
+                className="px-3 py-1.5 rounded-[3px] bg-zinc-900 hover:bg-zinc-800 text-zinc-400 text-xs sm:text-sm font-mono cursor-pointer"
               >
                 Cancel
               </button>
               <button
+                type="button"
                 onClick={handleAddFilter}
-                className="px-4 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-xs font-mono font-bold text-zinc-950 transition-colors cursor-pointer"
+                className="px-4 py-1.5 rounded-[3px] bg-emerald-500 hover:bg-emerald-400 text-zinc-950 text-xs sm:text-sm font-mono font-bold cursor-pointer"
               >
                 Apply Filter
               </button>

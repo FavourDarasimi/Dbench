@@ -260,7 +260,7 @@ export function MutationDiffDialog({
             type="button"
             onClick={onClose}
             disabled={isSubmitting}
-            className="px-4 py-2 rounded-xl hover:bg-zinc-800 text-xs font-mono text-zinc-400 hover:text-white transition-colors cursor-pointer disabled:opacity-40"
+            className="px-4 py-2 rounded-[3px] hover:bg-zinc-800 text-xs sm:text-sm font-mono text-zinc-400 hover:text-white transition-colors cursor-pointer disabled:opacity-40"
           >
             Cancel
           </button>
@@ -269,7 +269,7 @@ export function MutationDiffDialog({
             type="button"
             onClick={onConfirm}
             disabled={isSubmitting || (action === "update" && changedFields.length === 0)}
-            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-mono font-bold transition-all shadow-lg cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed ${
+            className={`flex items-center gap-2 px-5 py-2.5 rounded-[3px] text-xs sm:text-sm font-mono font-bold transition-all shadow-lg cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed ${
               isDelete
                 ? "bg-red-500 hover:bg-red-400 text-white shadow-red-500/20"
                 : "bg-emerald-500 hover:bg-emerald-400 text-zinc-950 shadow-emerald-500/20"

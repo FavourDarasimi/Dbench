@@ -69,12 +69,12 @@ export function QueryToolbar({
         {!isRunning ? (
           <button
             onClick={onRun}
-            className="flex items-center gap-2 px-3.5 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-bold transition-all shadow-sm shadow-emerald-500/20 cursor-pointer active:scale-95"
+            className="flex items-center gap-2 px-3.5 py-1.5 rounded-[3px] bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-bold transition-all shadow-sm shadow-emerald-500/20 cursor-pointer active:scale-95"
             title="Execute query (Cmd+Enter or Ctrl+Enter)"
           >
             <HugeiconsIcon icon={PlayIcon} className="size-3.5 fill-current" />
             <span>Run</span>
-            <span className="text-[10px] bg-emerald-600/50 text-zinc-950 px-1 py-0.2 rounded font-sans font-medium">
+            <span className="text-[10px] bg-emerald-600/50 text-zinc-950 px-1 py-0.2 rounded-[3px] font-sans font-medium">
               ⌘↵
             </span>
           </button>
@@ -82,7 +82,7 @@ export function QueryToolbar({
           /* Live Cancel Button (PRD F5) */
           <button
             onClick={onCancel}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-950/80 hover:bg-red-900 border border-red-500/40 text-red-300 font-semibold transition-all cursor-pointer animate-pulse"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-[3px] bg-red-950/80 hover:bg-red-900 border border-red-500/40 text-red-300 font-semibold transition-all cursor-pointer animate-pulse"
             title="Cancel running query"
           >
             <HugeiconsIcon icon={SquareIcon} className="size-3 fill-current" />
@@ -92,9 +92,9 @@ export function QueryToolbar({
         )}
 
         {/* Row Limit Selector */}
-        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#121214] border border-zinc-800 text-zinc-400">
+        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-[3px] bg-[#121214] border border-zinc-700 text-zinc-400">
           <HugeiconsIcon icon={LayersIcon} className="size-3 text-zinc-500" />
-          <span className="text-[11px]">Limit:</span>
+          <span className="text-xs">Limit:</span>
           <select
             value={limit}
             onChange={(e) => onLimitChange(Number(e.target.value))}
@@ -109,9 +109,9 @@ export function QueryToolbar({
         </div>
 
         {/* Timeout Selector */}
-        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#121214] border border-zinc-800 text-zinc-400">
+        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-[3px] bg-[#121214] border border-zinc-700 text-zinc-400">
           <HugeiconsIcon icon={Clock01Icon} className="size-3 text-zinc-500" />
-          <span className="text-[11px]">Timeout:</span>
+          <span className="text-xs">Timeout:</span>
           <select
             value={timeoutSec}
             onChange={(e) => onTimeoutChange(Number(e.target.value))}
@@ -130,7 +130,7 @@ export function QueryToolbar({
       <div className="flex items-center gap-2">
         {/* Read-Only Badge */}
         {isReadOnly && (
-          <div className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-amber-950/40 border border-amber-500/30 text-amber-300 text-[11px]">
+          <div className="flex items-center gap-1 px-2.5 py-1 rounded-[3px] bg-amber-950/40 border border-amber-500/30 text-amber-300 text-xs">
             <HugeiconsIcon icon={ShieldCheckIcon} className="size-3 text-amber-400" />
             <span>Read-Only Mode</span>
           </div>
@@ -138,7 +138,7 @@ export function QueryToolbar({
 
         {/* Execution Stats Badge */}
         {durationMs !== null && rowCount !== null && (
-          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#121214] border border-zinc-800 text-[11px] text-zinc-400">
+          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-[3px] bg-[#121214] border border-zinc-700 text-xs text-zinc-300">
             <span className="text-emerald-400 font-semibold">{rowCount} rows</span>
             <span className="text-zinc-600">·</span>
             <span>{durationMs}ms</span>
@@ -156,7 +156,7 @@ export function QueryToolbar({
         {/* Copy SQL Button */}
         <button
           onClick={handleCopy}
-          className="flex items-center gap-1 p-1.5 rounded-lg hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors cursor-pointer"
+          className="flex items-center gap-1 p-1.5 rounded-[3px] hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors cursor-pointer"
           title="Copy query to clipboard"
         >
           {copied ? (
@@ -171,7 +171,7 @@ export function QueryToolbar({
           <button
             onClick={onSaveQuery}
             disabled={!sqlContent.trim()}
-            className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-300 hover:text-white transition-colors cursor-pointer disabled:opacity-40"
+            className="flex items-center gap-1 px-2.5 py-1.5 rounded-[3px] bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 text-zinc-300 hover:text-white transition-colors cursor-pointer disabled:opacity-40"
             title="Save query to snippets"
           >
             <HugeiconsIcon icon={Bookmark01Icon} className="size-3.5 text-emerald-400" />
@@ -185,7 +185,7 @@ export function QueryToolbar({
             <button
               onClick={() => setExportMenuOpen(!exportMenuOpen)}
               disabled={!sqlContent.trim()}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-300 hover:text-white transition-colors cursor-pointer disabled:opacity-40"
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-[3px] bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 text-zinc-300 hover:text-white transition-colors cursor-pointer disabled:opacity-40"
               title="Export query results"
             >
               <HugeiconsIcon icon={DownloadIcon} className="size-3.5 text-emerald-400" />
@@ -196,7 +196,7 @@ export function QueryToolbar({
             {exportMenuOpen && (
               <div
                 onMouseLeave={() => setExportMenuOpen(false)}
-                className="absolute right-0 top-full mt-1 w-36 bg-[#0e0e11] border border-zinc-800 rounded-xl shadow-xl py-1 z-50 flex flex-col font-mono text-[11px]"
+                className="absolute right-0 top-full mt-1 w-36 bg-[#0e0e11] border border-zinc-800 rounded-[3px] shadow-xl py-1 z-50 flex flex-col font-mono text-xs"
               >
                 <button
                   onClick={() => {

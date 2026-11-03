@@ -29,9 +29,16 @@ import type {
 interface DataBrowserViewProps {
   tab: WorkspaceTab;
   connection?: Connection;
+  onToggleRail?: () => void;
+  isRailCollapsed?: boolean;
 }
 
-export function DataBrowserView({ tab, connection }: DataBrowserViewProps) {
+export function DataBrowserView({
+  tab,
+  connection,
+  onToggleRail,
+  isRailCollapsed,
+}: DataBrowserViewProps) {
   const queryClient = useQueryClient();
   const schema = tab.schema || "public";
   const table = tab.table || "";
@@ -329,7 +336,7 @@ export function DataBrowserView({ tab, connection }: DataBrowserViewProps) {
       {/* Toast Notification Banner */}
       {toastMessage && (
         <div
-          className={`absolute top-3 right-4 z-50 flex items-center gap-2 px-4 py-2.5 rounded-xl border text-xs font-mono shadow-2xl animate-in slide-in-from-top-2 duration-150 ${
+          className={`absolute top-3 right-4 z-50 flex items-center gap-2 px-4 py-2.5 rounded-[3px] border text-xs sm:text-sm font-mono shadow-2xl animate-in slide-in-from-top-2 duration-150 ${
             toastMessage.type === "success"
               ? "bg-[#0c1811] border-emerald-500/40 text-emerald-300"
               : "bg-[#1f0e10] border-red-500/40 text-red-300"
@@ -376,6 +383,8 @@ export function DataBrowserView({ tab, connection }: DataBrowserViewProps) {
         onAddRecord={openInsertModal}
         selectedCount={selectedRowKeys.size}
         onBulkDelete={handleBulkDelete}
+        onToggleRail={onToggleRail}
+        isRailCollapsed={isRailCollapsed}
       />
 
       {/* Primary Key Absence Warning for Mutations */}
@@ -425,42 +434,7 @@ export function DataBrowserView({ tab, connection }: DataBrowserViewProps) {
       </div>
 
       {/* Workspace Footer / Status Line */}
-      <div className="flex items-center justify-between px-3 py-1.5 bg-[#08080a] border-t border-zinc-800/80 text-[11px] font-mono text-zinc-500">
-        <div className="flex items-center gap-2">
-          <span className="flex items-center gap-1 text-zinc-400">
-            <HugeiconsIcon icon={DatabaseIcon} className="size-3 text-emerald-400" />
-            <span>{connection?.name || "Active DB"}</span>
-          </span>
-          <span>·</span>
-          <span>{connection?.engine || "postgres"}</span>
-          {isReadOnly ? (
-            <>
-              <span>·</span>
-              <span className="text-amber-400/90 flex items-center gap-1">
-                <HugeiconsIcon icon={ShieldCheckIcon} className="size-3" />
-                Read-Only Connection
-              </span>
-            </>
-          ) : isView ? (
-            <>
-              <span>·</span>
-              <span className="text-zinc-400 flex items-center gap-1">
-                <span>View (Read-Only)</span>
-              </span>
-            </>
-          ) : !hasPrimaryKey ? (
-            <>
-              <span>·</span>
-              <span className="text-zinc-500">No PK (Read-Only Grid)</span>
-            </>
-          ) : (
-            <>
-              <span>·</span>
-              <span className="text-emerald-400/90">Writable</span>
-            </>
-          )}
-        </div>
-
+      <div className="flex items-center justify-end px-3 py-1.5 bg-[#08080a] border-t border-zinc-800/80 text-xs sm:text-[13px] font-mono text-zinc-400">
         <div className="flex items-center gap-3">
           <span>{columns.length} columns</span>
           <span>·</span>

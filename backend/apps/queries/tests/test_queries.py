@@ -293,3 +293,28 @@ def test_saved_queries_crud(auth_client, test_connection):
     del_resp = auth_client.delete(f"/api/saved-queries/{saved_id}/")
     assert del_resp.status_code == 204
     assert SavedQuery.objects.count() == 0
+
+
+def test_query_history_and_saved_queries_select_related(user, test_connection):
+    from apps.queries.views import QueryHistoryViewSet, SavedQueryViewSet
+    from rest_framework.test import APIRequestFactory
+    from rest_framework.request import Request
+
+    factory = APIRequestFactory()
+    wsgi_req = factory.get("/api/history/")
+    req = Request(wsgi_req)
+    req.user = user
+
+    history_vs = QueryHistoryViewSet()
+    history_vs.request = req
+    history_vs.format_kwarg = None
+    h_qs = history_vs.get_queryset()
+    # Check that select_related was applied on connection and user
+    assert "connection" in h_qs.query.select_related
+    assert "user" in h_qs.query.select_related
+
+    saved_vs = SavedQueryViewSet()
+    saved_vs.request = req
+    saved_vs.format_kwarg = None
+    s_qs = saved_vs.get_queryset()
+    assert "connection" in s_qs.query.select_related

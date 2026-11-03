@@ -42,9 +42,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   return (
     <RequireAuth>
       <RealtimeSubscriber />
-      <div className="flex h-dvh bg-black text-zinc-100 selection:bg-emerald-500/25 selection:text-emerald-200 antialiased">
+      <div className="flex h-dvh w-full bg-[#0c0c0e] text-zinc-100 selection:bg-emerald-500/25 selection:text-emerald-200 antialiased overflow-hidden">
         <AppSidebar />
-        <main className="min-w-0 flex-1 overflow-y-auto">{children}</main>
+        <div className="flex-1 min-w-0 h-full p-3 md:p-3.5 flex flex-col overflow-hidden">
+          <main className="relative flex-1 min-w-0 h-full overflow-y-auto overflow-x-hidden rounded-[26px] border border-zinc-800/80 bg-black shadow-2xl flex flex-col">
+            {children}
+          </main>
+        </div>
       </div>
     </RequireAuth>
   );
@@ -80,18 +84,18 @@ function AppSidebar() {
         />
       )}
 
-      {/* Sidebar with grey border separating from main content */}
+      {/* Sidebar with grey border separating from main content on mobile drawer, transparent on desktop */}
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-50 flex w-[244px] shrink-0 flex-col border-r border-zinc-700",
-          "bg-[#050505] transition-transform duration-200 ease-out",
-          "md:sticky md:top-0 md:h-dvh md:translate-x-0 md:transition-[width] md:duration-200 md:ease-out",
+          "fixed inset-y-0 left-0 z-50 flex w-[244px] shrink-0 flex-col border-r border-zinc-800",
+          "bg-[#0c0c0e] transition-transform duration-200 ease-out",
+          "md:sticky md:top-0 md:h-dvh md:translate-x-0 md:transition-[width] md:duration-200 md:ease-out md:border-r-0 md:bg-transparent",
           navOpen ? "translate-x-0" : "-translate-x-full",
           navCollapsed ? "md:w-[72px]" : "md:w-[244px]",
         )}
       >
-        {/* Hairline glow along the inner edge */}
-        <div className="pointer-events-none absolute inset-y-0 right-0 w-px bg-gradient-to-b from-emerald-500/30 via-transparent to-transparent" />
+        {/* Hairline glow along the inner edge (mobile only) */}
+        <div className="pointer-events-none absolute inset-y-0 right-0 w-px bg-gradient-to-b from-emerald-500/30 via-transparent to-transparent md:hidden" />
 
         {/* Brand & Collapse Header: Collapse button on the right with no text */}
         <div
@@ -163,11 +167,11 @@ function Brand({ collapsed }: { collapsed: boolean }) {
     <Link
       href="/tables"
       className={cn(
-        "group flex items-center gap-2.5 rounded-md p-1.5 outline-none transition-colors hover:bg-zinc-900/40",
+        "group flex items-center gap-2.5 rounded-[3px] p-1.5 outline-none transition-colors hover:bg-zinc-900/40",
         collapsed && "justify-center",
       )}
     >
-      <span className="flex size-8 shrink-0 items-center justify-center rounded-lg border border-emerald-500/20 bg-emerald-500/10 text-emerald-400 shadow-[0_0_12px_rgba(16,185,129,0.15)] transition-colors group-hover:bg-emerald-500/20">
+      <span className="flex size-8 shrink-0 items-center justify-center rounded-[3px] border border-emerald-500/20 bg-emerald-500/10 text-emerald-400 shadow-[0_0_12px_rgba(16,185,129,0.15)] transition-colors group-hover:bg-emerald-500/20">
         <HugeiconsIcon icon={DatabaseIcon} className="size-4" />
       </span>
       <span
@@ -192,7 +196,7 @@ function CollapseButton({ collapsed }: { collapsed: boolean }) {
       aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
       title={collapsed ? "Expand sidebar (⌘\\)" : "Collapse sidebar (⌘\\)"}
       className={cn(
-        "flex size-8 shrink-0 items-center justify-center rounded-md text-zinc-400 hover:bg-zinc-800 hover:text-white transition-colors cursor-pointer",
+        "flex size-8 shrink-0 items-center justify-center rounded-[3px] text-zinc-400 hover:bg-zinc-800 hover:text-white transition-colors cursor-pointer",
         collapsed && "mt-1",
       )}
     >
@@ -218,7 +222,7 @@ function NavItem({ href, icon, label, isActive, collapsed }: NavItemProps) {
       href={href}
       aria-current={isActive ? "page" : undefined}
       className={cn(
-        "group flex items-center gap-2.5 rounded-md px-2.5 py-2 outline-none transition-colors",
+        "group flex items-center gap-2.5 rounded-[3px] px-2.5 py-2 outline-none transition-colors",
         isActive
           ? "bg-zinc-800 text-white font-medium"
           : "text-zinc-400 hover:bg-zinc-900/60 hover:text-zinc-100",
@@ -279,7 +283,7 @@ function UserBlock({ collapsed }: { collapsed: boolean }) {
           aria-label="Log out"
           title="Log out"
           className={cn(
-            "flex items-center justify-center rounded-md p-1.5 text-zinc-500 transition-colors cursor-pointer",
+            "flex items-center justify-center rounded-[3px] p-1.5 text-zinc-500 transition-colors cursor-pointer",
             "hover:bg-zinc-900 hover:text-zinc-100",
             "focus-visible:border-emerald-500/40 focus-visible:outline-none",
             collapsed && "md:w-full",

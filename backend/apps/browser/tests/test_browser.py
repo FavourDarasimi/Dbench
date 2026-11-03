@@ -287,3 +287,101 @@ def test_sql_preview_endpoint(auth_client, test_connection, sample_columns, monk
     assert '"age" > 21' in resp.data["sql"]
     assert "raw_sql" in resp.data
     assert resp.data["params"] == ["21"]
+
+
+def test_builder_select_columns_projection(sample_columns):
+    builder = BrowseQueryBuilder(
+        schema="public",
+        table="users",
+        columns=sample_columns,
+        dialect="postgres",
+        select_columns="id,name",
+    )
+    sql, params = builder.build()
+    assert sql.startswith('SELECT "id", "name" FROM "public"."users"')
+
+    # Invalid column raises ValidationError
+    with pytest.raises(ValidationError):
+        BrowseQueryBuilder(
+            schema="public",
+            table="users",
+            columns=sample_columns,
+            select_columns="id,nonexistent",
+        )
+
+
+def test_browse_rows_filtered_omits_blocking_count(auth_client, test_connection, sample_columns, monkeypatch):
+    setup_mock_schema(monkeypatch, sample_columns)
+
+    mock_driver = MagicMock()
+    mock_driver.execute.return_value = QueryResult(
+        columns=sample_columns,
+        column_names=["id", "name"],
+        rows=[{"id": 1, "name": "Alice"}],
+        row_count=1,
+        duration_ms=5,
+        truncated=False,
+    )
+    monkeypatch.setattr("apps.browser.services.get_driver", lambda config: mock_driver)
+
+    filters = json.dumps([{"column": "name", "op": "eq", "value": "Alice"}])
+    resp = auth_client.get(
+        f"/api/connections/{test_connection.id}/tables/users/rows/?filters={filters}&columns=id,name"
+    )
+    assert resp.status_code == 200, resp.data
+    # With filters active, total_rows is None to prevent expensive blocking table scans
+    assert resp.data["total_rows"] is None
+    assert resp.data["row_count"] == 1
+
+
+def test_row_detail_batched_union_all_counts(auth_client, test_connection, sample_columns, monkeypatch):
+    setup_mock_schema(monkeypatch, sample_columns)
+
+    executed_queries = []
+
+    class MockBatchDriver:
+        def __init__(self):
+            self.closed = False
+
+        def execute(self, sql, params=None, **kwargs):
+            executed_queries.append(sql)
+            if 'WHERE "id" = %s' in sql:
+                return QueryResult([], [], [{"id": 42, "name": "Bob"}], 1, 5, False)
+            if "tc.constraint_type = 'FOREIGN KEY'" in sql:
+                # Two referencing tables
+                return QueryResult(
+                    [],
+                    [],
+                    [
+                        {"table_schema": "public", "table_name": "orders", "column_name": "user_id"},
+                        {"table_schema": "public", "table_name": "reviews", "column_name": "author_id"},
+                    ],
+                    2,
+                    5,
+                    False,
+                )
+            if "UNION ALL" in sql:
+                return QueryResult(
+                    [],
+                    [],
+                    [{"rel_idx": 0, "rel_count": 5}, {"rel_idx": 1, "rel_count": 12}],
+                    2,
+                    5,
+                    False,
+                )
+            return QueryResult([], [], [], 0, 5, False)
+
+        def close(self):
+            self.closed = True
+
+    monkeypatch.setattr("apps.browser.services.get_driver", lambda config: MockBatchDriver())
+
+    resp = auth_client.get(f"/api/connections/{test_connection.id}/tables/users/rows/42/")
+    assert resp.status_code == 200, resp.data
+    assert len(resp.data["related"]) == 2
+    assert resp.data["related"][0]["table"] == "orders"
+    assert resp.data["related"][0]["count"] == 5
+    assert resp.data["related"][1]["table"] == "reviews"
+    assert resp.data["related"][1]["count"] == 12
+    # Check that UNION ALL was executed to batch the counts
+    assert any("UNION ALL" in q for q in executed_queries)

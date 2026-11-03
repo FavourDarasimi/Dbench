@@ -134,7 +134,7 @@ export function CellInspector({
           {canMutate && row && onEditRow && (
             <button
               onClick={() => onEditRow(row)}
-              className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[#141416] hover:bg-zinc-800 border border-zinc-800 text-xs font-mono text-zinc-300 hover:text-blue-400 transition-colors cursor-pointer"
+              className="flex items-center gap-1 px-2.5 py-1 rounded-[3px] bg-[#141416] hover:bg-zinc-800 border border-zinc-800 text-xs sm:text-sm font-mono text-zinc-300 hover:text-blue-400 transition-colors cursor-pointer"
               title="Edit record"
             >
               <HugeiconsIcon icon={PencilIcon} className="size-3 text-blue-400" />
@@ -145,7 +145,7 @@ export function CellInspector({
           {canMutate && row && onDeleteRow && (
             <button
               onClick={() => onDeleteRow(row)}
-              className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[#141416] hover:bg-zinc-800 border border-zinc-800 text-xs font-mono text-zinc-300 hover:text-red-400 transition-colors cursor-pointer"
+              className="flex items-center gap-1 px-2.5 py-1 rounded-[3px] bg-[#141416] hover:bg-zinc-800 border border-zinc-800 text-xs sm:text-sm font-mono text-zinc-300 hover:text-red-400 transition-colors cursor-pointer"
               title="Delete record"
             >
               <HugeiconsIcon icon={TrashIcon} className="size-3 text-red-400" />
@@ -155,7 +155,7 @@ export function CellInspector({
 
           <button
             onClick={onClose}
-            className="size-7 rounded-md hover:bg-zinc-800 text-zinc-400 hover:text-white flex items-center justify-center transition-colors cursor-pointer"
+            className="size-7 rounded-[3px] hover:bg-zinc-800 text-zinc-400 hover:text-white flex items-center justify-center transition-colors cursor-pointer"
             title="Close inspector (Esc)"
           >
             <HugeiconsIcon icon={Cancel01Icon} className="size-4" />
@@ -229,7 +229,7 @@ export function CellInspector({
             <div className="shrink-0 self-end">
               <button
                 onClick={handleCopy}
-                className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-[#141416] hover:bg-zinc-800 border border-zinc-800 text-xs font-mono text-zinc-300 hover:text-white transition-colors cursor-pointer"
+                className="flex items-center gap-1 px-3 py-1.5 rounded-[3px] bg-[#141416] hover:bg-zinc-800 border border-zinc-800 text-xs sm:text-sm font-mono text-zinc-300 hover:text-white transition-colors cursor-pointer"
                 title="Copy value to clipboard"
               >
                 {copied ? (

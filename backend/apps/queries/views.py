@@ -333,7 +333,7 @@ class QueryHistoryViewSet(viewsets.ReadOnlyModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        qs = QueryHistory.objects.filter(user=self.request.user)
+        qs = QueryHistory.objects.filter(user=self.request.user).select_related("connection", "user")
         conn_id = self.request.query_params.get("connection_id")
         if conn_id:
             qs = qs.filter(connection_id=conn_id)
@@ -353,7 +353,7 @@ class SavedQueryViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        qs = SavedQuery.objects.filter(owner=self.request.user)
+        qs = SavedQuery.objects.filter(owner=self.request.user).select_related("connection")
         conn_id = self.request.query_params.get("connection_id")
         if conn_id:
             qs = qs.filter(connection_id=conn_id)

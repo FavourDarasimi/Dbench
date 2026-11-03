@@ -130,6 +130,7 @@ class BrowseRowsView(APIView):
             filters=params.get("filters"),
             search=params.get("search"),
             cursor=params.get("cursor"),
+            select_columns=params.get("columns"),
         )
 
         payload = execute_browse(connection, request.user, builder)
@@ -360,6 +361,7 @@ class SqlPreviewView(APIView):
             filters=params.get("filters"),
             search=params.get("search"),
             cursor=params.get("cursor"),
+            select_columns=params.get("columns"),
         )
 
         raw_sql, bound_params = builder.build()

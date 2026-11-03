@@ -153,18 +153,33 @@ class SchemaCacheManager:
             if cached is not None:
                 return cached
 
-        schemas = self.get_schemas(connection, force_refresh=force_refresh)
-        tree = []
-        for schema_name in schemas:
-            tables = self.get_tables(connection, schema_name, force_refresh=force_refresh)
-            tree.append({
-                "schema": schema_name,
-                "tables": tables,
-            })
+        driver = self._get_driver_for_connection(connection)
+        try:
+            schemas = driver.list_schemas()
+            cache.set(self._key_schemas(conn_id), schemas, timeout=CACHE_TTL)
+            self._register_key(conn_id, self._key_schemas(conn_id))
 
-        cache.set(tree_key, tree, timeout=CACHE_TTL)
-        self._register_key(conn_id, tree_key)
-        return tree
+            tree = []
+            for schema_name in schemas:
+                tables = driver.list_tables(schema_name)
+                serialized = [t.to_dict() for t in tables]
+                table_cache_key = self._key_tables(conn_id, schema_name)
+                cache.set(table_cache_key, serialized, timeout=CACHE_TTL)
+                self._register_key(conn_id, table_cache_key)
+
+                tree.append({
+                    "schema": schema_name,
+                    "tables": serialized,
+                })
+
+            cache.set(tree_key, tree, timeout=CACHE_TTL)
+            self._register_key(conn_id, tree_key)
+            return tree
+        except Exception as exc:
+            logger.error("Error generating schema tree for connection %s: %s", conn_id, exc)
+            raise DatabaseUnavailableException(f"Failed to generate schema tree: {exc}") from exc
+        finally:
+            driver.close()
 
     def get_erd(self, connection: Connection, schema: str, force_refresh: bool = False) -> dict[str, Any]:
         conn_id = str(connection.id)

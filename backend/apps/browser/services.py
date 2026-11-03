@@ -22,9 +22,14 @@ def get_table_row_count(
     table: str,
     exact: bool = False,
     builder: BrowseQueryBuilder | None = None,
+    driver: Any = None,
 ) -> int:
     """Retrieve row count (fast estimate by default, exact on demand per PRD F20)."""
-    driver = get_driver(config_from_connection(connection))
+    own_driver = False
+    if driver is None:
+        driver = get_driver(config_from_connection(connection))
+        own_driver = True
+
     try:
         # If active filters/search exist, we must calculate count for that filtered set
         if builder and (builder.filters or builder.search):
@@ -76,7 +81,8 @@ def get_table_row_count(
         res = driver.execute(count_sql, limit=1, timeout=20)
         return int(next(iter(res.rows[0].values()))) if res.rows else 0
     finally:
-        driver.close()
+        if own_driver:
+            driver.close()
 
 
 def get_row_detail_with_related(
@@ -148,13 +154,14 @@ def get_row_detail_with_related(
             """
 
         rel_res = driver.execute(rel_sql, (schema, table), limit=50, timeout=10)
-        for rel_row in rel_res.rows:
-            ref_schema = rel_row.get("table_schema")
-            ref_table = rel_row.get("table_name")
-            ref_col = rel_row.get("column_name")
-            if not ref_schema or not ref_table or not ref_col:
-                continue
+        valid_rels = [
+            (r["table_schema"], r["table_name"], r["column_name"])
+            for r in rel_res.rows
+            if r.get("table_schema") and r.get("table_name") and r.get("column_name")
+        ]
 
+        if len(valid_rels) == 1:
+            ref_schema, ref_table, ref_col = valid_rels[0]
             try:
                 q_rs = quote_identifier(ref_schema, connection.engine)
                 q_rt = quote_identifier(ref_table, connection.engine)
@@ -170,6 +177,52 @@ def get_row_detail_with_related(
                 })
             except Exception as exc:
                 logger.debug("Failed counting related rows in %s.%s: %s", ref_schema, ref_table, exc)
+        elif len(valid_rels) > 1:
+            # Batch multiple related counts into a single UNION ALL query
+            try:
+                union_subqueries = []
+                union_params = []
+                for idx, (ref_schema, ref_table, ref_col) in enumerate(valid_rels):
+                    q_rs = quote_identifier(ref_schema, connection.engine)
+                    q_rt = quote_identifier(ref_table, connection.engine)
+                    q_rc = quote_identifier(ref_col, connection.engine)
+                    union_subqueries.append(
+                        f"SELECT {idx} AS rel_idx, COUNT(*) AS rel_count FROM {q_rs}.{q_rt} WHERE {q_rc} = %s"
+                    )
+                    union_params.append(pk_value)
+
+                batch_sql = " UNION ALL ".join(union_subqueries) + ";"
+                c_res = driver.execute(batch_sql, tuple(union_params), limit=len(valid_rels), timeout=10)
+                counts_by_idx = {
+                    int(row.get("rel_idx")): int(row.get("rel_count", 0))
+                    for row in c_res.rows
+                    if "rel_idx" in row and "rel_count" in row
+                }
+                for idx, (ref_schema, ref_table, ref_col) in enumerate(valid_rels):
+                    related_counts.append({
+                        "schema": ref_schema,
+                        "table": ref_table,
+                        "column": ref_col,
+                        "count": counts_by_idx.get(idx, 0),
+                    })
+            except Exception as exc:
+                logger.debug("Batch related count failed, falling back to individual queries: %s", exc)
+                for ref_schema, ref_table, ref_col in valid_rels:
+                    try:
+                        q_rs = quote_identifier(ref_schema, connection.engine)
+                        q_rt = quote_identifier(ref_table, connection.engine)
+                        q_rc = quote_identifier(ref_col, connection.engine)
+                        count_query = f"SELECT COUNT(*) FROM {q_rs}.{q_rt} WHERE {q_rc} = %s;"
+                        c_res = driver.execute(count_query, (pk_value,), limit=1, timeout=5)
+                        count_val = int(next(iter(c_res.rows[0].values()))) if c_res.rows else 0
+                        related_counts.append({
+                            "schema": ref_schema,
+                            "table": ref_table,
+                            "column": ref_col,
+                            "count": count_val,
+                        })
+                    except Exception:
+                        pass
 
         return {
             "row": row_data,
@@ -210,14 +263,20 @@ def execute_browse(
             source=QueryHistory.Source.BROWSER,
         )
 
-        # Determine total estimate
-        total_estimate = get_table_row_count(
-            connection,
-            schema=builder.schema,
-            table=builder.table,
-            exact=False,
-            builder=builder,
-        )
+        # Determine total estimate:
+        # Avoid blocking COUNT(*) on filtered/searched tables during initial page browse;
+        # clients fetch exact count on-demand via the /count/ endpoint.
+        if builder.filters or builder.search:
+            total_estimate = None
+        else:
+            total_estimate = get_table_row_count(
+                connection,
+                schema=builder.schema,
+                table=builder.table,
+                exact=False,
+                builder=builder,
+                driver=driver,
+            )
 
         has_more = len(result.rows) == builder.page_size
 

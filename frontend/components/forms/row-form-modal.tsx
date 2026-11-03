@@ -384,7 +384,7 @@ export function RowFormModal({
               type="button"
               onClick={onClose}
               disabled={isSubmitting}
-              className="px-4 py-2 rounded-xl hover:bg-zinc-800 text-xs font-mono text-zinc-400 hover:text-white transition-colors cursor-pointer"
+              className="px-4 py-2 rounded-[3px] hover:bg-zinc-800 text-xs sm:text-sm font-mono text-zinc-400 hover:text-white transition-colors cursor-pointer"
             >
               Cancel
             </button>
@@ -393,7 +393,7 @@ export function RowFormModal({
               type="button"
               onClick={handleReviewDiff}
               disabled={isSubmitting}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-xs font-mono font-bold text-zinc-950 transition-all shadow-lg shadow-emerald-500/20 cursor-pointer disabled:opacity-40"
+              className="flex items-center gap-2 px-5 py-2.5 rounded-[3px] bg-emerald-500 hover:bg-emerald-400 text-xs sm:text-sm font-mono font-bold text-zinc-950 transition-all shadow-lg shadow-emerald-500/20 cursor-pointer disabled:opacity-40"
             >
               <HugeiconsIcon icon={AiSparklesIcon} className="size-3.5 text-zinc-950" />
               <span>Review Changes (Diff)</span>

@@ -15,11 +15,12 @@ import {
   ArrowUp01Icon,
   CheckIcon,
   Copy01Icon,
+  Delete02Icon,
+  Edit02Icon,
   ExpandIcon,
   KeyRoundIcon,
-  PencilIcon,
-  TrashIcon,
 } from "@hugeicons/core-free-icons";
+import { cn } from "@/lib/utils";
 import { ForeignKeyBadge } from "@/components/browser/foreign-key-badge";
 import { CellInspector } from "./cell-inspector";
 import type { ColumnInfo } from "@/lib/types";
@@ -117,17 +118,35 @@ export function DataGrid({
             });
 
           return (
-            <div className="flex items-center justify-center gap-1">
+            <div className="flex items-center justify-center py-1 px-1">
               {canMutate && onToggleSelectAll && (
-                <input
-                  type="checkbox"
-                  checked={Boolean(isAllSelected)}
-                  onChange={onToggleSelectAll}
-                  className="size-3 rounded border-zinc-700 bg-zinc-900 text-emerald-500 focus:ring-0 cursor-pointer"
-                  title="Select all on this page"
-                />
+                <label className="relative flex items-center justify-center cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={Boolean(isAllSelected)}
+                    onChange={onToggleSelectAll}
+                    className="sr-only peer"
+                    title="Select all on this page"
+                  />
+                  <div
+                    className={cn(
+                      "size-3.5 rounded-[3px] border border-zinc-700 bg-black flex items-center justify-center transition-colors",
+                      Boolean(isAllSelected) ? "bg-zinc-900 border-zinc-400" : "hover:border-zinc-500"
+                    )}
+                  >
+                    {Boolean(isAllSelected) && (
+                      <svg
+                        className="size-2.5 text-zinc-100 stroke-[3]"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                      >
+                        <path d="M4 12l5 5L20 6" />
+                      </svg>
+                    )}
+                  </div>
+                </label>
               )}
-              <span className="text-[10px] font-mono text-zinc-400 select-none">#</span>
             </div>
           );
         },
@@ -137,25 +156,46 @@ export function DataGrid({
           const isSelected = selectedRowKeys ? selectedRowKeys.has(rowKey) : false;
 
           return (
-            <div className="flex items-center justify-center gap-1 text-[10px] font-mono text-zinc-400 select-none">
+            <div className="flex items-center justify-center py-1">
               {canMutate && onToggleSelectRow && (
-                <input
-                  type="checkbox"
-                  checked={isSelected}
-                  onChange={(e) => {
-                    e.stopPropagation();
-                    onToggleSelectRow(rowKey);
-                  }}
-                  className="size-3 rounded border-zinc-700 bg-zinc-900 text-emerald-500 focus:ring-0 cursor-pointer"
-                />
+                <label
+                  className="relative flex items-center justify-center cursor-pointer select-none"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <input
+                    type="checkbox"
+                    checked={isSelected}
+                    onChange={(e) => {
+                      e.stopPropagation();
+                      onToggleSelectRow(rowKey);
+                    }}
+                    className="sr-only peer"
+                  />
+                  <div
+                    className={cn(
+                      "size-3.5 rounded-[3px] border border-zinc-700 bg-black flex items-center justify-center transition-colors",
+                      isSelected ? "bg-zinc-900 border-zinc-400" : "hover:border-zinc-500"
+                    )}
+                  >
+                    {isSelected && (
+                      <svg
+                        className="size-2.5 text-zinc-100 stroke-[3]"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                      >
+                        <path d="M4 12l5 5L20 6" />
+                      </svg>
+                    )}
+                  </div>
+                </label>
               )}
-              <span>{info.row.index + 1}</span>
             </div>
           );
         },
-        size: canMutate && onToggleSelectRow ? 64 : 48,
-        minSize: 40,
-        maxSize: 80,
+        size: 38,
+        minSize: 32,
+        maxSize: 44,
       },
     ];
 
@@ -174,13 +214,13 @@ export function DataGrid({
               <div className="flex items-center gap-1.5 truncate">
                 {col.is_primary_key && (
                   <span title="Primary Key">
-                    <HugeiconsIcon icon={KeyRoundIcon} className="size-3 text-amber-400 shrink-0" />
+                    <HugeiconsIcon icon={KeyRoundIcon} className="size-3.5 text-amber-400 shrink-0" />
                   </span>
                 )}
-                <span className="truncate font-semibold text-zinc-200 group-hover:text-white">
+                <span className="truncate font-semibold text-xs sm:text-[13px] text-zinc-200 group-hover:text-white">
                   {col.name}
                 </span>
-                <span className="text-[10px] text-zinc-400 font-normal">
+                <span className="text-[11px] text-zinc-400 font-normal">
                   {col.data_type}
                 </span>
               </div>
@@ -218,17 +258,17 @@ export function DataGrid({
 
           // 2. Null
           if (val === null || val === undefined) {
-            return <span className="text-zinc-600 font-mono text-[11px] italic">NULL</span>;
+            return <span className="text-zinc-600 font-mono text-xs italic">NULL</span>;
           }
 
           // 3. Boolean
           if (typeof val === "boolean") {
             return val ? (
-              <span className="inline-flex px-1.5 py-0.2 rounded text-[10px] font-mono font-bold bg-emerald-950/60 text-emerald-400 border border-emerald-500/30">
+              <span className="inline-flex px-1.5 py-0.5 rounded-[3px] text-xs font-mono font-bold bg-emerald-950/60 text-emerald-400 border border-emerald-500/30">
                 TRUE
               </span>
             ) : (
-              <span className="inline-flex px-1.5 py-0.2 rounded text-[10px] font-mono font-bold bg-zinc-900 text-zinc-400 border border-zinc-800">
+              <span className="inline-flex px-1.5 py-0.5 rounded-[3px] text-xs font-mono font-bold bg-zinc-900 text-zinc-400 border border-zinc-800">
                 FALSE
               </span>
             );
@@ -239,7 +279,7 @@ export function DataGrid({
             const jsonStr = JSON.stringify(val);
             return (
               <div className="flex items-center justify-between gap-1 group/cell w-full">
-                <span className="truncate text-emerald-400/90 font-mono text-[11px]">
+                <span className="truncate text-emerald-400/90 font-mono text-xs sm:text-[13px]">
                   {jsonStr}
                 </span>
                 <button
@@ -249,7 +289,7 @@ export function DataGrid({
                     setInspectedColumn(col.name);
                     setInspectorOpen(true);
                   }}
-                  className="opacity-0 group-hover/cell:opacity-100 size-5 rounded hover:bg-zinc-800 text-zinc-400 hover:text-white flex items-center justify-center transition-opacity shrink-0 cursor-pointer"
+                  className="opacity-0 group-hover/cell:opacity-100 size-5 rounded-[3px] hover:bg-zinc-800 text-zinc-400 hover:text-white flex items-center justify-center transition-opacity shrink-0 cursor-pointer"
                   title="Expand JSON in inspector"
                 >
                   <HugeiconsIcon icon={ExpandIcon} className="size-3" />
@@ -265,7 +305,7 @@ export function DataGrid({
           return (
             <div className="flex items-center justify-between gap-1 group/cell w-full">
               <span
-                className={`truncate font-mono text-xs ${
+                className={`truncate font-mono text-xs sm:text-[13px] ${
                   col.generic_type === "number" ? "text-right w-full text-zinc-200" : "text-zinc-300"
                 }`}
                 title={strVal}
@@ -279,7 +319,7 @@ export function DataGrid({
                     e.stopPropagation();
                     copyCellValue(cellKey, val);
                   }}
-                  className="size-5 rounded hover:bg-zinc-800 text-zinc-400 hover:text-white flex items-center justify-center cursor-pointer"
+                  className="size-5 rounded-[3px] hover:bg-zinc-800 text-zinc-400 hover:text-white flex items-center justify-center cursor-pointer"
                   title="Copy cell value"
                 >
                   {isCopied ? (
@@ -297,7 +337,7 @@ export function DataGrid({
                       setInspectedColumn(col.name);
                       setInspectorOpen(true);
                     }}
-                    className="size-5 rounded hover:bg-zinc-800 text-zinc-400 hover:text-white flex items-center justify-center cursor-pointer"
+                    className="size-5 rounded-[3px] hover:bg-zinc-800 text-zinc-400 hover:text-white flex items-center justify-center cursor-pointer"
                     title="View full text in inspector"
                   >
                     <HugeiconsIcon icon={ExpandIcon} className="size-3" />
@@ -312,12 +352,12 @@ export function DataGrid({
       });
     }
 
-    // 3. Row Actions Column (Pencil Edit, Trash Delete)
+    // 3. Row Actions Column (Edit, Delete)
     if (canMutate && (onEditRow || onDeleteRow)) {
       cols.push({
         id: "__actions",
         header: () => (
-          <span className="text-[10px] font-mono text-zinc-400 select-none">Actions</span>
+          <span className="text-xs font-mono text-zinc-400 select-none">Actions</span>
         ),
         cell: (info) => {
           const rowData = info.row.original;
@@ -330,10 +370,10 @@ export function DataGrid({
                     e.stopPropagation();
                     onEditRow(rowData);
                   }}
-                  className="size-6 rounded hover:bg-zinc-800 text-zinc-400 hover:text-blue-400 flex items-center justify-center transition-colors cursor-pointer"
+                  className="size-6 rounded-[3px] hover:bg-zinc-800 text-zinc-400 hover:text-blue-400 flex items-center justify-center transition-colors cursor-pointer"
                   title="Edit record"
                 >
-                  <HugeiconsIcon icon={PencilIcon} className="size-3" />
+                  <HugeiconsIcon icon={Edit02Icon} className="size-3.5" />
                 </button>
               )}
 
@@ -344,10 +384,10 @@ export function DataGrid({
                     e.stopPropagation();
                     onDeleteRow(rowData);
                   }}
-                  className="size-6 rounded hover:bg-zinc-800 text-zinc-400 hover:text-red-400 flex items-center justify-center transition-colors cursor-pointer"
+                  className="size-6 rounded-[3px] hover:bg-zinc-800 text-zinc-400 hover:text-red-400 flex items-center justify-center transition-colors cursor-pointer"
                   title="Delete record"
                 >
-                  <HugeiconsIcon icon={TrashIcon} className="size-3" />
+                  <HugeiconsIcon icon={Delete02Icon} className="size-3.5" />
                 </button>
               )}
             </div>
@@ -441,12 +481,12 @@ export function DataGrid({
           </thead>
 
           {/* Virtual Body */}
-          <tbody className="divide-y divide-zinc-900/60 font-mono text-xs">
+          <tbody className="divide-y divide-zinc-900/60 font-mono text-xs sm:text-[13px]">
             {isLoading && rows.length === 0 ? (
               <tr>
                 <td
                   colSpan={tableColumns.length}
-                  className="py-16 text-center text-zinc-500 text-xs font-mono"
+                  className="py-16 text-center text-zinc-500 text-xs sm:text-sm font-mono"
                 >
                   <div className="flex items-center justify-center gap-2">
                     <span className="size-2 rounded-full bg-emerald-400 animate-pulse" />
@@ -458,7 +498,7 @@ export function DataGrid({
               <tr>
                 <td
                   colSpan={tableColumns.length}
-                  className="py-16 text-center text-zinc-500 text-xs font-mono"
+                  className="py-16 text-center text-zinc-500 text-xs sm:text-sm font-mono"
                 >
                   No rows found matching current filters.
                 </td>
@@ -486,7 +526,7 @@ export function DataGrid({
                         <td
                           key={cell.id}
                           style={{ width: cell.column.getSize() }}
-                          className="px-2.5 py-1.5 text-xs border-r border-zinc-900/40 last:border-r-0 truncate max-w-0"
+                          className="px-2.5 py-1.5 text-xs sm:text-[13px] border-r border-zinc-900/40 last:border-r-0 truncate max-w-0"
                         >
                           {flexRender(cell.column.columnDef.cell, cell.getContext())}
                         </td>

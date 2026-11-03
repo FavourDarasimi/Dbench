@@ -89,6 +89,26 @@
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
   }
+
+  /* ---- Dark Precision Scrollbar (Neon/Dbench Theme) ---- */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: #070709;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #27272a;
+    border-radius: 3px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #3f3f46;
+  }
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: #27272a #070709;
+  }
 }
 
 /* ---- Linear / Raycast Dark Precision Landing Theme Utilities ---- */
@@ -230,4 +250,23 @@
 
 .animate-node-glow {
   animation: node-glow 3s ease-in-out infinite;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: #070709;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #27272a;
+  border-radius: 3px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #3f3f46;
+}
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #27272a #070709;
 }

@@ -9,9 +9,8 @@ import {
   CodeIcon,
   DatabaseIcon,
   Layers01Icon,
-  PanelLeftCloseIcon,
-  PanelLeftOpenIcon,
   PlusSignIcon,
+  ReloadIcon,
   Search01Icon,
   TableIcon,
   ViewIcon,
@@ -67,7 +66,12 @@ export default function TablesPage() {
   const connId = activeConn?.id;
 
   // Introspect schema tree for active connection
-  const { data: schemaTreeData, isLoading: isSchemaLoading } = useQuery<SchemaTreeResponse>({
+  const {
+    data: schemaTreeData,
+    isLoading: isSchemaLoading,
+    refetch: refetchSchema,
+    isFetching: isSchemaFetching,
+  } = useQuery<SchemaTreeResponse>({
     queryKey: ["schema-tree", connId],
     queryFn: () => apiGet<SchemaTreeResponse>(`/connections/${connId}/schema-tree/`),
     enabled: Boolean(connId),
@@ -135,7 +139,7 @@ export default function TablesPage() {
   if (!connections || connections.length === 0) {
     return (
       <div className="flex h-full flex-col items-center justify-center p-8 text-center text-zinc-400 select-none bg-black">
-        <div className="size-16 rounded-2xl bg-emerald-950/40 border border-emerald-500/20 flex items-center justify-center text-emerald-400 shadow-[0_0_24px_rgba(16,185,129,0.15)] mb-6">
+        <div className="size-16 rounded-[3px] bg-emerald-950/40 border border-emerald-500/20 flex items-center justify-center text-emerald-400 shadow-[0_0_24px_rgba(16,185,129,0.15)] mb-6">
           <HugeiconsIcon icon={DatabaseIcon} className="size-8" />
         </div>
         <h2 className="text-2xl font-bold tracking-tight text-white mb-2">
@@ -146,7 +150,7 @@ export default function TablesPage() {
         </p>
         <Link
           href="/connections"
-          className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-xs font-mono font-bold text-zinc-950 transition-all shadow-lg shadow-emerald-500/20"
+          className="inline-flex items-center gap-2 px-5 py-3 rounded-[3px] bg-emerald-500 hover:bg-emerald-400 text-xs font-mono font-bold text-zinc-950 transition-all shadow-lg shadow-emerald-500/20"
         >
           <HugeiconsIcon icon={PlusSignIcon} className="size-4" />
           <span>Add Connection</span>
@@ -155,21 +159,28 @@ export default function TablesPage() {
     );
   }
 
-  // Active table tab
-  const activeTab: WorkspaceTab | null = selectedTable && connId
+  // Active table tab (derived with immediate fallback to avoid render lag)
+  const activeTableName =
+    selectedTable &&
+    selectedTable.schema === selectedSchema &&
+    currentSchemaTables.some((t) => t.name === selectedTable.table)
+      ? selectedTable.table
+      : currentSchemaTables[0]?.name;
+
+  const activeTab: WorkspaceTab | null = activeTableName && connId
     ? tabs.find(
         (t) =>
           t.type === "browser" &&
           t.connectionId === connId &&
-          t.schema === selectedTable.schema &&
-          t.table === selectedTable.table
+          t.schema === selectedSchema &&
+          t.table === activeTableName
       ) || {
-        id: `browser-${connId}-${selectedTable.schema}-${selectedTable.table}`,
-        title: `${selectedTable.schema}.${selectedTable.table}`,
+        id: `browser-${connId}-${selectedSchema}-${activeTableName}`,
+        title: `${selectedSchema}.${activeTableName}`,
         type: "browser",
         connectionId: connId,
-        schema: selectedTable.schema,
-        table: selectedTable.table,
+        schema: selectedSchema,
+        table: activeTableName,
         isDirty: false,
       }
     : null;
@@ -180,32 +191,46 @@ export default function TablesPage() {
         Neon Database Tables Layout:
         Left Pane: Schema & Table Browser
       */}
-      {tablesRailCollapsed ? (
-        <button
-          type="button"
-          onClick={() => setTablesRailCollapsed(false)}
-          aria-label="Expand tables list"
-          title="Expand tables list"
-          className="flex h-full w-8 shrink-0 flex-col items-center justify-start pt-3 border-r border-zinc-800 bg-[#080808] text-zinc-500 hover:text-white transition-colors cursor-pointer"
-        >
-          <HugeiconsIcon icon={PanelLeftOpenIcon} className="size-4" />
-        </button>
-      ) : (
+      {!tablesRailCollapsed && (
         <aside className="flex h-full w-60 sm:w-64 shrink-0 flex-col border-r border-zinc-800 bg-[#070709]">
-          {/* Top Header: Schema Selector & Collapse Button */}
-          <div className="flex items-center justify-between p-2.5 border-b border-zinc-800/80 bg-[#0a0a0d]">
+          {/* Header row: Database title and schema selector */}
+          <div className="p-3 border-b border-zinc-800/80 bg-[#0a0a0d] space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-xs sm:text-sm font-bold text-white tracking-tight">Tables</span>
+              <span className="text-[11px] font-mono text-zinc-500 truncate max-w-[120px]">
+                {activeConn?.db_name || activeConn?.name}
+              </span>
+            </div>
+
+            {/* Database Engine / Type (Disabled Input) */}
+            <div>
+              <input
+                type="text"
+                disabled
+                value={
+                  activeConn?.engine === "postgres"
+                    ? "PostgreSQL"
+                    : activeConn?.engine === "mysql"
+                    ? "MySQL"
+                    : activeConn?.engine || "PostgreSQL"
+                }
+                className="w-full px-2.5 py-1.5 rounded-[3px] bg-zinc-950/80 border border-zinc-800 text-xs sm:text-sm font-mono text-zinc-400 select-none cursor-not-allowed opacity-90"
+                title="Database Type"
+              />
+            </div>
+
             {/* Schema Selector Dropdown */}
-            <div className="relative flex-1 mr-1">
+            <div className="relative">
               <button
                 type="button"
                 onClick={() => setSchemaDropdownOpen((prev) => !prev)}
-                className="flex w-full items-center justify-between gap-1.5 px-2 py-1.5 rounded-md bg-zinc-900/80 hover:bg-zinc-800 border border-zinc-800 text-xs font-medium text-zinc-200 transition-colors cursor-pointer"
+                className="flex w-full items-center justify-between gap-1.5 px-2.5 py-1.5 rounded-[3px] bg-zinc-900/90 hover:bg-zinc-800 border border-zinc-700 text-xs sm:text-sm font-medium text-zinc-200 transition-colors cursor-pointer"
               >
                 <div className="flex items-center gap-1.5 truncate">
                   <HugeiconsIcon icon={Layers01Icon} className="size-3.5 text-emerald-400 shrink-0" />
                   <span className="truncate">{selectedSchema}</span>
                 </div>
-                <HugeiconsIcon icon={ChevronDownIcon} className="size-3 text-zinc-500 shrink-0" />
+                <HugeiconsIcon icon={ChevronDownIcon} className="size-3 text-zinc-400 shrink-0" />
               </button>
 
               {/* Schema Menu */}
@@ -215,8 +240,8 @@ export default function TablesPage() {
                     className="fixed inset-0 z-30"
                     onClick={() => setSchemaDropdownOpen(false)}
                   />
-                  <div className="absolute left-0 top-full mt-1 w-full z-40 rounded-lg bg-zinc-950 border border-zinc-800 py-1 shadow-2xl">
-                    <div className="px-2 py-1 text-[10px] font-semibold text-zinc-500 uppercase tracking-wider">
+                  <div className="absolute left-0 top-full mt-1 w-full z-40 rounded-[3px] bg-zinc-950 border border-zinc-700 py-1 shadow-2xl">
+                    <div className="px-2.5 py-1 text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">
                       Schemas
                     </div>
                     {availableSchemas.map((schema) => (
@@ -228,7 +253,7 @@ export default function TablesPage() {
                           setSchemaDropdownOpen(false);
                         }}
                         className={cn(
-                          "flex w-full items-center gap-2 px-2.5 py-1.5 text-xs text-left transition-colors cursor-pointer",
+                          "flex w-full items-center gap-2 px-2.5 py-1.5 text-xs sm:text-sm text-left transition-colors cursor-pointer",
                           schema === selectedSchema
                             ? "bg-zinc-800 text-emerald-400 font-medium"
                             : "text-zinc-400 hover:bg-zinc-900 hover:text-zinc-200"
@@ -242,44 +267,47 @@ export default function TablesPage() {
               )}
             </div>
 
-            {/* Collapse Rail Button */}
-            <button
-              type="button"
-              onClick={() => setTablesRailCollapsed(true)}
-              aria-label="Collapse tables list"
-              title="Collapse tables list"
-              className="flex size-7 shrink-0 items-center justify-center rounded-md text-zinc-400 hover:bg-zinc-800 hover:text-white transition-colors cursor-pointer"
-            >
-              <HugeiconsIcon icon={PanelLeftCloseIcon} className="size-3.5" />
-            </button>
-          </div>
+            {/* Search row with filter and refresh button */}
+            <div className="flex items-center gap-1.5 pt-0.5">
+              <div className="relative flex-1">
+                <HugeiconsIcon
+                  icon={Search01Icon}
+                  className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3 text-zinc-500 pointer-events-none"
+                />
+                <input
+                  type="text"
+                  value={tableSearch}
+                  onChange={(e) => setTableSearch(e.target.value)}
+                  placeholder="Search..."
+                  className="w-full pl-7 pr-2 py-1 rounded-[3px] bg-zinc-950 border border-zinc-700 text-xs sm:text-sm text-zinc-200 placeholder:text-zinc-500 focus:outline-none focus:border-emerald-500/50"
+                />
+              </div>
 
-          {/* Search Table Input */}
-          <div className="p-2 border-b border-zinc-800/60">
-            <div className="relative">
-              <HugeiconsIcon
-                icon={Search01Icon}
-                className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3 text-zinc-500 pointer-events-none"
-              />
-              <input
-                type="text"
-                value={tableSearch}
-                onChange={(e) => setTableSearch(e.target.value)}
-                placeholder="Filter tables..."
-                className="w-full pl-7 pr-2.5 py-1 rounded-md bg-zinc-950 border border-zinc-800 text-xs text-zinc-200 placeholder:text-zinc-600 focus:outline-none focus:border-emerald-500/50"
-              />
+              {/* Quick reload schema */}
+              <button
+                type="button"
+                onClick={() => refetchSchema()}
+                disabled={isSchemaFetching}
+                title="Refresh tables"
+                className="flex size-7 items-center justify-center rounded-[3px] border border-zinc-700 bg-zinc-900/60 hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors cursor-pointer shrink-0"
+              >
+                <HugeiconsIcon
+                  icon={ReloadIcon}
+                  className={cn("size-3", isSchemaFetching && "animate-spin text-emerald-400")}
+                />
+              </button>
             </div>
           </div>
 
-          {/* Tables List */}
-          <div className="flex-1 overflow-y-auto p-1.5 space-y-0.5">
+          {/* Tables List with dark custom scrollbar */}
+          <div className="flex-1 overflow-y-auto p-1.5 space-y-0.5 custom-scrollbar">
             {isSchemaLoading ? (
-              <div className="flex items-center justify-center p-6 text-zinc-500 text-xs">
+              <div className="flex items-center justify-center p-6 text-zinc-500 text-xs sm:text-sm">
                 <Spinner className="size-4 text-emerald-400 mr-2" />
                 <span>Loading tables...</span>
               </div>
             ) : filteredTables.length === 0 ? (
-              <div className="p-4 text-center text-xs text-zinc-500">
+              <div className="p-4 text-center text-xs sm:text-sm text-zinc-500">
                 {tableSearch ? "No matching tables" : "No tables in schema"}
               </div>
             ) : (
@@ -293,10 +321,10 @@ export default function TablesPage() {
                     type="button"
                     onClick={() => handleSelectTable(tbl.name)}
                     className={cn(
-                      "group flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-xs text-left outline-none transition-colors cursor-pointer",
+                      "group flex w-full items-center gap-2 rounded-[3px] px-2.5 py-1.5 text-xs sm:text-[13px] text-left outline-none transition-colors cursor-pointer",
                       isSelected
-                        ? "bg-zinc-800/90 text-white font-medium shadow-sm"
-                        : "text-zinc-400 hover:bg-zinc-900/60 hover:text-zinc-200"
+                        ? "bg-zinc-800 text-white font-medium shadow-sm"
+                        : "text-zinc-400 hover:bg-zinc-900/70 hover:text-zinc-200"
                     )}
                   >
                     <HugeiconsIcon
@@ -310,7 +338,7 @@ export default function TablesPage() {
                     />
                     <span className="truncate flex-1">{tbl.name}</span>
                     {typeof tbl.row_count_estimate === "number" && (
-                      <span className="text-[10px] text-zinc-600 group-hover:text-zinc-500 shrink-0">
+                      <span className="text-[11px] text-zinc-500 group-hover:text-zinc-400 shrink-0 font-normal">
                         {tbl.row_count_estimate > 999
                           ? `${(tbl.row_count_estimate / 1000).toFixed(1)}k`
                           : tbl.row_count_estimate}
@@ -328,15 +356,21 @@ export default function TablesPage() {
         Main Area: Spreadsheet / Data Browser View
       */}
       <div className="flex-1 flex flex-col h-full min-w-0 overflow-hidden bg-[#050505]">
-        {activeTab ? (
+        {isSchemaLoading ? (
+          <div className="flex-1 flex items-center justify-center bg-[#050505]">
+            <Spinner className="size-6 text-emerald-400" />
+          </div>
+        ) : activeTab ? (
           <DataBrowserView
             key={activeTab.id}
             tab={activeTab}
             connection={activeConn}
+            onToggleRail={() => setTablesRailCollapsed((prev) => !prev)}
+            isRailCollapsed={tablesRailCollapsed}
           />
         ) : (
           <div className="flex-1 flex flex-col items-center justify-center p-8 text-center text-zinc-400 select-none">
-            <div className="size-16 rounded-2xl bg-emerald-950/40 border border-emerald-500/20 flex items-center justify-center text-emerald-400 shadow-[0_0_24px_rgba(16,185,129,0.15)] mb-4">
+            <div className="size-16 rounded-[3px] bg-emerald-950/40 border border-emerald-500/20 flex items-center justify-center text-emerald-400 shadow-[0_0_24px_rgba(16,185,129,0.15)] mb-4">
               <HugeiconsIcon icon={TableIcon} className="size-8" />
             </div>
             <h3 className="text-xl font-bold tracking-tight text-white mb-2">
@@ -347,7 +381,7 @@ export default function TablesPage() {
             </p>
             <Link
               href="/sql"
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-xs font-mono font-bold text-zinc-950 transition-all shadow-lg shadow-emerald-500/20 cursor-pointer"
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-[3px] bg-emerald-500 hover:bg-emerald-400 text-xs font-mono font-bold text-zinc-950 transition-all shadow-lg shadow-emerald-500/20 cursor-pointer"
             >
               <HugeiconsIcon icon={CodeIcon} className="size-4" />
               <span>Open SQL Editor</span>

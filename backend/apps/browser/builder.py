@@ -52,6 +52,7 @@ class BrowseQueryBuilder:
         filters: list[dict[str, Any]] | None = None,
         search: str | None = None,
         cursor: dict[str, Any] | None = None,
+        select_columns: list[str] | str | None = None,
     ):
         self.schema = schema.strip()
         self.table = table.strip()
@@ -65,6 +66,26 @@ class BrowseQueryBuilder:
         self.filters = filters or []
         self.search = (search or "").strip()
         self.cursor = cursor
+        self.select_columns = self._normalize_select_columns(select_columns)
+
+    def _normalize_select_columns(self, cols_input: Any) -> list[str] | None:
+        """Validate and normalize requested projection columns against table metadata."""
+        if not cols_input:
+            return None
+        if isinstance(cols_input, str):
+            cols = [c.strip() for c in cols_input.split(",") if c.strip()]
+        elif isinstance(cols_input, (list, tuple)):
+            cols = [str(c).strip() for c in cols_input if str(c).strip()]
+        else:
+            return None
+
+        if not cols or "*" in cols:
+            return None
+
+        for c in cols:
+            if c not in self.columns_by_name:
+                raise ValidationError(f"Invalid projected column: '{c}' does not exist in table.")
+        return cols
 
     def _normalize_sort(self, sort_input: Any) -> list[tuple[str, str]]:
         """Normalize various sort inputs into list of (column, 'ASC'|'DESC')."""
@@ -201,7 +222,12 @@ class BrowseQueryBuilder:
             offset = (self.page - 1) * self.page_size
             limit_sql = f" LIMIT {self.page_size} OFFSET {offset}"
 
-        sql = f"SELECT * FROM {table_ref}{where_sql}{order_sql}{limit_sql};"
+        if self.select_columns:
+            projection = ", ".join(self._quote(c) for c in self.select_columns)
+        else:
+            projection = "*"
+
+        sql = f"SELECT {projection} FROM {table_ref}{where_sql}{order_sql}{limit_sql};"
         return sql, params
 
     def build_count_query(self) -> tuple[str, list[Any]]:

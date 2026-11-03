@@ -69,6 +69,34 @@ class PostgresDriver(BaseDriver):
                 raise DriverAuthenticationError(f"Authentication failed for user '{self.username}': {msg}", exc) from exc
             raise DriverConnectionError(f"Cannot connect to PostgreSQL at {self.host}:{self.port}/{self.db_name}: {msg}", exc) from exc
 
+    def _acquire_connection(self, timeout: int = 10) -> tuple[psycopg.Connection, bool]:
+        """
+        Acquire a pooled connection if pooling is enabled, otherwise open direct.
+        Returns (connection, is_pooled).
+        """
+        if self.config.get("use_pool", False):
+            try:
+                managed = pool_manager.get_pg_pool(self.config)
+                conn = managed.pool.getconn(timeout=timeout)
+                return conn, True
+            except Exception as exc:
+                logger.debug("Pooled connection failed, falling back to direct: %s", exc)
+        return self._open_direct_connection(timeout=timeout), False
+
+    def _release_connection(self, conn: psycopg.Connection, is_pooled: bool = False):
+        """Return pooled connection to pool or close direct connection."""
+        if is_pooled:
+            try:
+                managed = pool_manager.get_pg_pool(self.config)
+                managed.pool.putconn(conn)
+                return
+            except Exception as exc:
+                logger.debug("Failed returning connection to pool: %s", exc)
+        try:
+            conn.close()
+        except Exception:
+            pass
+
     def test_connection(self) -> TestResult:
         started = time.perf_counter()
         try:
@@ -97,8 +125,8 @@ class PostgresDriver(BaseDriver):
         started = time.perf_counter()
         conn_id = self.config.get("id")
 
-        # Open connection
-        conn = self._open_direct_connection(timeout=min(timeout, 10))
+        # Open or acquire connection
+        conn, is_pooled = self._acquire_connection(timeout=min(timeout, 10))
         backend_pid = conn.info.backend_pid
 
         if run_id:
@@ -186,10 +214,7 @@ class PostgresDriver(BaseDriver):
         finally:
             if run_id:
                 run_tracker.unregister(run_id)
-            try:
-                conn.close()
-            except Exception:
-                pass
+            self._release_connection(conn, is_pooled)
 
     def stream_query(
         self,
@@ -278,10 +303,13 @@ class PostgresDriver(BaseDriver):
               AND schema_name NOT LIKE 'pg_toast_temp_%'
             ORDER BY schema_name;
         """
-        with self._open_direct_connection() as conn:
+        conn, is_pooled = self._acquire_connection(timeout=6)
+        try:
             with conn.cursor() as cur:
                 cur.execute(sql)
                 return [row[0] for row in cur.fetchall()]
+        finally:
+            self._release_connection(conn, is_pooled)
 
     def list_tables(self, schema: str) -> list[TableMeta]:
         sql = """
@@ -295,7 +323,8 @@ class PostgresDriver(BaseDriver):
             WHERE t.table_schema = %s
             ORDER BY t.table_name;
         """
-        with self._open_direct_connection() as conn:
+        conn, is_pooled = self._acquire_connection(timeout=6)
+        try:
             with conn.cursor() as cur:
                 cur.execute(sql, (schema,))
                 tables = []
@@ -310,6 +339,8 @@ class PostgresDriver(BaseDriver):
                         )
                     )
                 return tables
+        finally:
+            self._release_connection(conn, is_pooled)
 
     def describe_table(self, schema: str, table: str) -> list[ColumnMeta]:
         col_sql = """
@@ -353,7 +384,8 @@ class PostgresDriver(BaseDriver):
               AND tc.constraint_type = 'FOREIGN KEY';
         """
 
-        with self._open_direct_connection() as conn:
+        conn, is_pooled = self._acquire_connection(timeout=6)
+        try:
             with conn.cursor() as cur:
                 # 1. Columns
                 cur.execute(col_sql, (schema, table))
@@ -373,6 +405,8 @@ class PostgresDriver(BaseDriver):
                         target_column=f_col,
                         constraint_name=c_name,
                     )
+        finally:
+            self._release_connection(conn, is_pooled)
 
         result: list[ColumnMeta] = []
         for name, dtype, udt, is_null, default, _ord in cols_data:
@@ -435,7 +469,8 @@ class PostgresDriver(BaseDriver):
               AND tc.constraint_type = 'FOREIGN KEY';
         """
 
-        with self._open_direct_connection() as conn:
+        conn, is_pooled = self._acquire_connection(timeout=10)
+        try:
             with conn.cursor() as cur:
                 cur.execute(all_cols_sql, (schema,))
                 cols_rows = cur.fetchall()
@@ -466,6 +501,8 @@ class PostgresDriver(BaseDriver):
                         "target_column": f_col,
                         "constraint_name": c_name,
                     })
+        finally:
+            self._release_connection(conn, is_pooled)
 
         tables_dict: dict[str, list[dict[str, Any]]] = {}
         for t_name, c_name, dtype, udt, is_null, default, _ord in cols_rows:

@@ -14,6 +14,7 @@ class BrowseRequestSerializer(serializers.Serializer):
     filters = serializers.CharField(required=False, allow_blank=True, default="")
     search = serializers.CharField(required=False, allow_blank=True, default="")
     cursor = serializers.CharField(required=False, allow_blank=True, default="")
+    columns = serializers.CharField(required=False, allow_blank=True, default="")
 
     def to_parsed_params(self) -> dict[str, Any]:
         data = dict(self.validated_data)

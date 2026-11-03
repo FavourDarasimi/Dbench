@@ -133,7 +133,7 @@ export function WorkspaceTabs({ onOpenCommandPalette, filterType }: WorkspaceTab
               {/* Saved Queries Drawer Button (PRD F9) */}
               <button
                 onClick={() => setSavedQueriesOpen(true)}
-                className="flex items-center gap-1 px-2.5 py-1 rounded-md bg-[#050505] hover:bg-zinc-900 border border-zinc-800 text-[11px] font-mono text-zinc-400 hover:text-emerald-300 transition-colors cursor-pointer"
+                className="flex items-center gap-1 px-2.5 py-1 rounded-[3px] bg-[#050505] hover:bg-zinc-900 border border-zinc-700 text-xs font-mono text-zinc-300 hover:text-white transition-colors cursor-pointer"
                 title="Open Saved Queries"
               >
                 <HugeiconsIcon icon={Bookmark02Icon} className="size-3 text-emerald-400" />
@@ -143,7 +143,7 @@ export function WorkspaceTabs({ onOpenCommandPalette, filterType }: WorkspaceTab
               {/* Query History Drawer Button (PRD F9) */}
               <button
                 onClick={handleOpenHistory}
-                className="relative flex items-center gap-1 px-2.5 py-1 rounded-md bg-[#050505] hover:bg-zinc-900 border border-zinc-800 text-[11px] font-mono text-zinc-400 hover:text-emerald-300 transition-colors cursor-pointer"
+                className="relative flex items-center gap-1 px-2.5 py-1 rounded-[3px] bg-[#050505] hover:bg-zinc-900 border border-zinc-700 text-xs font-mono text-zinc-300 hover:text-white transition-colors cursor-pointer"
                 title="Open Query Execution History"
               >
                 <HugeiconsIcon icon={Time04Icon} className="size-3 text-emerald-400" />
@@ -161,10 +161,10 @@ export function WorkspaceTabs({ onOpenCommandPalette, filterType }: WorkspaceTab
           {onOpenCommandPalette && (
             <button
               onClick={onOpenCommandPalette}
-              className="hidden lg:flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#050505] hover:bg-zinc-900 border border-zinc-800 text-[11px] font-mono text-zinc-400 hover:text-white transition-colors cursor-pointer"
+              className="hidden lg:flex items-center gap-1.5 px-2.5 py-1 rounded-[3px] bg-[#050505] hover:bg-zinc-900 border border-zinc-700 text-xs font-mono text-zinc-300 hover:text-white transition-colors cursor-pointer"
               title="Open Command Palette (⌘K)"
             >
-              <HugeiconsIcon icon={Search01Icon} className="size-3 text-zinc-500" />
+              <HugeiconsIcon icon={Search01Icon} className="size-3 text-zinc-400" />
               <span>Commands</span>
               <kbd className="px-1 py-0.2 rounded bg-zinc-800 text-[9px] text-zinc-400">⌘K</kbd>
             </button>
@@ -179,7 +179,7 @@ export function WorkspaceTabs({ onOpenCommandPalette, filterType }: WorkspaceTab
                 }
               }}
               disabled={!activeConnectionId}
-              className="flex items-center gap-1 px-2.5 py-1 rounded-md bg-[#050505] hover:bg-zinc-900 border border-zinc-800 text-[11px] font-mono text-zinc-400 hover:text-emerald-300 transition-colors shrink-0 disabled:opacity-40 cursor-pointer"
+              className="flex items-center gap-1 px-2.5 py-1 rounded-[3px] bg-[#050505] hover:bg-zinc-900 border border-zinc-700 text-xs font-mono text-zinc-300 hover:text-white transition-colors shrink-0 disabled:opacity-40 cursor-pointer"
               title="Open new SQL Query tab"
             >
               <HugeiconsIcon icon={PlusSignIcon} className="size-3 text-emerald-400" />

@@ -37,6 +37,11 @@ class QueryHistory(models.Model):
     class Meta:
         ordering = ("-created_at",)
         verbose_name_plural = "query histories"
+        indexes = [
+            models.Index(fields=["user", "-created_at"]),
+            models.Index(fields=["connection", "-created_at"]),
+            models.Index(fields=["user", "connection", "-created_at"]),
+        ]
 
     def __str__(self):
         return f"{self.user.email} - {self.status} ({self.duration_ms}ms) [{self.created_at}]"
@@ -59,6 +64,10 @@ class SavedQuery(models.Model):
     class Meta:
         ordering = ("-updated_at",)
         verbose_name_plural = "saved queries"
+        indexes = [
+            models.Index(fields=["owner", "-updated_at"]),
+            models.Index(fields=["owner", "connection", "-updated_at"]),
+        ]
 
     def __str__(self):
         return f"{self.title} ({self.owner.email})"
