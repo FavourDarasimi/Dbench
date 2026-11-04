@@ -37,15 +37,16 @@ export interface Connection {
 
 export interface ConnectionPayload {
   name: string;
-  engine: Engine;
-  host: string;
-  port: number;
-  db_name: string;
-  username: string;
+  engine?: Engine;
+  host?: string;
+  port?: number;
+  db_name?: string;
+  username?: string;
   password?: string;
-  ssl_mode: SslMode;
-  read_only: boolean;
-  ssh_config: { enabled: boolean; host: string; port: number; username: string; password?: string };
+  database_url?: string;
+  ssl_mode?: SslMode;
+  read_only?: boolean;
+  ssh_config?: { enabled: boolean; host: string; port: number; username: string; password?: string };
 }
 
 export interface TestResult {
