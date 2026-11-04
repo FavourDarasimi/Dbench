@@ -2,6 +2,30 @@ import { create } from "zustand";
 import type { WorkspaceTab } from "@/lib/types";
 
 const NAV_STORAGE_KEY = "dbench:nav-collapsed";
+const ACTIVE_CONN_STORAGE_KEY = "dbench:active-connection-id";
+
+/** The active database connection ID survives reloads. */
+function readActiveConnectionId(): string | null {
+  if (typeof window === "undefined") return null;
+  try {
+    return window.localStorage.getItem(ACTIVE_CONN_STORAGE_KEY);
+  } catch {
+    return null;
+  }
+}
+
+function writeActiveConnectionId(id: string | null) {
+  if (typeof window === "undefined") return;
+  try {
+    if (id) {
+      window.localStorage.setItem(ACTIVE_CONN_STORAGE_KEY, id);
+    } else {
+      window.localStorage.removeItem(ACTIVE_CONN_STORAGE_KEY);
+    }
+  } catch {
+    // Private mode / quota
+  }
+}
 
 /** The rail collapses to an icon strip on desktop; the choice survives reloads. */
 function readNavCollapsed(): boolean {
@@ -54,7 +78,7 @@ interface WorkspaceState {
 }
 
 export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
-  activeConnectionId: null,
+  activeConnectionId: readActiveConnectionId(),
   tabs: [],
   activeTabId: null,
   activeView: "table",
@@ -64,7 +88,16 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
   navOpen: false,
 
   setActiveConnectionId: (id) => {
-    set({ activeConnectionId: id });
+    const currentId = get().activeConnectionId;
+    writeActiveConnectionId(id);
+    if (currentId !== id) {
+      set({
+        activeConnectionId: id,
+        selectedTable: null,
+      });
+    } else {
+      set({ activeConnectionId: id });
+    }
   },
 
   setActiveView: (view) => set({ activeView: view }),
@@ -72,6 +105,7 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
   setSelectedTable: (table) => set({ selectedTable: table }),
 
   openBrowserTab: (connectionId, schema, table, initialFilter) => {
+    writeActiveConnectionId(connectionId);
     const { tabs } = get();
     const existing = tabs.find(
       (t) =>
@@ -123,6 +157,7 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
   },
 
   openSqlTab: (connectionId, initialSql, customTitle) => {
+    writeActiveConnectionId(connectionId);
     const { tabs } = get();
     const sqlTabsCount = tabs.filter((t) => t.type === "sql").length;
     const tabId = `sql-${Date.now()}`;
@@ -179,6 +214,7 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
   setActiveTab: (tabId) => {
     const tab = get().tabs.find((t) => t.id === tabId);
     if (tab) {
+      writeActiveConnectionId(tab.connectionId);
       if (tab.type === "browser") {
         set({
           activeTabId: tabId,

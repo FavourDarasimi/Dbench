@@ -35,10 +35,12 @@ export default function VisualizerPage() {
     queryFn: () => api<Connection[]>("/connections/"),
   });
 
-  // Automatically select first connection if none active
+  // Automatically select first connection if none active or invalid
   useEffect(() => {
-    if (connections && connections.length > 0 && !activeConnectionId) {
-      setActiveConnectionId(connections[0].id);
+    if (connections && connections.length > 0) {
+      if (!activeConnectionId || !connections.some((c) => c.id === activeConnectionId)) {
+        setActiveConnectionId(connections[0].id);
+      }
     }
   }, [connections, activeConnectionId, setActiveConnectionId]);
 

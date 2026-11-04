@@ -3,13 +3,15 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
+  CheckmarkBadge01Icon,
+  CheckmarkCircle02Icon,
   DatabaseIcon,
   PencilIcon,
   PlayIcon,
   PlusSignIcon,
   TrashIcon,
 } from "@hugeicons/core-free-icons";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { ConnectionForm } from "@/components/connection-form";
 import { Alert } from "@/components/ui/alert";
@@ -19,10 +21,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { api, apiDelete, apiPost } from "@/lib/api";
+import { useWorkspaceStore } from "@/lib/stores/workspace-store";
 import type { Connection, TestResult } from "@/lib/types";
 
 export default function ConnectionsPage() {
   const queryClient = useQueryClient();
+  const { activeConnectionId, setActiveConnectionId } = useWorkspaceStore();
   const { data: connections, isLoading, isError, error } = useQuery({
     queryKey: ["connections"],
     queryFn: () => api<Connection[]>("/connections/"),
@@ -34,6 +38,17 @@ export default function ConnectionsPage() {
   const [testingId, setTestingId] = useState<string | null>(null);
   const [rowResults, setRowResults] = useState<Record<string, TestResult>>({});
   const [deleteError, setDeleteError] = useState<string | null>(null);
+
+  // Synchronize active connection with available connections
+  useEffect(() => {
+    if (connections && connections.length > 0) {
+      if (!activeConnectionId || !connections.some((c) => c.id === activeConnectionId)) {
+        setActiveConnectionId(connections[0].id);
+      }
+    } else if (connections && connections.length === 0 && activeConnectionId) {
+      setActiveConnectionId(null);
+    }
+  }, [connections, activeConnectionId, setActiveConnectionId]);
 
   function refresh() {
     queryClient.invalidateQueries({ queryKey: ["connections"] });
@@ -74,6 +89,10 @@ export default function ConnectionsPage() {
     setDeleteError(null);
     try {
       await apiDelete(`/connections/${deleting.id}/`);
+      if (activeConnectionId === deleting.id) {
+        const remaining = connections?.filter((c) => c.id !== deleting.id) || [];
+        setActiveConnectionId(remaining[0]?.id || null);
+      }
       setDeleting(null);
       refresh();
     } catch (err) {
@@ -175,13 +194,26 @@ export default function ConnectionsPage() {
 
               <TableBody className="divide-y divide-zinc-800/60">
                 {connections.map((connection) => {
+                  const isActive = connection.id === activeConnectionId;
                   return (
                     <TableRow
                       key={connection.id}
-                      className="border-b border-zinc-800/60 hover:bg-zinc-800/30 transition-colors"
+                      className={`border-b border-zinc-800/60 transition-colors ${
+                        isActive
+                          ? "bg-emerald-500/[0.04] border-emerald-500/25 hover:bg-emerald-500/[0.07]"
+                          : "hover:bg-zinc-800/30"
+                      }`}
                     >
                       <TableCell className="font-medium text-white px-4 py-3.5 text-sm">
-                        {connection.name}
+                        <div className="flex items-center gap-2">
+                          <span>{connection.name}</span>
+                          {isActive && (
+                            <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 font-mono">
+                              <span className="size-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                              Active
+                            </span>
+                          )}
+                        </div>
                       </TableCell>
 
                       <TableCell className="px-4 py-3.5">
@@ -216,7 +248,25 @@ export default function ConnectionsPage() {
                       </TableCell>
 
                       <TableCell className="px-4 py-3.5">
-                        <div className="flex justify-end gap-1">
+                        <div className="flex justify-end items-center gap-1.5">
+                          {!isActive ? (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => setActiveConnectionId(connection.id)}
+                              aria-label={`Set ${connection.name} as active`}
+                              className="text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10 border border-emerald-500/25 transition-colors cursor-pointer text-xs h-8 px-2.5 font-medium"
+                            >
+                              <HugeiconsIcon icon={CheckmarkBadge01Icon} className="size-3.5" />
+                              <span>Set active</span>
+                            </Button>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-mono font-medium text-emerald-400">
+                              <HugeiconsIcon icon={CheckmarkCircle02Icon} className="size-3.5" />
+                              <span>Active</span>
+                            </span>
+                          )}
+
                           <Button
                             variant="ghost"
                             size="sm"

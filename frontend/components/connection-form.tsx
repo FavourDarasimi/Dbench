@@ -21,6 +21,7 @@ import { Button } from "@/components/ui/button";
 import { DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { FieldError, Input, Label } from "@/components/ui/input";
 import { api, apiPost, apiPatch } from "@/lib/api";
+import { useWorkspaceStore } from "@/lib/stores/workspace-store";
 import type { Connection, ConnectionPayload, Engine, SslMode, TestResult } from "@/lib/types";
 
 const SSL_MODES: SslMode[] = ["disable", "allow", "prefer", "require", "verify-ca", "verify-full"];
@@ -154,6 +155,7 @@ export function ConnectionForm({
   const [testResult, setTestResult] = useState<TestResult | null>(null);
   const [testing, setTesting] = useState(false);
   const [saving, setSaving] = useState(false);
+  const setActiveConnectionId = useWorkspaceStore((s) => s.setActiveConnectionId);
 
   const { register, handleSubmit, reset, watch, setValue, trigger, getValues, formState } = useForm<FormValues>({
     resolver: zodResolver(manualSchema),
@@ -211,7 +213,10 @@ export function ConnectionForm({
       if (connection) {
         await apiPatch(`/connections/${connection.id}/`, payload);
       } else {
-        await apiPost("/connections/", payload);
+        const created = await apiPost<Connection>("/connections/", payload);
+        if (created?.id) {
+          setActiveConnectionId(created.id);
+        }
       }
       onSaved();
     } catch (err) {
@@ -282,7 +287,10 @@ export function ConnectionForm({
       if (connection) {
         await apiPatch(`/connections/${connection.id}/`, payload);
       } else {
-        await apiPost("/connections/", payload);
+        const created = await apiPost<Connection>("/connections/", payload);
+        if (created?.id) {
+          setActiveConnectionId(created.id);
+        }
       }
       onSaved();
     } catch (err) {

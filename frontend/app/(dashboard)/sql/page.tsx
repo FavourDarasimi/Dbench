@@ -44,24 +44,28 @@ export default function SqlEditorPage() {
     queryFn: () => api<Connection[]>("/connections/"),
   });
 
-  // Automatically select first connection if none active
+  // Automatically select first connection if none active or invalid
   useEffect(() => {
-    if (connections && connections.length > 0 && !activeConnectionId) {
-      setActiveConnectionId(connections[0].id);
+    if (connections && connections.length > 0) {
+      if (!activeConnectionId || !connections.some((c) => c.id === activeConnectionId)) {
+        setActiveConnectionId(connections[0].id);
+      }
     }
   }, [connections, activeConnectionId, setActiveConnectionId]);
 
   const activeConn = connections?.find((c) => c.id === activeConnectionId) || connections?.[0];
   const connId = activeConn?.id;
 
-  // Find active SQL tab
+  // Find active SQL tab for current connection
   const activeSqlTab =
+    tabs.find((t) => t.type === "sql" && t.id === activeTabId && t.connectionId === connId) ||
+    tabs.find((t) => t.type === "sql" && t.connectionId === connId) ||
     tabs.find((t) => t.type === "sql" && t.id === activeTabId) ||
     tabs.find((t) => t.type === "sql");
 
-  // Auto-open an initial SQL query tab if user has none
+  // Auto-open an initial SQL query tab if user has none for active connection
   useEffect(() => {
-    if (connId && !tabs.some((t) => t.type === "sql")) {
+    if (connId && !tabs.some((t) => t.type === "sql" && t.connectionId === connId)) {
       openSqlTab(connId);
     }
   }, [connId, tabs, openSqlTab]);

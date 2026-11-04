@@ -22,6 +22,7 @@ import { api } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { useWorkspaceStore } from "@/lib/stores/workspace-store";
 import { subscribeUserChannel, disconnectPusher } from "@/lib/pusher";
+import { ConnectionSwitcher } from "@/components/sidebar/connection-switcher";
 
 function RealtimeSubscriber() {
   const { data: user } = useCurrentUser();
@@ -108,8 +109,13 @@ function AppSidebar() {
           <CollapseButton collapsed={navCollapsed} />
         </div>
 
-        {/* Generous space between Dbench/Collapse and nav links */}
-        <div className="my-3 border-b border-zinc-800/50 mx-3" />
+        {/* Database Connection Switcher */}
+        <div className="mt-1 mb-1">
+          <ConnectionSwitcher collapsed={navCollapsed} />
+        </div>
+
+        {/* Generous space between Header/Switcher and nav links */}
+        <div className="my-2 border-b border-zinc-800/50 mx-3" />
 
         {/* Navigation items: Tables, SQL Editor, Visualizer, Connections */}
         <nav className="flex flex-col gap-1 px-3">

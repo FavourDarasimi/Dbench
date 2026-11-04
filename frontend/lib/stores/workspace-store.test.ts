@@ -108,4 +108,41 @@ describe("useWorkspaceStore", () => {
     useWorkspaceStore.getState().toggleSidebar();
     expect(useWorkspaceStore.getState().sidebarCollapsed).toBe(true);
   });
+
+  it("persists active connection to localStorage and clears on null", () => {
+    const store: Record<string, string> = {};
+    const mockWindow = {
+      localStorage: {
+        getItem: (k: string) => store[k] ?? null,
+        setItem: (k: string, v: string) => {
+          store[k] = v;
+        },
+        removeItem: (k: string) => {
+          delete store[k];
+        },
+      },
+    };
+    (globalThis as unknown as { window: unknown }).window = mockWindow;
+
+    try {
+      useWorkspaceStore.getState().setActiveConnectionId("conn-456");
+      expect(mockWindow.localStorage.getItem("dbench:active-connection-id")).toBe("conn-456");
+
+      useWorkspaceStore.getState().setActiveConnectionId(null);
+      expect(mockWindow.localStorage.getItem("dbench:active-connection-id")).toBeNull();
+    } finally {
+      delete (globalThis as unknown as { window?: unknown }).window;
+    }
+  });
+
+  it("resets selectedTable when active connection changes", () => {
+    useWorkspaceStore.getState().setActiveConnectionId("conn-1");
+    useWorkspaceStore.getState().setSelectedTable({ schema: "public", table: "users" });
+    expect(useWorkspaceStore.getState().selectedTable).toEqual({ schema: "public", table: "users" });
+
+    // Switching to another connection resets selectedTable
+    useWorkspaceStore.getState().setActiveConnectionId("conn-2");
+    expect(useWorkspaceStore.getState().activeConnectionId).toBe("conn-2");
+    expect(useWorkspaceStore.getState().selectedTable).toBeNull();
+  });
 });
