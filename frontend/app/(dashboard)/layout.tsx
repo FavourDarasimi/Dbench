@@ -110,7 +110,7 @@ function AppSidebar() {
         </div>
 
         {/* Database Connection Switcher */}
-        <div className="mt-1 mb-1">
+        <div className="px-3 my-1">
           <ConnectionSwitcher collapsed={navCollapsed} />
         </div>
 

@@ -6,7 +6,7 @@ import {
   CheckmarkBadge01Icon,
   CheckmarkCircle02Icon,
   DatabaseIcon,
-  PencilIcon,
+  Edit02Icon,
   PlayIcon,
   PlusSignIcon,
   TrashIcon,
@@ -17,7 +17,7 @@ import { ConnectionForm } from "@/components/connection-form";
 import { Alert } from "@/components/ui/alert";
 import { Spinner } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { api, apiDelete, apiPost } from "@/lib/api";
@@ -126,12 +126,7 @@ export default function ConnectionsPage() {
             <div className="size-7 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
               <HugeiconsIcon icon={DatabaseIcon} className="size-3.5" />
             </div>
-            <div>
-              <CardTitle className="text-base font-semibold text-white">Saved connections</CardTitle>
-              <CardDescription className="text-xs text-zinc-400 mt-0.5">
-                Passwords are encrypted at rest with Fernet and never returned to the browser.
-              </CardDescription>
-            </div>
+            <CardTitle className="text-base font-semibold text-white">Saved connections</CardTitle>
           </div>
         </CardHeader>
 
@@ -205,15 +200,7 @@ export default function ConnectionsPage() {
                       }`}
                     >
                       <TableCell className="font-medium text-white px-4 py-3.5 text-sm">
-                        <div className="flex items-center gap-2">
-                          <span>{connection.name}</span>
-                          {isActive && (
-                            <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 font-mono">
-                              <span className="size-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                              Active
-                            </span>
-                          )}
-                        </div>
+                        {connection.name}
                       </TableCell>
 
                       <TableCell className="px-4 py-3.5">
@@ -290,7 +277,7 @@ export default function ConnectionsPage() {
                             aria-label={`Edit ${connection.name}`}
                             className="text-zinc-300 hover:text-white hover:bg-zinc-800/80 transition-colors cursor-pointer text-xs h-8 px-2.5"
                           >
-                            <HugeiconsIcon icon={PencilIcon} className="size-3.5" />
+                            <HugeiconsIcon icon={Edit02Icon} className="size-3.5" />
                             <span>Edit</span>
                           </Button>
 
