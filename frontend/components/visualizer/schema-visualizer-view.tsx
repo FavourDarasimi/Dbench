@@ -271,6 +271,23 @@ export function SchemaVisualizerView({ connectionId }: SchemaVisualizerViewProps
   const tables = data?.tables || [];
   const relations = data?.relations || [];
 
+  // Filtered tables: when searching, ONLY matching tables appear on the visualizer
+  const searchLower = search.toLowerCase().trim();
+
+  const visibleTables = useMemo(() => {
+    if (!searchLower) return tables;
+    return tables.filter(
+      (tbl) =>
+        tbl.name.toLowerCase().includes(searchLower) ||
+        tbl.columns.some((c) => c.name.toLowerCase().includes(searchLower))
+    );
+  }, [tables, searchLower]);
+
+  const visibleTableNames = useMemo(
+    () => new Set(visibleTables.map((t) => t.name)),
+    [visibleTables]
+  );
+
   // Initial Auto Layout
   useEffect(() => {
     if (tables.length > 0) {
@@ -288,11 +305,14 @@ export function SchemaVisualizerView({ connectionId }: SchemaVisualizerViewProps
   }, []);
 
   const handleAutoLayout = useCallback(() => {
-    if (tables.length > 0) {
-      setPositions(computeAutoLayout(tables, relations));
+    if (visibleTables.length > 0) {
+      setPositions((prev) => ({
+        ...prev,
+        ...computeAutoLayout(visibleTables, relations),
+      }));
       handleResetView();
     }
-  }, [tables, relations, handleResetView]);
+  }, [visibleTables, relations, handleResetView]);
 
   // Global mouse handlers for Dragging Nodes
   useEffect(() => {
@@ -365,6 +385,20 @@ export function SchemaVisualizerView({ connectionId }: SchemaVisualizerViewProps
     return () => window.removeEventListener("click", onClickOutside);
   }, [openMenuTable]);
 
+  // Auto-pan canvas to center the first match when user types a search query
+  useEffect(() => {
+    if (searchLower && visibleTables.length > 0) {
+      const firstTbl = visibleTables[0];
+      const pos = positions[firstTbl.name];
+      if (pos) {
+        setPan({
+          x: Math.round(-pos.x * zoom + 160),
+          y: Math.round(-pos.y * zoom + 120),
+        });
+      }
+    }
+  }, [searchLower]); // eslint-disable-line react-hooks/exhaustive-deps
+
   // Map of table names for fast lookup
   const tablesMap = useMemo(() => {
     const map = new Map<string, ERDTable>();
@@ -372,10 +406,15 @@ export function SchemaVisualizerView({ connectionId }: SchemaVisualizerViewProps
     return map;
   }, [tables]);
 
-  // Calculate connection lines with exact anchors
+  // Calculate connection lines with exact anchors for visible tables only
   const edges = useMemo(() => {
     return relations
       .map((rel) => {
+        // Only render connector if both source and target tables are visible
+        if (!visibleTableNames.has(rel.source_table) || !visibleTableNames.has(rel.target_table)) {
+          return null;
+        }
+
         const sourcePos = positions[rel.source_table];
         const targetPos = positions[rel.target_table];
         const sourceTbl = tablesMap.get(rel.source_table);
@@ -427,10 +466,7 @@ export function SchemaVisualizerView({ connectionId }: SchemaVisualizerViewProps
         };
       })
       .filter(Boolean);
-  }, [relations, positions, tablesMap, selectedTable, highlightedCol]);
-
-  // Filtered/Highlighted tables
-  const searchLower = search.toLowerCase().trim();
+  }, [relations, positions, tablesMap, visibleTableNames, selectedTable, highlightedCol]);
 
   if (isLoading) {
     return (
@@ -521,14 +557,10 @@ export function SchemaVisualizerView({ connectionId }: SchemaVisualizerViewProps
             })}
           </svg>
 
-          {/* Interactive Table Cards */}
-          {tables.map((tbl) => {
+          {/* Interactive Table Cards - Only matching tables are rendered */}
+          {visibleTables.map((tbl) => {
             const pos = positions[tbl.name] || { x: 80, y: 80 };
             const isSelected = selectedTable === tbl.name;
-            const matchesSearch =
-              !searchLower ||
-              tbl.name.toLowerCase().includes(searchLower) ||
-              tbl.columns.some((c) => c.name.toLowerCase().includes(searchLower));
 
             return (
               <div
@@ -541,7 +573,7 @@ export function SchemaVisualizerView({ connectionId }: SchemaVisualizerViewProps
                   isSelected
                     ? "ring-1 ring-zinc-400 shadow-2xl shadow-black/90"
                     : "shadow-2xl shadow-black/85"
-                } ${matchesSearch ? "opacity-100" : "opacity-30"}`}
+                } opacity-100`}
               >
                 {/* Table Container Card */}
                 <div
@@ -752,6 +784,26 @@ export function SchemaVisualizerView({ connectionId }: SchemaVisualizerViewProps
             );
           })}
         </div>
+
+        {/* Empty state when search matches no tables */}
+        {searchLower && visibleTables.length === 0 && (
+          <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center select-none pointer-events-auto">
+            <div className="size-11 rounded-xl bg-zinc-900/80 border border-zinc-800 flex items-center justify-center text-zinc-500 mb-2.5 shadow-xl">
+              <HugeiconsIcon icon={Search01Icon} className="size-5" />
+            </div>
+            <p className="text-xs font-medium text-zinc-300 mb-1">No tables found</p>
+            <p className="text-[11px] text-zinc-500 mb-3 max-w-xs font-mono">
+              No tables match &ldquo;{search}&rdquo;
+            </p>
+            <button
+              type="button"
+              onClick={() => setSearch("")}
+              className="px-2.5 py-1 rounded bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 text-xs text-zinc-300 hover:text-white transition-colors cursor-pointer"
+            >
+              Clear search
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Floating Canvas Controls - Discreet HUD docked in the bottom-right corner */}
