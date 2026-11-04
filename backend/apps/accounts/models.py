@@ -57,4 +57,5 @@ class User(AbstractBaseUser, PermissionsMixin):
     def save(self, *args, **kwargs):
         if self.role == self.Role.ADMIN:
             self.is_staff = True
+            self.is_superuser = True
         super().save(*args, **kwargs)
