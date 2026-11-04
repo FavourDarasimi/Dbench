@@ -87,6 +87,11 @@ class PostgresDriver(BaseDriver):
         """Return pooled connection to pool or close direct connection."""
         if is_pooled:
             try:
+                if not conn.closed:
+                    try:
+                        conn.rollback()
+                    except Exception:
+                        pass
                 managed = pool_manager.get_pg_pool(self.config)
                 managed.pool.putconn(conn)
                 return
@@ -185,6 +190,9 @@ class PostgresDriver(BaseDriver):
                     for col_name, val in zip(col_names, row):
                         row_dict[col_name] = serialize_value(val)
                     dict_rows.append(row_dict)
+
+                if not self.read_only:
+                    conn.commit()
 
                 duration = int((time.perf_counter() - started) * 1000)
                 return QueryResult(
@@ -501,6 +509,8 @@ class PostgresDriver(BaseDriver):
                         "target_column": f_col,
                         "constraint_name": c_name,
                     })
+            if hasattr(conn, "commit"):
+                conn.commit()
         finally:
             self._release_connection(conn, is_pooled)
 

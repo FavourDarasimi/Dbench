@@ -164,6 +164,9 @@ class MySQLDriver(BaseDriver):
                         row_dict[col_name] = serialize_value(val)
                     dict_rows.append(row_dict)
 
+                if not self.read_only:
+                    conn.commit()
+
                 duration = int((time.perf_counter() - started) * 1000)
                 return QueryResult(
                     columns=columns,
@@ -424,7 +427,9 @@ class MySQLDriver(BaseDriver):
                 is_primary_key=(key.upper() == "PRI"),
                 foreign_key=fks_by_table.get(t_name, {}).get(c_name),
             )
-            tables_dict.setdefault(t_name, []).append(col_meta.to_dict())
+            col_dict = col_meta.to_dict()
+            col_dict["is_unique"] = (key.upper() == "UNI")
+            tables_dict.setdefault(t_name, []).append(col_dict)
 
         tables_result = []
         for t in tables_meta:
