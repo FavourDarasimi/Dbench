@@ -242,7 +242,7 @@ export function SchemaExplorer({ connections }: SchemaExplorerProps) {
 
                             {/* Actions on hover & row count */}
                             <div className="flex items-center gap-1.5 shrink-0 ml-2">
-                              {table.row_count_estimate !== null && (
+                              {table.row_count_estimate !== null && !isView && (
                                 <span className="text-[10px] text-zinc-500 group-hover/item:hidden">
                                   {formatRowCount(table.row_count_estimate)}
                                 </span>

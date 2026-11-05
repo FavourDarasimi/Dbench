@@ -331,6 +331,13 @@ def execute_row_mutation(
             source=AuditLog.Source.BROWSER,
         )
 
+        # Invalidate metadata cache so sidebar row counts update immediately
+        if action in ("insert", "delete", "bulk_delete"):
+            try:
+                schema_cache.invalidate_connection(str(connection.id))
+            except Exception:
+                pass
+
         return {
             "action": action,
             "schema": schema,
@@ -474,6 +481,11 @@ def execute_staged_mutations(
                 source=AuditLog.Source.STAGING,
             )
             audit_ids.append(str(audit_entry.id))
+
+        try:
+            schema_cache.invalidate_connection(str(connection.id))
+        except Exception:
+            pass
 
         return {
             "preview": False,

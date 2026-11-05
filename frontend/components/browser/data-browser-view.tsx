@@ -392,6 +392,9 @@ export function DataBrowserView({
       await queryClient.invalidateQueries({
         queryKey: ["browse-rows", tab.connectionId, schema, table],
       });
+      queryClient.invalidateQueries({
+        queryKey: ["schema-tree", tab.connectionId],
+      });
       refetchRows();
     } catch (err) {
       showToast(err instanceof Error ? err.message : "Delete failed", "error");
@@ -417,6 +420,9 @@ export function DataBrowserView({
     }
     queryClient.invalidateQueries({
       queryKey: ["browse-rows", tab.connectionId, schema, table],
+    });
+    queryClient.invalidateQueries({
+      queryKey: ["schema-tree", tab.connectionId],
     });
     refetchRows();
   }
@@ -627,6 +633,9 @@ export function DataBrowserView({
           queryClient.invalidateQueries({
             queryKey: ["browse-rows", tab.connectionId, schema, table],
           });
+          queryClient.invalidateQueries({
+            queryKey: ["schema-tree", tab.connectionId],
+          });
           refetchRows();
         }}
         connection={connection}
@@ -641,6 +650,9 @@ export function DataBrowserView({
           queryClient.invalidateQueries({
             queryKey: ["browse-rows", tab.connectionId, schema, table],
           });
+          queryClient.invalidateQueries({
+            queryKey: ["schema-tree", tab.connectionId],
+          });
           refetchRows();
         }}
       />
@@ -653,6 +665,9 @@ export function DataBrowserView({
         onExecuted={() => {
           queryClient.invalidateQueries({
             queryKey: ["browse-rows", tab.connectionId, schema, table],
+          });
+          queryClient.invalidateQueries({
+            queryKey: ["schema-tree", tab.connectionId],
           });
           refetchRows();
         }}
@@ -667,6 +682,9 @@ export function DataBrowserView({
             showToast("Change reverted successfully.");
             queryClient.invalidateQueries({
               queryKey: ["browse-rows", tab.connectionId, schema, table],
+            });
+            queryClient.invalidateQueries({
+              queryKey: ["schema-tree", tab.connectionId],
             });
             refetchRows();
           }}

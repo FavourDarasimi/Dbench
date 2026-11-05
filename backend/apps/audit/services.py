@@ -165,6 +165,11 @@ def execute_undo(audit_id: str | uuid.UUID, user: Any) -> AuditLog:
             source=audit_entry.source,
         )
 
+        try:
+            schema_cache.invalidate_connection(str(audit_entry.connection_id))
+        except Exception:
+            pass
+
         return audit_entry
     finally:
         driver.close()

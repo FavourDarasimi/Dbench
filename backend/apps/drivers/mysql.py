@@ -405,7 +405,7 @@ class MySQLDriver(BaseDriver):
                             name=name,
                             schema=schema,
                             type=kind,
-                            row_count_estimate=int(rows) if rows is not None else None,
+                            row_count_estimate=max(int(rows), 0) if (rows is not None and kind != "view") else None,
                         )
                     )
                 return tables

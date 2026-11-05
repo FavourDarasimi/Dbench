@@ -424,10 +424,18 @@ class PostgresDriver(BaseDriver):
             SELECT
                 t.table_name,
                 t.table_type,
-                COALESCE(c.reltuples, 0)::bigint AS row_estimate
+                CASE
+                    WHEN t.table_type = 'VIEW' THEN NULL
+                    WHEN s.n_live_tup IS NOT NULL AND s.n_live_tup > 0 THEN s.n_live_tup
+                    WHEN c.reltuples IS NOT NULL AND c.reltuples > 0 THEN c.reltuples::bigint
+                    WHEN s.n_live_tup IS NOT NULL THEN s.n_live_tup
+                    WHEN c.reltuples IS NOT NULL AND c.reltuples >= 0 THEN c.reltuples::bigint
+                    ELSE 0
+                END AS row_estimate
             FROM information_schema.tables t
-            LEFT JOIN pg_class c ON c.relname = t.table_name
-            LEFT JOIN pg_namespace n ON n.oid = c.relnamespace AND n.nspname = t.table_schema
+            LEFT JOIN pg_namespace n ON n.nspname = t.table_schema
+            LEFT JOIN pg_class c ON c.relname = t.table_name AND c.relnamespace = n.oid
+            LEFT JOIN pg_stat_all_tables s ON s.schemaname = t.table_schema AND s.relname = t.table_name
             WHERE t.table_schema = %s
             ORDER BY t.table_name;
         """
@@ -443,7 +451,7 @@ class PostgresDriver(BaseDriver):
                             name=name,
                             schema=schema,
                             type=kind,
-                            row_count_estimate=max(int(estimate), 0) if estimate is not None else None,
+                            row_count_estimate=max(int(estimate), 0) if (estimate is not None and kind != "view") else None,
                         )
                     )
                 return tables
