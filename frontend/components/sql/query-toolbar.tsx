@@ -17,6 +17,7 @@ import {
 
 interface QueryToolbarProps {
   onRun: () => void;
+  onDryRun?: () => void;
   onCancel: () => void;
   isRunning: boolean;
   activeRunId: string | null;
@@ -36,6 +37,7 @@ interface QueryToolbarProps {
 
 export function QueryToolbar({
   onRun,
+  onDryRun,
   onCancel,
   isRunning,
   activeRunId,
@@ -67,17 +69,30 @@ export function QueryToolbar({
       <div className="flex items-center gap-2">
         {/* Run Query Button */}
         {!isRunning ? (
-          <button
-            onClick={onRun}
-            className="flex items-center gap-2 px-3.5 py-1.5 rounded-[3px] bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-bold transition-all shadow-sm shadow-emerald-500/20 cursor-pointer active:scale-95"
-            title="Execute query (Cmd+Enter or Ctrl+Enter)"
-          >
-            <HugeiconsIcon icon={PlayIcon} className="size-3.5 fill-current" />
-            <span>Run</span>
-            <span className="text-[10px] bg-emerald-600/50 text-zinc-950 px-1 py-0.2 rounded-[3px] font-sans font-medium">
-              ⌘↵
-            </span>
-          </button>
+          <>
+            <button
+              onClick={onRun}
+              className="flex items-center gap-2 px-3.5 py-1.5 rounded-[3px] bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-bold transition-all shadow-sm shadow-emerald-500/20 cursor-pointer active:scale-95"
+              title="Execute query (Cmd+Enter or Ctrl+Enter)"
+            >
+              <HugeiconsIcon icon={PlayIcon} className="size-3.5 fill-current" />
+              <span>Run</span>
+              <span className="text-[10px] bg-emerald-600/50 text-zinc-950 px-1 py-0.2 rounded-[3px] font-sans font-medium">
+                ⌘↵
+              </span>
+            </button>
+
+            {onDryRun && (
+              <button
+                type="button"
+                onClick={onDryRun}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-[3px] bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 text-zinc-300 hover:text-white font-medium transition-all cursor-pointer"
+                title="Dry-run in a rolled-back transaction to inspect impact"
+              >
+                <span>Dry Run</span>
+              </button>
+            )}
+          </>
         ) : (
           /* Live Cancel Button (PRD F5) */
           <button

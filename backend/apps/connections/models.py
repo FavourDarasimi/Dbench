@@ -19,6 +19,11 @@ class Connection(models.Model):
         VERIFY_CA = "verify-ca", "verify-ca"
         VERIFY_FULL = "verify-full", "verify-full"
 
+    class Environment(models.TextChoices):
+        PRODUCTION = "production", "Production"
+        STAGING = "staging", "Staging"
+        DEVELOPMENT = "development", "Development"
+
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     owner = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="connections"
@@ -35,6 +40,11 @@ class Connection(models.Model):
     )
     encrypted_ssh_config = models.TextField(blank=True, default="")
     read_only = models.BooleanField(default=False)
+    environment = models.CharField(
+        max_length=16, choices=Environment.choices, default=Environment.DEVELOPMENT
+    )
+    is_production = models.BooleanField(default=False)
+    require_approval = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

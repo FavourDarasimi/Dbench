@@ -15,6 +15,11 @@ import { BrowseToolbar } from "./browse-toolbar";
 import { DataGrid } from "@/components/grid/data-grid";
 import { RowFormModal } from "@/components/forms/row-form-modal";
 import { DeleteConfirmModal } from "@/components/forms/delete-confirm-modal";
+import { StagingBar } from "@/components/browser/staging-bar";
+import { StagedChangesModal } from "@/components/browser/staged-changes-modal";
+import { UndoToast } from "@/components/audit/undo-toast";
+import { AuditLogModal } from "@/components/audit/audit-log-modal";
+import { ChangeRequestsModal } from "@/components/approvals/change-requests-modal";
 import type {
   BrowseFilter,
   BrowseResponse,
@@ -22,6 +27,7 @@ import type {
   Connection,
   RowMutationRequest,
   RowMutationResponse,
+  StagedChange,
   TableColumnsResponse,
   WorkspaceTab,
 } from "@/lib/types";
@@ -64,6 +70,13 @@ export function DataBrowserView({
   const [isBulkDelete, setIsBulkDelete] = useState(false);
   const [deleteSqlPreview, setDeleteSqlPreview] = useState<string>("");
   const [isDeleting, setIsDeleting] = useState(false);
+
+  // Safe Writes, Staging & Governance State
+  const [stagedChanges, setStagedChanges] = useState<StagedChange[]>([]);
+  const [stagedModalOpen, setStagedModalOpen] = useState(false);
+  const [auditModalOpen, setAuditModalOpen] = useState(false);
+  const [changeRequestsModalOpen, setChangeRequestsModalOpen] = useState(false);
+  const [lastAudit, setLastAudit] = useState<{ id: string; message: string } | null>(null);
 
   // Toast / Feedback message
   const [toastMessage, setToastMessage] = useState<{ text: string; type: "success" | "error" } | null>(null);
@@ -207,6 +220,126 @@ export function DataBrowserView({
     setDeleteDialogOpen(true);
   }
 
+  // Counts of staged actions
+  const stagedUpdates = stagedChanges.filter((c) => c.action === "update").length;
+  const stagedInserts = stagedChanges.filter((c) => c.action === "insert").length;
+  const stagedDeletes = stagedChanges.filter((c) => c.action === "delete").length;
+
+  function handleStageCellEdit(row: Record<string, unknown>, column: string, newValue: unknown) {
+    if (!pkCol) return;
+    const pkVal = row[pkCol.name] as string | number;
+    const originalVal = row[column];
+
+    setStagedChanges((prev) => {
+      const existingIndex = prev.findIndex(
+        (c) =>
+          c.action === "update" &&
+          c.schema === schema &&
+          c.table === table &&
+          String(c.pk) === String(pkVal)
+      );
+
+      if (existingIndex >= 0) {
+        const existing = prev[existingIndex];
+        const updatedData = { ...existing.data, [column]: newValue };
+        if (newValue === originalVal) {
+          delete updatedData[column];
+          if (Object.keys(updatedData).length === 0) {
+            return prev.filter((_, idx) => idx !== existingIndex);
+          }
+        }
+        const updatedChange: StagedChange = {
+          ...existing,
+          data: updatedData,
+        };
+        const next = [...prev];
+        next[existingIndex] = updatedChange;
+        return next;
+      } else {
+        if (newValue === originalVal) return prev;
+
+        const newChange: StagedChange = {
+          id: crypto.randomUUID(),
+          action: "update",
+          schema,
+          table,
+          pk: pkVal,
+          data: { [column]: newValue },
+          originalData: row,
+          displayLabel: `Update row ${pkVal}: ${column}`,
+        };
+        return [...prev, newChange];
+      }
+    });
+  }
+
+  function handleStageInsertOrEdit(data: Record<string, unknown>) {
+    if (rowFormMode === "insert") {
+      const newChange: StagedChange = {
+        id: crypto.randomUUID(),
+        action: "insert",
+        schema,
+        table,
+        data,
+        displayLabel: `Insert new row into ${schema}.${table}`,
+      };
+      setStagedChanges((prev) => [...prev, newChange]);
+      showToast("Record creation staged for review.");
+    } else if (editingRow && pkCol) {
+      const pkVal = editingRow[pkCol.name] as string | number;
+      const newChange: StagedChange = {
+        id: crypto.randomUUID(),
+        action: "update",
+        schema,
+        table,
+        pk: pkVal,
+        data,
+        originalData: editingRow,
+        displayLabel: `Update row ${pkVal}`,
+      };
+      setStagedChanges((prev) => [
+        ...prev.filter(
+          (c) => !(c.action === "update" && String(c.pk) === String(pkVal))
+        ),
+        newChange,
+      ]);
+      showToast(`Record ${pkVal} update staged.`);
+    }
+  }
+
+  function handleStageDelete() {
+    if (!pkCol) return;
+    if (isBulkDelete) {
+      const pks = Array.from(selectedRowKeys);
+      const newChanges: StagedChange[] = pks.map((pkVal) => ({
+        id: crypto.randomUUID(),
+        action: "delete",
+        schema,
+        table,
+        pk: pkVal,
+        displayLabel: `Delete row ${pkVal} from ${schema}.${table}`,
+      }));
+      setStagedChanges((prev) => [...prev, ...newChanges]);
+      setSelectedRowKeys(new Set());
+      showToast(`Staged deletion for ${pks.length} records.`);
+    } else if (deletingRow) {
+      const pkVal = deletingRow[pkCol.name] as string | number;
+      const newChange: StagedChange = {
+        id: crypto.randomUUID(),
+        action: "delete",
+        schema,
+        table,
+        pk: pkVal,
+        originalData: deletingRow,
+        displayLabel: `Delete row ${pkVal} from ${schema}.${table}`,
+      };
+      setStagedChanges((prev) => [...prev, newChange]);
+      showToast(`Staged deletion for row '${pkVal}'.`);
+    }
+    setDeleteDialogOpen(false);
+    setDeletingRow(null);
+  }
+
   async function confirmCommitDelete() {
     setIsDeleting(true);
     try {
@@ -222,7 +355,14 @@ export function DataBrowserView({
             preview: false,
           }
         );
-        showToast(res.message || `Deleted ${pks.length} records.`);
+        if (res.requires_approval) {
+          showToast(res.message || "Delete request submitted for peer approval.");
+        } else {
+          showToast(res.message || `Deleted ${pks.length} records.`);
+          if (res.audit_id) {
+            setLastAudit({ id: res.audit_id, message: res.message || `Deleted ${pks.length} records.` });
+          }
+        }
         setSelectedRowKeys(new Set());
       } else if (deletingRow && pkCol) {
         const pkVal = String(deletingRow[pkCol.name]);
@@ -236,7 +376,14 @@ export function DataBrowserView({
             preview: false,
           }
         );
-        showToast(res.message || `Record '${pkVal}' deleted.`);
+        if (res.requires_approval) {
+          showToast(res.message || "Delete request submitted for peer approval.");
+        } else {
+          showToast(res.message || `Record '${pkVal}' deleted.`);
+          if (res.audit_id) {
+            setLastAudit({ id: res.audit_id, message: res.message || `Record '${pkVal}' deleted.` });
+          }
+        }
       }
 
       setDeleteDialogOpen(false);
@@ -254,12 +401,20 @@ export function DataBrowserView({
     }
   }
 
-  function handleMutationSuccess() {
-    showToast(
-      rowFormMode === "insert"
-        ? "Record created successfully."
-        : "Record updated successfully."
-    );
+  function handleMutationSuccess(res?: RowMutationResponse) {
+    if (res?.requires_approval) {
+      showToast(res.message || "Write request submitted for peer approval.");
+    } else {
+      const msg =
+        res?.message ||
+        (rowFormMode === "insert"
+          ? "Record created successfully."
+          : "Record updated successfully.");
+      showToast(msg);
+      if (res?.audit_id) {
+        setLastAudit({ id: res.audit_id, message: msg });
+      }
+    }
     queryClient.invalidateQueries({
       queryKey: ["browse-rows", tab.connectionId, schema, table],
     });
@@ -350,6 +505,10 @@ export function DataBrowserView({
         onBulkDelete={handleBulkDelete}
         onToggleRail={onToggleRail}
         isRailCollapsed={isRailCollapsed}
+        onOpenAuditModal={() => setAuditModalOpen(true)}
+        onOpenChangeRequestsModal={() => setChangeRequestsModalOpen(true)}
+        requireApproval={Boolean(connection?.require_approval)}
+        isProduction={Boolean(connection?.is_production || connection?.environment === "production")}
       />
 
       {/* Primary Key Absence Warning for Mutations */}
@@ -395,6 +554,8 @@ export function DataBrowserView({
           onToggleSelectAll={handleToggleSelectAll}
           onEditRow={handleEditRow}
           onDeleteRow={handleDeleteSingleRow}
+          stagedChanges={stagedChanges}
+          onStageCellEdit={handleStageCellEdit}
         />
       </div>
 
@@ -420,6 +581,7 @@ export function DataBrowserView({
         columns={columns}
         initialData={editingRow}
         onSuccess={handleMutationSuccess}
+        onStage={handleStageInsertOrEdit}
       />
 
       {/* Delete Confirmation Modal (Simple, Minimal Design) */}
@@ -430,6 +592,7 @@ export function DataBrowserView({
           setDeletingRow(null);
         }}
         onConfirm={confirmCommitDelete}
+        onStage={handleStageDelete}
         isSubmitting={isDeleting}
         schema={schema}
         table={table}
@@ -437,6 +600,79 @@ export function DataBrowserView({
         pkValue={deletingRow && pkCol ? String(deletingRow[pkCol.name]) : null}
         bulkCount={isBulkDelete ? selectedRowKeys.size : 1}
       />
+
+      {/* Floating Staging Bar Dock */}
+      {stagedChanges.length > 0 && (
+        <StagingBar
+          stagedCount={stagedChanges.length}
+          updateCount={stagedUpdates}
+          insertCount={stagedInserts}
+          deleteCount={stagedDeletes}
+          onReview={() => setStagedModalOpen(true)}
+          onDiscardAll={() => setStagedChanges([])}
+        />
+      )}
+
+      {/* Review & Atomic Commit Modal */}
+      <StagedChangesModal
+        isOpen={stagedModalOpen}
+        onClose={() => setStagedModalOpen(false)}
+        stagedChanges={stagedChanges}
+        onRemoveChange={(id) =>
+          setStagedChanges((prev) => prev.filter((c) => c.id !== id))
+        }
+        onCommitSuccess={(msg, requiresApproval) => {
+          setStagedChanges([]);
+          showToast(msg);
+          queryClient.invalidateQueries({
+            queryKey: ["browse-rows", tab.connectionId, schema, table],
+          });
+          refetchRows();
+        }}
+        connection={connection}
+      />
+
+      {/* Row-Level Audit Trail & Undo History Modal */}
+      <AuditLogModal
+        isOpen={auditModalOpen}
+        onClose={() => setAuditModalOpen(false)}
+        connection={connection}
+        onReverted={() => {
+          queryClient.invalidateQueries({
+            queryKey: ["browse-rows", tab.connectionId, schema, table],
+          });
+          refetchRows();
+        }}
+      />
+
+      {/* Peer Approval Change Requests Modal */}
+      <ChangeRequestsModal
+        isOpen={changeRequestsModalOpen}
+        onClose={() => setChangeRequestsModalOpen(false)}
+        connection={connection}
+        onExecuted={() => {
+          queryClient.invalidateQueries({
+            queryKey: ["browse-rows", tab.connectionId, schema, table],
+          });
+          refetchRows();
+        }}
+      />
+
+      {/* 1-Click Floating Undo Toast */}
+      {lastAudit && (
+        <UndoToast
+          auditId={lastAudit.id}
+          message={lastAudit.message}
+          onUndoSuccess={() => {
+            showToast("Change reverted successfully.");
+            queryClient.invalidateQueries({
+              queryKey: ["browse-rows", tab.connectionId, schema, table],
+            });
+            refetchRows();
+          }}
+          onClose={() => setLastAudit(null)}
+        />
+      )}
     </div>
   );
 }

@@ -8,6 +8,7 @@ interface DeleteConfirmModalProps {
   isOpen: boolean;
   onClose: () => void;
   onConfirm: () => Promise<void>;
+  onStage?: () => void;
   isSubmitting: boolean;
   schema: string;
   table: string;
@@ -20,6 +21,7 @@ export function DeleteConfirmModal({
   isOpen,
   onClose,
   onConfirm,
+  onStage,
   isSubmitting,
   schema,
   table,
@@ -85,6 +87,16 @@ export function DeleteConfirmModal({
           >
             Cancel
           </button>
+          {onStage && (
+            <button
+              type="button"
+              onClick={onStage}
+              disabled={isSubmitting}
+              className="px-3.5 py-2 rounded-[3px] border border-amber-500/40 bg-amber-950/40 hover:bg-amber-900/60 text-amber-300 font-mono font-medium text-xs sm:text-sm transition-colors cursor-pointer disabled:opacity-40"
+            >
+              Stage Deletion
+            </button>
+          )}
           <button
             type="button"
             onClick={onConfirm}

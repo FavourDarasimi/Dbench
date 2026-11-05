@@ -9,6 +9,7 @@ import {
   ChevronDownIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
+  Clock01Icon,
   Delete02Icon,
   DownloadIcon,
   FilterIcon,
@@ -19,6 +20,7 @@ import {
   Search01Icon,
   Sorting01Icon,
   TableIcon,
+  UserCheck01Icon,
 } from "@hugeicons/core-free-icons";
 import { apiPost } from "@/lib/api";
 import { cn } from "@/lib/utils";
@@ -57,6 +59,10 @@ interface BrowseToolbarProps {
   onBulkDelete?: () => void;
   onToggleRail?: () => void;
   isRailCollapsed?: boolean;
+  onOpenAuditModal?: () => void;
+  onOpenChangeRequestsModal?: () => void;
+  requireApproval?: boolean;
+  isProduction?: boolean;
 }
 
 export function BrowseToolbar({
@@ -86,6 +92,10 @@ export function BrowseToolbar({
   onBulkDelete,
   onToggleRail,
   isRailCollapsed = false,
+  onOpenAuditModal,
+  onOpenChangeRequestsModal,
+  requireApproval = false,
+  isProduction = false,
 }: BrowseToolbarProps) {
   const { openSqlTab } = useWorkspaceStore();
   const router = useRouter();
@@ -428,6 +438,30 @@ export function BrowseToolbar({
               </div>
             )}
           </div>
+
+          {/* Audit Trail Modal */}
+          {onOpenAuditModal && (
+            <button
+              onClick={onOpenAuditModal}
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-[3px] bg-[#121214] hover:bg-zinc-800 border border-zinc-700 text-zinc-300 text-xs sm:text-sm font-mono font-medium transition-colors cursor-pointer"
+              title="View Row-level Audit Trail & Undo History"
+            >
+              <HugeiconsIcon icon={Clock01Icon} className="size-3 text-zinc-400" />
+              <span>Audit</span>
+            </button>
+          )}
+
+          {/* Change Requests Modal (Approvals) */}
+          {onOpenChangeRequestsModal && (requireApproval || isProduction) && (
+            <button
+              onClick={onOpenChangeRequestsModal}
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-[3px] bg-amber-950/40 hover:bg-amber-900/60 border border-amber-500/40 text-amber-300 text-xs sm:text-sm font-mono font-medium transition-colors cursor-pointer"
+              title="Review Peer Approval Change Requests"
+            >
+              <HugeiconsIcon icon={UserCheck01Icon} className="size-3 text-amber-400" />
+              <span>Requests</span>
+            </button>
+          )}
 
           {/* Show SQL Bridge */}
           <button

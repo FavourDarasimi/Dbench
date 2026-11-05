@@ -34,6 +34,8 @@ from apps.notifications.events import (
 from .export import build_streaming_export_response
 from .models import QueryHistory, SavedQuery
 from .safety import analyze_sql_safety, is_mutation_statement
+from apps.audit.models import AuditLog
+from apps.audit.services import create_change_request, record_audit
 from .serializers import (
     DestructiveWarningResponseSerializer,
     DirectExportRequestSerializer,
@@ -80,9 +82,10 @@ class ExecuteQueryView(APIView):
         limit: int = data.get("limit", 1000)
         timeout: int = data.get("timeout", 30)
         confirm_destructive: bool = data.get("confirm_destructive", False)
+        dry_run: bool = data.get("dry_run", False)
         source: str = data.get("source", QueryHistory.Source.EDITOR)
 
-        # 1. Read-only fast-path rejection
+        # 1. Read-only fast-path rejection (PRD F7)
         if connection.read_only and is_mutation_statement(sql, connection.engine):
             err_msg = "Connection is in read-only mode. Modifying operations are blocked."
             QueryHistory.objects.create(
@@ -97,22 +100,63 @@ class ExecuteQueryView(APIView):
             )
             return Response({"detail": err_msg}, status=status.HTTP_403_FORBIDDEN)
 
-        # 2. Destructive SQL safety checks (PRD F6)
+        config = config_from_connection(connection)
+        driver = get_driver(config)
+
+        # 2. Dry-run Mode (Impact preview without committing)
+        if dry_run:
+            try:
+                dr_res = driver.execute_dry_run(sql, params=params, timeout=timeout)
+                return Response(dr_res.to_dict(), status=status.HTTP_200_OK)
+            finally:
+                driver.close()
+
+        # 3. Production Approval Check
+        if getattr(connection, "require_approval", False) and is_mutation_statement(sql, connection.engine):
+            driver.close()
+            cr = create_change_request(
+                connection=connection,
+                requester=request.user,
+                sql=sql,
+                action="raw_sql",
+                params=params,
+                title="SQL Query Change Request",
+            )
+            return Response(
+                {
+                    "requires_approval": True,
+                    "change_request_id": str(cr.id),
+                    "impact_summary": cr.impact_summary,
+                    "message": f"Change request #{cr.id} created for production approval.",
+                },
+                status=status.HTTP_200_OK,
+            )
+
+        # 4. Destructive SQL safety checks (PRD F6 + Impact preview)
         warnings = analyze_sql_safety(sql, dialect=connection.engine)
         if warnings and not confirm_destructive:
+            impact = None
+            try:
+                dr = driver.execute_dry_run(sql, params=params, timeout=10)
+                impact = {
+                    "rows_affected": dr.rows_affected,
+                    "sample_rows": dr.sample_rows[:5],
+                }
+            except Exception as exc:
+                logger.debug("Dry run impact preview for guardrail skipped: %s", exc)
+            driver.close()
             return Response(
                 {
                     "requires_confirmation": True,
                     "warnings": warnings,
+                    "impact": impact,
                     "message": "Destructive statement detected. Confirmation required before execution.",
                 },
                 status=status.HTTP_422_UNPROCESSABLE_ENTITY,
             )
 
-        # 3. Execution setup
+        # 5. Execution setup
         run_id = str(uuid.uuid4())
-        config = config_from_connection(connection)
-        driver = get_driver(config)
 
         notify_query_started(
             user_id=request.user.id,
@@ -142,6 +186,17 @@ class ExecuteQueryView(APIView):
                 row_count=result.row_count,
                 source=source,
             )
+
+            # Record modifying statement in AuditLog
+            if is_mutation_statement(sql, connection.engine):
+                record_audit(
+                    connection=connection,
+                    user=request.user,
+                    action=AuditLog.Action.RAW_SQL,
+                    sql=sql,
+                    rows_affected=result.row_count,
+                    source=AuditLog.Source.EDITOR,
+                )
 
             notify_query_completed(
                 user_id=request.user.id,

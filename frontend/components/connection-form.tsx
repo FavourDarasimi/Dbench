@@ -97,6 +97,8 @@ const manualSchema = z
     password: z.string().optional(),
     ssl_mode: z.enum(["disable", "allow", "prefer", "require", "verify-ca", "verify-full"]),
     read_only: z.boolean(),
+    environment: z.enum(["development", "staging", "production"]),
+    require_approval: z.boolean(),
     ssh_enabled: z.boolean(),
     ssh_host: z.string().optional(),
     ssh_port: z.string().optional(),
@@ -129,6 +131,8 @@ function defaultsFor(connection?: Connection | null): FormValues {
     password: "",
     ssl_mode: connection?.ssl_mode ?? "prefer",
     read_only: connection?.read_only ?? false,
+    environment: connection?.environment ?? "development",
+    require_approval: connection?.require_approval ?? false,
     ssh_enabled: connection?.ssh_config?.enabled ?? false,
     ssh_host: connection?.ssh_config?.host ?? "",
     ssh_port: String(connection?.ssh_config?.port ?? 22),
@@ -149,6 +153,12 @@ export function ConnectionForm({
   const [databaseUrl, setDatabaseUrl] = useState("");
   const [urlName, setUrlName] = useState(connection?.name ?? "");
   const [urlReadOnly, setUrlReadOnly] = useState(connection?.read_only ?? false);
+  const [urlEnvironment, setUrlEnvironment] = useState<"development" | "staging" | "production">(
+    connection?.environment ?? "development"
+  );
+  const [urlRequireApproval, setUrlRequireApproval] = useState(
+    connection?.require_approval ?? false
+  );
 
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
@@ -170,6 +180,8 @@ export function ConnectionForm({
     setDatabaseUrl("");
     setUrlName(connection?.name ?? "");
     setUrlReadOnly(connection?.read_only ?? false);
+    setUrlEnvironment(connection?.environment ?? "development");
+    setUrlRequireApproval(connection?.require_approval ?? false);
     setTestResult(null);
     setServerError(null);
     setShowAdvanced(Boolean(connection?.ssh_config?.enabled));
@@ -209,6 +221,9 @@ export function ConnectionForm({
         name: finalName,
         database_url: trimmed,
         read_only: urlReadOnly,
+        environment: urlEnvironment,
+        is_production: urlEnvironment === "production",
+        require_approval: urlRequireApproval,
       };
       if (connection) {
         await apiPatch(`/connections/${connection.id}/`, payload);
@@ -265,6 +280,9 @@ export function ConnectionForm({
       username: values.username?.trim() ?? "",
       ssl_mode: values.ssl_mode,
       read_only: values.read_only,
+      environment: values.environment,
+      is_production: values.environment === "production",
+      require_approval: values.require_approval,
       ssh_config: {
         enabled: values.ssh_enabled,
         host: values.ssh_host?.trim() ?? "",
@@ -462,15 +480,41 @@ export function ConnectionForm({
             />
           </div>
 
-          <label className="flex cursor-pointer items-center gap-2 text-xs text-zinc-400 select-none pt-0.5">
-            <input
-              type="checkbox"
-              checked={urlReadOnly}
-              onChange={(e) => setUrlReadOnly(e.target.checked)}
-              className="size-3.5 rounded accent-emerald-500 border-zinc-700 bg-zinc-900"
-            />
-            <span>Read-only mode (prevent write queries)</span>
-          </label>
+          <div className="grid grid-cols-2 gap-2 pt-0.5">
+            <label className="flex cursor-pointer items-center gap-2 text-xs text-zinc-400 select-none">
+              <input
+                type="checkbox"
+                checked={urlReadOnly}
+                onChange={(e) => setUrlReadOnly(e.target.checked)}
+                className="size-3.5 rounded accent-emerald-500 border-zinc-700 bg-zinc-900"
+              />
+              <span>Read-only mode</span>
+            </label>
+
+            <label className="flex cursor-pointer items-center gap-2 text-xs text-zinc-400 select-none">
+              <input
+                type="checkbox"
+                checked={urlRequireApproval}
+                onChange={(e) => setUrlRequireApproval(e.target.checked)}
+                className="size-3.5 rounded accent-amber-500 border-zinc-700 bg-zinc-900"
+              />
+              <span>Require write approval</span>
+            </label>
+          </div>
+
+          <div className="grid gap-1.5">
+            <Label htmlFor="url_env" className="text-xs font-medium text-zinc-300">Environment</Label>
+            <select
+              id="url_env"
+              value={urlEnvironment}
+              onChange={(e) => setUrlEnvironment(e.target.value as "development" | "staging" | "production")}
+              className="flex h-9 w-full rounded-md border border-zinc-800 bg-[#18181c] px-2.5 text-xs text-zinc-200 shadow-sm focus:border-emerald-500/80 transition-colors cursor-pointer"
+            >
+              <option value="development">Development</option>
+              <option value="staging">Staging</option>
+              <option value="production">Production</option>
+            </select>
+          </div>
 
           <DialogFooter className="items-center justify-between sm:justify-between gap-2 pt-3 border-t border-zinc-800/80">
             <Button
@@ -645,6 +689,33 @@ export function ConnectionForm({
                     ))}
                   </select>
                 </div>
+
+                {/* Environment Selector */}
+                <div className="grid gap-1.5">
+                  <Label htmlFor="environment" className="text-[11px] text-zinc-400">Environment</Label>
+                  <select
+                    id="environment"
+                    className="flex h-8 w-full rounded-md border border-zinc-800 bg-[#18181c] px-2.5 text-xs text-zinc-200 shadow-sm focus-visible:outline-none focus:border-emerald-500 transition-colors cursor-pointer"
+                    {...register("environment")}
+                  >
+                    <option value="development">Development</option>
+                    <option value="staging">Staging</option>
+                    <option value="production">Production</option>
+                  </select>
+                </div>
+
+                {/* Require Peer Approval */}
+                <label className="flex cursor-pointer items-start gap-2 text-zinc-400 select-none">
+                  <input
+                    type="checkbox"
+                    className="size-3.5 mt-0.5 rounded accent-amber-500 border-zinc-700 bg-zinc-900"
+                    {...register("require_approval")}
+                  />
+                  <div>
+                    <span className="text-zinc-200">Require peer approval for writes</span>
+                    <p className="text-[10px] text-zinc-500">Mutations become change requests requiring peer review.</p>
+                  </div>
+                </label>
 
                 {/* Read-only Checkbox */}
                 <label className="flex cursor-pointer items-center gap-2 text-zinc-400 select-none">

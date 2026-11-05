@@ -66,7 +66,8 @@ interface RowFormDrawerProps {
   table: string;
   columns: ColumnInfo[];
   initialData?: Record<string, unknown> | null;
-  onSuccess: () => void;
+  onSuccess: (res?: RowMutationResponse) => void;
+  onStage?: (data: Record<string, unknown>) => void;
 }
 
 export function RowFormModal({
@@ -79,6 +80,7 @@ export function RowFormModal({
   columns,
   initialData,
   onSuccess,
+  onStage,
 }: RowFormDrawerProps) {
   // Form values: map of column name -> value
   const [formValues, setFormValues] = useState<Record<string, unknown>>({});
@@ -247,12 +249,12 @@ export function RowFormModal({
         preview: false,
       };
 
-      await apiPost<RowMutationResponse>(
+      const res = await apiPost<RowMutationResponse>(
         `/connections/${connectionId}/rows/`,
         requestPayload
       );
 
-      onSuccess();
+      onSuccess(res);
       onClose();
     } catch (err) {
       setErrorMessage(err instanceof Error ? err.message : "Failed to save record");
@@ -528,7 +530,7 @@ export function RowFormModal({
             {mode === "edit" && pkValue ? `PK: ${pkValue}` : ""}
           </div>
 
-          {/* Bottom Right: Cancel & Save Ctrl+Enter */}
+          {/* Bottom Right: Cancel, Stage, & Save Ctrl+Enter */}
           <div className="flex items-center gap-3">
             <button
               type="button"
@@ -538,6 +540,21 @@ export function RowFormModal({
             >
               Cancel
             </button>
+
+            {onStage && (
+              <button
+                type="button"
+                onClick={() => {
+                  const dataPayload = buildPayloadData();
+                  onStage(dataPayload);
+                  onClose();
+                }}
+                disabled={isSubmitting}
+                className="px-3.5 py-2 rounded-[3px] border border-amber-500/40 bg-amber-950/40 hover:bg-amber-900/60 text-amber-300 font-mono font-medium text-xs sm:text-sm transition-colors cursor-pointer disabled:opacity-40"
+              >
+                Stage {mode === "edit" ? "Edit" : "Insert"}
+              </button>
+            )}
 
             <button
               type="button"

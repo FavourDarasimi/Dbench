@@ -13,6 +13,7 @@ class ExecuteQueryRequestSerializer(serializers.Serializer):
     limit = serializers.IntegerField(required=False, default=1000, min_value=1, max_value=10000)
     timeout = serializers.IntegerField(required=False, default=30, min_value=1, max_value=120)
     confirm_destructive = serializers.BooleanField(required=False, default=False)
+    dry_run = serializers.BooleanField(required=False, default=False)
     source = serializers.ChoiceField(
         choices=QueryHistory.Source.choices, required=False, default=QueryHistory.Source.EDITOR
     )

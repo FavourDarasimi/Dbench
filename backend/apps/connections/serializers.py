@@ -70,6 +70,7 @@ class ConnectionSerializer(serializers.ModelSerializer):
         fields = [
             "id", "name", "engine", "host", "port", "db_name", "username",
             "password", "database_url", "ssl_mode", "ssh_config", "read_only",
+            "environment", "is_production", "require_approval",
             "has_password", "has_ssh_password", "created_at", "updated_at",
         ]
         read_only_fields = ["id", "created_at", "updated_at"]

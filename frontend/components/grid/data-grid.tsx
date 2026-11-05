@@ -22,7 +22,7 @@ import {
 import { cn } from "@/lib/utils";
 import { ForeignKeyBadge } from "@/components/browser/foreign-key-badge";
 import { CellInspector } from "./cell-inspector";
-import type { ColumnInfo } from "@/lib/types";
+import type { ColumnInfo, StagedChange } from "@/lib/types";
 
 interface DataGridProps {
   connectionId: string;
@@ -40,6 +40,8 @@ interface DataGridProps {
   onToggleSelectAll?: () => void;
   onEditRow?: (row: Record<string, unknown>) => void;
   onDeleteRow?: (row: Record<string, unknown>) => void;
+  stagedChanges?: StagedChange[];
+  onStageCellEdit?: (row: Record<string, unknown>, column: string, newValue: unknown) => void;
 }
 
 export function DataGrid({
@@ -58,6 +60,8 @@ export function DataGrid({
   onToggleSelectAll,
   onEditRow,
   onDeleteRow,
+  stagedChanges,
+  onStageCellEdit,
 }: DataGridProps) {
   const tableContainerRef = useRef<HTMLDivElement>(null);
 
@@ -66,6 +70,80 @@ export function DataGrid({
   const [inspectedRow, setInspectedRow] = useState<Record<string, unknown> | null>(null);
   const [inspectedColumn, setInspectedColumn] = useState<string | null>(null);
   const [copiedCellKey, setCopiedCellKey] = useState<string | null>(null);
+
+  // Inline Cell Editing State
+  const [editingCell, setEditingCell] = useState<{
+    rowKey: string;
+    colName: string;
+    rowData: Record<string, unknown>;
+  } | null>(null);
+  const [editInputVal, setEditInputVal] = useState<string>("");
+
+  // Index staged changes for row & cell highlighting
+  const stagedUpdatesByCell = useMemo(() => {
+    const map = new Map<string, unknown>();
+    if (!stagedChanges) return map;
+    for (const change of stagedChanges) {
+      if (
+        change.action === "update" &&
+        change.schema === schema &&
+        change.table === table &&
+        change.pk !== undefined &&
+        change.data
+      ) {
+        for (const [col, val] of Object.entries(change.data)) {
+          map.set(`${String(change.pk)}:${col}`, val);
+        }
+      }
+    }
+    return map;
+  }, [stagedChanges, schema, table]);
+
+  const stagedDeletionsByPk = useMemo(() => {
+    const set = new Set<string>();
+    if (!stagedChanges) return set;
+    for (const change of stagedChanges) {
+      if (
+        change.action === "delete" &&
+        change.schema === schema &&
+        change.table === table &&
+        change.pk !== undefined
+      ) {
+        set.add(String(change.pk));
+      }
+    }
+    return set;
+  }, [stagedChanges, schema, table]);
+
+  function handleCommitInlineEdit(colInfo?: ColumnInfo) {
+    if (!editingCell || !onStageCellEdit) {
+      setEditingCell(null);
+      return;
+    }
+    const { rowData, colName } = editingCell;
+    const col = colInfo || columns.find((c) => c.name === colName);
+    let parsedVal: unknown = editInputVal;
+
+    if (col) {
+      if (editInputVal === "" && col.nullable) {
+        parsedVal = null;
+      } else if (col.generic_type === "number") {
+        const num = Number(editInputVal);
+        parsedVal = isNaN(num) ? editInputVal : num;
+      } else if (col.generic_type === "boolean") {
+        parsedVal = editInputVal.toLowerCase() === "true" || editInputVal === "1";
+      } else if (col.generic_type === "json") {
+        try {
+          parsedVal = JSON.parse(editInputVal);
+        } catch {
+          parsedVal = editInputVal;
+        }
+      }
+    }
+
+    onStageCellEdit(rowData, colName, parsedVal);
+    setEditingCell(null);
+  }
 
   function copyCellValue(cellKey: string, val: unknown) {
     const text =
@@ -153,10 +231,18 @@ export function DataGrid({
           const rowData = info.row.original;
           const rowKey = String(pkCol ? rowData[pkCol.name] : info.row.id);
           const isSelected = selectedRowKeys ? selectedRowKeys.has(rowKey) : false;
+          const isStagedDelete = stagedDeletionsByPk.has(rowKey);
 
           return (
             <div className="flex items-center justify-center py-1">
-              {canMutate && onToggleSelectRow && (
+              {isStagedDelete ? (
+                <span
+                  className="size-3.5 rounded-[3px] bg-red-950/80 border border-red-500/50 flex items-center justify-center text-red-400 text-[9px] font-bold"
+                  title="Staged for deletion"
+                >
+                  ✕
+                </span>
+              ) : canMutate && onToggleSelectRow ? (
                 <label
                   className="relative flex items-center justify-center cursor-pointer select-none"
                   onClick={(e) => e.stopPropagation()}
@@ -188,7 +274,7 @@ export function DataGrid({
                     )}
                   </div>
                 </label>
-              )}
+              ) : null}
             </div>
           );
         },
@@ -236,82 +322,215 @@ export function DataGrid({
         cell: (info) => {
           const val = info.getValue();
           const rowData = info.row.original;
+          const rowKey = String(pkCol ? rowData[pkCol.name] : info.row.id);
           const cellKey = `${info.row.id}-${col.name}`;
           const isCopied = copiedCellKey === cellKey;
+          const isRowDeleted = stagedDeletionsByPk.has(rowKey);
+
+          const cellStagedKey = `${rowKey}:${col.name}`;
+          const hasStagedEdit = stagedUpdatesByCell.has(cellStagedKey);
+          const stagedVal = stagedUpdatesByCell.get(cellStagedKey);
+          const effectiveVal = hasStagedEdit ? stagedVal : val;
+
+          const isEditing =
+            editingCell !== null &&
+            editingCell.rowKey === rowKey &&
+            editingCell.colName === col.name;
+
+          if (isEditing) {
+            return (
+              <div
+                className="w-full flex items-center"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <input
+                  autoFocus
+                  type="text"
+                  value={editInputVal}
+                  onChange={(e) => setEditInputVal(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      handleCommitInlineEdit(col);
+                    } else if (e.key === "Escape") {
+                      setEditingCell(null);
+                    }
+                  }}
+                  onBlur={() => handleCommitInlineEdit(col)}
+                  className="w-full h-6 px-1.5 py-0.5 rounded-[3px] bg-[#16161a] border border-amber-500/70 text-amber-200 font-mono text-xs outline-none shadow-inner"
+                />
+              </div>
+            );
+          }
+
+          const handleCellDoubleClick = (e: React.MouseEvent) => {
+            if (canMutate && onStageCellEdit && !col.is_primary_key && !isRowDeleted) {
+              e.stopPropagation();
+              setEditingCell({
+                rowKey,
+                colName: col.name,
+                rowData,
+              });
+              setEditInputVal(
+                effectiveVal === null || effectiveVal === undefined
+                  ? ""
+                  : typeof effectiveVal === "object"
+                  ? JSON.stringify(effectiveVal)
+                  : String(effectiveVal)
+              );
+            }
+          };
 
           // 1. Foreign Key
-          if (col.foreign_key && val !== null && val !== undefined) {
+          if (col.foreign_key && effectiveVal !== null && effectiveVal !== undefined) {
             return (
-              <ForeignKeyBadge
-                connectionId={connectionId}
-                value={val}
-                foreignKey={col.foreign_key}
-              />
+              <div
+                onDoubleClick={handleCellDoubleClick}
+                className={cn(
+                  "flex items-center gap-1.5 w-full",
+                  hasStagedEdit && "border-l-2 border-amber-400 pl-1 bg-amber-500/10 rounded-r"
+                )}
+                title={hasStagedEdit ? `Staged edit (original: ${String(val)})` : undefined}
+              >
+                <ForeignKeyBadge
+                  connectionId={connectionId}
+                  value={effectiveVal}
+                  foreignKey={col.foreign_key}
+                />
+                {hasStagedEdit && (
+                  <span className="text-[10px] text-amber-400/90 font-mono italic shrink-0">
+                    (staged)
+                  </span>
+                )}
+              </div>
             );
           }
 
           // 2. Null
-          if (val === null || val === undefined) {
-            return <span className="text-zinc-600 font-mono text-xs italic">NULL</span>;
+          if (effectiveVal === null || effectiveVal === undefined) {
+            return (
+              <div
+                onDoubleClick={handleCellDoubleClick}
+                className={cn(
+                  "flex items-center gap-1 w-full",
+                  hasStagedEdit && "border-l-2 border-amber-400 pl-1 bg-amber-500/10 rounded-r"
+                )}
+                title={hasStagedEdit ? `Staged edit (original: ${String(val)})` : undefined}
+              >
+                <span className="text-zinc-600 font-mono text-xs italic">NULL</span>
+                {hasStagedEdit && (
+                  <span className="text-[10px] text-amber-400/90 font-mono italic shrink-0">
+                    (staged)
+                  </span>
+                )}
+              </div>
+            );
           }
 
           // 3. Boolean
-          if (typeof val === "boolean") {
-            return val ? (
-              <span className="inline-flex px-1.5 py-0.5 rounded-[3px] text-xs font-mono font-bold bg-emerald-950/60 text-emerald-400 border border-emerald-500/30">
-                TRUE
-              </span>
-            ) : (
-              <span className="inline-flex px-1.5 py-0.5 rounded-[3px] text-xs font-mono font-bold bg-zinc-900 text-zinc-400 border border-zinc-800">
-                FALSE
-              </span>
+          if (typeof effectiveVal === "boolean") {
+            return (
+              <div
+                onDoubleClick={handleCellDoubleClick}
+                className={cn(
+                  "flex items-center gap-1 w-full",
+                  hasStagedEdit && "border-l-2 border-amber-400 pl-1 bg-amber-500/10 rounded-r"
+                )}
+                title={hasStagedEdit ? `Staged edit (original: ${String(val)})` : undefined}
+              >
+                {effectiveVal ? (
+                  <span className="inline-flex px-1.5 py-0.5 rounded-[3px] text-xs font-mono font-bold bg-emerald-950/60 text-emerald-400 border border-emerald-500/30">
+                    TRUE
+                  </span>
+                ) : (
+                  <span className="inline-flex px-1.5 py-0.5 rounded-[3px] text-xs font-mono font-bold bg-zinc-900 text-zinc-400 border border-zinc-800">
+                    FALSE
+                  </span>
+                )}
+                {hasStagedEdit && (
+                  <span className="text-[10px] text-amber-400/90 font-mono italic shrink-0">
+                    (staged)
+                  </span>
+                )}
+              </div>
             );
           }
 
           // 4. Object / Array (JSON)
-          if (typeof val === "object") {
-            const jsonStr = JSON.stringify(val);
+          if (typeof effectiveVal === "object") {
+            const jsonStr = JSON.stringify(effectiveVal);
             return (
-              <div className="flex items-center justify-between gap-1 group/cell w-full">
-                <span className="truncate text-emerald-400/90 font-mono text-xs sm:text-[13px]">
+              <div
+                onDoubleClick={handleCellDoubleClick}
+                className={cn(
+                  "flex items-center justify-between gap-1 group/cell w-full",
+                  hasStagedEdit && "border-l-2 border-amber-400 pl-1 bg-amber-500/10 rounded-r"
+                )}
+                title={hasStagedEdit ? `Staged edit (original: ${JSON.stringify(val)})` : undefined}
+              >
+                <span className={cn(
+                  "truncate font-mono text-xs sm:text-[13px]",
+                  hasStagedEdit ? "text-amber-300 font-medium" : "text-emerald-400/90"
+                )}>
                   {jsonStr}
                 </span>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setInspectedRow(rowData);
-                    setInspectedColumn(col.name);
-                    setInspectorOpen(true);
-                  }}
-                  className="opacity-0 group-hover/cell:opacity-100 size-5 rounded-[3px] hover:bg-zinc-800 text-zinc-400 hover:text-white flex items-center justify-center transition-opacity shrink-0 cursor-pointer"
-                  title="Expand JSON in inspector"
-                >
-                  <HugeiconsIcon icon={ExpandIcon} className="size-3" />
-                </button>
+                <div className="flex items-center gap-1 shrink-0">
+                  {hasStagedEdit && (
+                    <span className="text-[10px] text-amber-400/90 font-mono italic">
+                      (staged)
+                    </span>
+                  )}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setInspectedRow(rowData);
+                      setInspectedColumn(col.name);
+                      setInspectorOpen(true);
+                    }}
+                    className="opacity-0 group-hover/cell:opacity-100 size-5 rounded-[3px] hover:bg-zinc-800 text-zinc-400 hover:text-white flex items-center justify-center transition-opacity shrink-0 cursor-pointer"
+                    title="Expand JSON in inspector"
+                  >
+                    <HugeiconsIcon icon={ExpandIcon} className="size-3" />
+                  </button>
+                </div>
               </div>
             );
           }
 
           // 5. String or Number
-          const strVal = String(val);
+          const strVal = String(effectiveVal);
           const isLong = strVal.length > 50;
 
           return (
-            <div className="flex items-center justify-between gap-1 group/cell w-full">
-              <span
-                className={`truncate font-mono text-xs sm:text-[13px] ${
-                  col.generic_type === "number" ? "text-right w-full text-zinc-200" : "text-zinc-300"
-                }`}
-                title={strVal}
-              >
-                {strVal}
-              </span>
+            <div
+              onDoubleClick={handleCellDoubleClick}
+              className={cn(
+                "flex items-center justify-between gap-1 group/cell w-full",
+                hasStagedEdit && "border-l-2 border-amber-400 pl-1 bg-amber-500/10 rounded-r"
+              )}
+              title={hasStagedEdit ? `Staged edit (original: ${String(val)})` : strVal}
+            >
+              <div className="flex items-center gap-1.5 truncate">
+                <span
+                  className={cn(
+                    "truncate font-mono text-xs sm:text-[13px]",
+                    col.generic_type === "number" ? "text-right w-full" : "",
+                    hasStagedEdit ? "text-amber-300 font-semibold" : "text-zinc-300"
+                  )}
+                >
+                  {strVal}
+                </span>
+                {hasStagedEdit && (
+                  <span className="text-[10px] text-amber-400 font-mono italic shrink-0 px-1 py-0.2 rounded bg-amber-500/20">
+                    staged
+                  </span>
+                )}
+              </div>
 
               <div className="opacity-0 group-hover/cell:opacity-100 flex items-center gap-0.5 shrink-0 transition-opacity">
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
-                    copyCellValue(cellKey, val);
+                    copyCellValue(cellKey, effectiveVal);
                   }}
                   className="size-5 rounded-[3px] hover:bg-zinc-800 text-zinc-400 hover:text-white flex items-center justify-center cursor-pointer"
                   title="Copy cell value"
@@ -355,34 +574,45 @@ export function DataGrid({
         ),
         cell: (info) => {
           const rowData = info.row.original;
+          const rowKey = String(pkCol ? rowData[pkCol.name] : info.row.id);
+          const isStagedDelete = stagedDeletionsByPk.has(rowKey);
+
           return (
             <div className="flex items-center gap-1 justify-center">
-              {onEditRow && (
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onEditRow(rowData);
-                  }}
-                  className="size-6 rounded-[3px] hover:bg-zinc-800 text-zinc-400 hover:text-blue-400 flex items-center justify-center transition-colors cursor-pointer"
-                  title="Edit record"
-                >
-                  <HugeiconsIcon icon={Edit02Icon} className="size-3.5" />
-                </button>
-              )}
+              {isStagedDelete ? (
+                <span className="text-[10px] text-red-400 font-mono italic px-1 rounded bg-red-950/60 border border-red-500/30">
+                  queued del
+                </span>
+              ) : (
+                <>
+                  {onEditRow && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onEditRow(rowData);
+                      }}
+                      className="size-6 rounded-[3px] hover:bg-zinc-800 text-zinc-400 hover:text-blue-400 flex items-center justify-center transition-colors cursor-pointer"
+                      title="Edit record"
+                    >
+                      <HugeiconsIcon icon={Edit02Icon} className="size-3.5" />
+                    </button>
+                  )}
 
-              {onDeleteRow && (
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onDeleteRow(rowData);
-                  }}
-                  className="size-6 rounded-[3px] hover:bg-zinc-800 text-zinc-400 hover:text-red-400 flex items-center justify-center transition-colors cursor-pointer"
-                  title="Delete record"
-                >
-                  <HugeiconsIcon icon={Delete02Icon} className="size-3.5" />
-                </button>
+                  {onDeleteRow && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onDeleteRow(rowData);
+                      }}
+                      className="size-6 rounded-[3px] hover:bg-zinc-800 text-zinc-400 hover:text-red-400 flex items-center justify-center transition-colors cursor-pointer"
+                      title="Delete record"
+                    >
+                      <HugeiconsIcon icon={Delete02Icon} className="size-3.5" />
+                    </button>
+                  )}
+                </>
               )}
             </div>
           );
@@ -408,6 +638,11 @@ export function DataGrid({
     pkCol,
     onEditRow,
     onDeleteRow,
+    stagedUpdatesByCell,
+    stagedDeletionsByPk,
+    editingCell,
+    editInputVal,
+    onStageCellEdit,
   ]);
 
   const tableInstance = useReactTable({
@@ -507,6 +742,10 @@ export function DataGrid({
 
                 {virtualRows.map((virtualRow) => {
                   const row = tableRows[virtualRow.index];
+                  const rowData = row.original;
+                  const rowKey = String(pkCol ? rowData[pkCol.name] : row.id);
+                  const isStagedDelete = stagedDeletionsByPk.has(rowKey);
+
                   return (
                     <tr
                       key={row.id}
@@ -514,7 +753,10 @@ export function DataGrid({
                         setInspectedRow(row.original);
                         setInspectedColumn(columns[0]?.name || null);
                       }}
-                      className="hover:bg-zinc-900/60 transition-colors group cursor-pointer"
+                      className={cn(
+                        "hover:bg-zinc-900/60 transition-colors group cursor-pointer",
+                        isStagedDelete && "bg-red-950/20 opacity-60 text-red-400 line-through"
+                      )}
                     >
                       {row.getVisibleCells().map((cell) => (
                         <td

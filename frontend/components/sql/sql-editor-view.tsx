@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { Cancel01Icon, ShieldAlertIcon } from "@hugeicons/core-free-icons";
 import { apiGet, apiPost, ApiError } from "@/lib/api";
 import { useWorkspaceStore } from "@/lib/stores/workspace-store";
 import { MonacoSqlCanvas } from "./monaco-sql-canvas";
@@ -14,6 +16,7 @@ import type {
   ColumnInfo,
   Connection,
   DestructiveWarningResponse,
+  DryRunResponse,
   ExecuteQueryRequest,
   ExecuteQueryResponse,
   SchemaTreeResponse,
@@ -51,7 +54,12 @@ export function SqlEditorView({ tab, connection }: SqlEditorViewProps) {
   // AST Guardrail Modal State (PRD F6)
   const [guardrailOpen, setGuardrailOpen] = useState<boolean>(false);
   const [guardrailWarnings, setGuardrailWarnings] = useState<string[]>([]);
+  const [guardrailImpact, setGuardrailImpact] = useState<{
+    rows_affected: number;
+    sample_rows?: Record<string, unknown>[];
+  } | null>(null);
   const [pendingSql, setPendingSql] = useState<string>("");
+  const [approvalNotification, setApprovalNotification] = useState<string | null>(null);
 
   // Save Query Modal State (PRD F9)
   const [saveModalOpen, setSaveModalOpen] = useState<boolean>(false);
@@ -105,6 +113,12 @@ export function SqlEditorView({ tab, connection }: SqlEditorViewProps) {
         payload
       );
 
+      if (res.requires_approval) {
+        setApprovalNotification(res.message || "Change request submitted for peer approval.");
+        setResultsCollapsed(true);
+        return;
+      }
+
       setActiveRunId(res.run_id);
       setColumns(res.columns || []);
       setRows(res.rows || []);
@@ -120,6 +134,7 @@ export function SqlEditorView({ tab, connection }: SqlEditorViewProps) {
         if (warningData?.requires_confirmation) {
           setPendingSql(rawSql);
           setGuardrailWarnings(warningData.warnings || ["Destructive statement detected"]);
+          setGuardrailImpact(warningData.impact || null);
           setGuardrailOpen(true);
           return;
         }
@@ -128,6 +143,38 @@ export function SqlEditorView({ tab, connection }: SqlEditorViewProps) {
       setErrorMessage(err instanceof Error ? err.message : "Query execution failed");
       setRowCount(0);
       setResultsCollapsed(false);
+    } finally {
+      setIsRunning(false);
+    }
+  }
+
+  // Dry-run statement inside an isolated transaction and report impact
+  async function handleDryRun() {
+    const rawSql = currentSql.trim();
+    if (!rawSql) return;
+
+    setIsRunning(true);
+    setErrorMessage(null);
+    setApprovalNotification(null);
+
+    try {
+      const res = await apiPost<DryRunResponse>(
+        `/connections/${tab.connectionId}/dry-run/`,
+        {
+          sql: rawSql,
+          timeout: timeoutSec,
+        }
+      );
+
+      setColumns(res.columns || []);
+      setRows(res.sample_rows || []);
+      setRowCount(res.rows_affected);
+      setDurationMs(res.duration_ms);
+      setTruncated(false);
+      setResultsCollapsed(false);
+      setErrorMessage(`[Dry-Run Simulator] Transaction rolled back. This statement will affect ${res.rows_affected} ${res.rows_affected === 1 ? 'row' : 'rows'}.`);
+    } catch (err) {
+      setErrorMessage(err instanceof Error ? err.message : "Dry-run failed");
     } finally {
       setIsRunning(false);
     }
@@ -170,6 +217,7 @@ export function SqlEditorView({ tab, connection }: SqlEditorViewProps) {
       {/* Query Execution & Configuration Toolbar */}
       <QueryToolbar
         onRun={() => executeSql()}
+        onDryRun={handleDryRun}
         onCancel={handleCancelQuery}
         isRunning={isRunning}
         activeRunId={activeRunId}
@@ -186,6 +234,22 @@ export function SqlEditorView({ tab, connection }: SqlEditorViewProps) {
         onSaveQuery={() => setSaveModalOpen(true)}
         onExport={handleExport}
       />
+
+      {/* Production Approval Notification */}
+      {approvalNotification && (
+        <div className="mx-4 mt-2.5 p-3 rounded-xl bg-amber-950/40 border border-amber-500/30 text-amber-300 text-xs flex items-center justify-between gap-2 animate-in fade-in">
+          <div className="flex items-center gap-2">
+            <HugeiconsIcon icon={ShieldAlertIcon} className="size-4 shrink-0 text-amber-400" />
+            <span>{approvalNotification}</span>
+          </div>
+          <button
+            onClick={() => setApprovalNotification(null)}
+            className="text-zinc-400 hover:text-white cursor-pointer"
+          >
+            <HugeiconsIcon icon={Cancel01Icon} className="size-3.5" />
+          </button>
+        </div>
+      )}
 
       {/* Center Monaco SQL Canvas */}
       <div className="flex-1 overflow-hidden flex flex-col min-h-[140px]">
@@ -219,6 +283,7 @@ export function SqlEditorView({ tab, connection }: SqlEditorViewProps) {
         isSubmitting={isRunning}
         warnings={guardrailWarnings}
         sql={pendingSql}
+        impact={guardrailImpact}
       />
 
       {/* Save Query Modal (PRD F9) */}

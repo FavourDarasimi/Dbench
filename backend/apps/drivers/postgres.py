@@ -18,6 +18,7 @@ from .base import (
     DriverQueryError,
     DriverReadOnlyError,
     DriverTimeoutError,
+    DryRunResult,
     ForeignKeyMeta,
     QueryResult,
     TableMeta,
@@ -228,6 +229,92 @@ class PostgresDriver(BaseDriver):
             if run_id:
                 run_tracker.unregister(run_id)
             self._release_connection(conn, is_pooled)
+
+    def execute_dry_run(
+        self,
+        sql: str,
+        params: tuple | list | dict | None = None,
+        timeout: int = 30,
+    ) -> DryRunResult:
+        """
+        Execute statement inside an isolated transaction, sample affected rows,
+        read rows_affected, and GUARANTEE rollback.
+        """
+        started = time.perf_counter()
+        conn = self._open_direct_connection(timeout=min(timeout, 10))
+        sample_rows: list[dict[str, Any]] = []
+        columns: list[ColumnMeta] = []
+        rows_affected = 0
+        warnings: list[str] = []
+
+        try:
+            timeout_ms = max(int(timeout * 1000), 1000)
+            conn.execute(f"SET statement_timeout = {timeout_ms};")
+
+            # Try running with RETURNING * if it's an UPDATE, DELETE, or INSERT without RETURNING
+            clean_sql = sql.strip().rstrip(";")
+            upper_sql = clean_sql.upper()
+            can_return = (
+                (upper_sql.startswith("UPDATE") or upper_sql.startswith("DELETE") or upper_sql.startswith("INSERT"))
+                and "RETURNING" not in upper_sql
+            )
+
+            executed_sql = f"{clean_sql} RETURNING *;" if can_return else sql
+
+            with conn.cursor() as cur:
+                try:
+                    cur.execute(executed_sql, params)
+                except Exception as exc:
+                    if can_return:
+                        # Fallback to original SQL if RETURNING * failed (e.g. complex expression)
+                        conn.rollback()
+                        cur.execute(sql, params)
+                    else:
+                        raise exc
+
+                rows_affected = cur.rowcount if cur.rowcount != -1 else 0
+
+                if cur.description is not None:
+                    col_names = [desc.name for desc in cur.description]
+                    for name in col_names:
+                        columns.append(
+                            ColumnMeta(
+                                name=name,
+                                data_type="text",
+                                generic_type=generic_type_from_name(name),
+                                nullable=True,
+                            )
+                        )
+                    raw_rows = cur.fetchmany(10)
+                    for row in raw_rows:
+                        row_dict = {}
+                        for col_name, val in zip(col_names, row):
+                            row_dict[col_name] = serialize_value(val)
+                        sample_rows.append(row_dict)
+
+            duration = int((time.perf_counter() - started) * 1000)
+            return DryRunResult(
+                sql=sql,
+                rows_affected=rows_affected,
+                sample_rows=sample_rows,
+                columns=columns,
+                duration_ms=duration,
+                warnings=warnings,
+            )
+        except Exception as exc:
+            msg = str(exc)
+            if "statement timeout" in msg.lower():
+                raise DriverTimeoutError(f"Dry-run timed out after {timeout} seconds.", exc) from exc
+            raise DriverQueryError(f"Dry-run execution failed: {msg}", exc) from exc
+        finally:
+            try:
+                conn.rollback()
+            except Exception:
+                pass
+            try:
+                conn.close()
+            except Exception:
+                pass
 
     def stream_query(
         self,

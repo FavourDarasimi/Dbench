@@ -16,6 +16,10 @@ interface AstGuardrailModalProps {
   isSubmitting: boolean;
   warnings: string[];
   sql: string;
+  impact?: {
+    rows_affected: number;
+    sample_rows?: Record<string, unknown>[];
+  } | null;
 }
 
 export function AstGuardrailModal({
@@ -25,6 +29,7 @@ export function AstGuardrailModal({
   isSubmitting,
   warnings,
   sql,
+  impact,
 }: AstGuardrailModalProps) {
   if (!isOpen) return null;
 
@@ -73,6 +78,29 @@ export function AstGuardrailModal({
               ))}
             </ul>
           </div>
+
+          {/* Live Impact Preview */}
+          {impact && (
+            <div className="p-3.5 rounded-xl bg-red-950/20 border border-red-500/30 text-red-300 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="font-bold text-xs text-red-200">
+                  Simulated Impact (Dry-Run):
+                </span>
+                <span className="px-2 py-0.5 rounded bg-red-950/80 text-red-300 border border-red-500/40 text-[10px] font-bold">
+                  {impact.rows_affected} {impact.rows_affected === 1 ? "row" : "rows"} affected
+                </span>
+              </div>
+              <p className="text-[11px] text-zinc-400">
+                This statement was dry-run in an isolated transaction. Executing anyway will permanently modify these records.
+              </p>
+              {impact.sample_rows && impact.sample_rows.length > 0 && (
+                <div className="mt-1.5 bg-black/60 p-2 rounded-lg border border-zinc-800 text-[10px] overflow-x-auto max-h-28">
+                  <div className="text-zinc-500 mb-0.5">Sample affected records:</div>
+                  <pre className="text-zinc-300">{JSON.stringify(impact.sample_rows, null, 2)}</pre>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* SQL Code Preview */}
           <div className="space-y-1.5">

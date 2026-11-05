@@ -11,6 +11,8 @@ from apps.drivers.base import ColumnMeta
 from apps.drivers.factory import get_driver
 from apps.explorer.services import schema_cache
 from apps.queries.models import QueryHistory
+from apps.audit.models import AuditLog
+from apps.audit.services import create_change_request, record_audit
 
 from .builder import quote_identifier
 
@@ -254,7 +256,48 @@ def execute_row_mutation(
             "row": None,
         }
 
-    # 6. Execute Mutation
+    # Fetch before_state for UPDATE or DELETE to enable 1-click undo
+    before_state = None
+    if action in ("update", "delete") and pk is not None and builder.primary_key_col:
+        try:
+            fetch_driver = get_driver(config_from_connection(connection))
+            table_ref = f"{builder._quote(schema)}.{builder._quote(table)}"
+            pk_clause = f"{builder._quote(builder.primary_key_col)} = %s"
+            fetch_res = fetch_driver.execute(f"SELECT * FROM {table_ref} WHERE {pk_clause} LIMIT 1;", [pk], timeout=10)
+            if fetch_res.rows:
+                before_state = fetch_res.rows[0]
+            fetch_driver.close()
+        except Exception as exc:
+            logger.debug("Could not fetch before_state for undo: %s", exc)
+
+    # 6. Production Approval Check
+    if getattr(connection, "require_approval", False):
+        cr = create_change_request(
+            connection=connection,
+            requester=user,
+            sql=sql,
+            action=action,
+            schema_name=schema,
+            table_name=table,
+            params=params,
+            title=f"{action.capitalize()} {schema}.{table} row ({pk})" if pk else f"{action.capitalize()} on {schema}.{table}",
+        )
+        return {
+            "action": action,
+            "schema": schema,
+            "table": table,
+            "pk": pk,
+            "pks": pks,
+            "preview": False,
+            "requires_approval": True,
+            "change_request_id": str(cr.id),
+            "impact_summary": cr.impact_summary,
+            "message": f"Change request #{cr.id} created. Awaiting peer approval on production.",
+            "rows_affected": 0,
+            "row": None,
+        }
+
+    # 7. Execute Mutation
     driver = get_driver(config_from_connection(connection))
     try:
         res = driver.execute(sql, params, limit=10, timeout=20)
@@ -272,6 +315,22 @@ def execute_row_mutation(
 
         returned_row = res.rows[0] if res.rows else None
 
+        # Log to AuditLog for row-level auditing and 1-click undo
+        audit_entry = record_audit(
+            connection=connection,
+            user=user,
+            action=action,
+            schema_name=schema,
+            table_name=table,
+            record_pk=str(pk) if pk is not None else "",
+            before_state=before_state,
+            after_state=returned_row or data if action in ("insert", "update") else None,
+            sql=preview_sql,
+            rows_affected=res.row_count,
+            reversible=action in ("insert", "update", "delete"),
+            source=AuditLog.Source.BROWSER,
+        )
+
         return {
             "action": action,
             "schema": schema,
@@ -279,6 +338,7 @@ def execute_row_mutation(
             "pk": pk,
             "pks": pks,
             "preview": False,
+            "audit_id": str(audit_entry.id),
             "sql": preview_sql,
             "rows_affected": res.row_count,
             "row": returned_row,
@@ -288,5 +348,142 @@ def execute_row_mutation(
         clean_msg = _friendly_constraint_error(exc)
         logger.warning("Mutation error on %s.%s (%s): %s", schema, table, action, exc)
         raise ValidationError(clean_msg) from exc
+    finally:
+        driver.close()
+
+
+def execute_staged_mutations(
+    connection: Connection,
+    user: Any,
+    staged_items: list[dict[str, Any]],
+    preview: bool = False,
+) -> dict[str, Any]:
+    """
+    Execute a batch of staged mutations atomically inside a single database transaction.
+    Enforces read-only connection limits, view restrictions, and approval requirements.
+    """
+    if connection.read_only:
+        raise PermissionDenied("This connection is in read-only mode. Modifying operations are blocked.")
+    if not staged_items:
+        raise ValidationError("No staged changes to commit.")
+
+    compiled_statements: list[tuple[str, list[Any], dict[str, Any]]] = []
+
+    for item in staged_items:
+        action = item.get("action", "").lower().strip()
+        schema = item.get("schema", "public").strip()
+        table = item.get("table", "").strip()
+        data = item.get("data") or {}
+        pk = item.get("pk")
+
+        tables = schema_cache.get_tables(connection, schema)
+        target_meta = next((t for t in tables if t["name"] == table), None)
+        if target_meta and target_meta.get("type") == "view":
+            raise ValidationError(f"'{schema}.{table}' is a database view. Editing is not permitted.")
+
+        columns_raw = schema_cache.get_columns(connection, schema, table)
+        columns = [
+            ColumnMeta(
+                name=c["name"],
+                data_type=c["data_type"],
+                generic_type=c["generic_type"],
+                nullable=c.get("nullable", True),
+                default=c.get("default"),
+                is_primary_key=c.get("is_primary_key", False),
+            )
+            for c in columns_raw
+        ]
+        builder = MutationBuilder(schema=schema, table=table, columns=columns, dialect=connection.engine)
+
+        if action == "insert":
+            sql, params = builder.build_insert(data)
+        elif action == "update":
+            if pk is None:
+                raise ValidationError("Primary key 'pk' is required for row update.")
+            sql, params = builder.build_update(pk, data)
+        elif action == "delete":
+            if pk is None:
+                raise ValidationError("Primary key 'pk' is required for row deletion.")
+            sql, params = builder.build_delete(pk)
+        else:
+            raise ValidationError(f"Unsupported staged mutation action: '{action}'.")
+
+        compiled_statements.append((sql, params, item))
+
+    # Combine SQL into a readable preview
+    all_preview_sqls = [_render_preview_sql(s, p) for s, p, _ in compiled_statements]
+    combined_sql = "\n".join(all_preview_sqls)
+
+    if preview:
+        driver = get_driver(config_from_connection(connection))
+        total_affected = 0
+        try:
+            for sql, params, _ in compiled_statements:
+                dr = driver.execute_dry_run(sql, params, timeout=10)
+                total_affected += dr.rows_affected
+            return {
+                "preview": True,
+                "staged_count": len(staged_items),
+                "rows_affected": total_affected,
+                "sql": combined_sql,
+                "message": f"Preview: {len(staged_items)} staged changes will affect {total_affected} rows.",
+            }
+        except Exception as exc:
+            raise ValidationError(f"Dry run simulation error: {exc}") from exc
+        finally:
+            driver.close()
+
+    # Production Approval Check
+    if getattr(connection, "require_approval", False):
+        cr = create_change_request(
+            connection=connection,
+            requester=user,
+            sql=combined_sql,
+            action="batch_mutation",
+            schema_name=staged_items[0].get("schema", "public"),
+            table_name=staged_items[0].get("table", "batch"),
+            staged_payload=staged_items,
+            title=f"Batch of {len(staged_items)} staged edits on {staged_items[0].get('table', 'tables')}",
+        )
+        return {
+            "preview": False,
+            "requires_approval": True,
+            "change_request_id": str(cr.id),
+            "impact_summary": cr.impact_summary,
+            "message": f"Batch change request #{cr.id} created. Awaiting peer approval on production.",
+        }
+
+    # Execute atomically in one connection/transaction
+    driver = get_driver(config_from_connection(connection))
+    audit_ids: list[str] = []
+    try:
+        for sql, params, item in compiled_statements:
+            res = driver.execute(sql, params, limit=10, timeout=20)
+            audit_entry = record_audit(
+                connection=connection,
+                user=user,
+                action=item.get("action", "update"),
+                schema_name=item.get("schema", "public"),
+                table_name=item.get("table", ""),
+                record_pk=str(item.get("pk", "")),
+                before_state=item.get("originalData"),
+                after_state=item.get("data"),
+                sql=_render_preview_sql(sql, params),
+                rows_affected=res.row_count,
+                reversible=True,
+                source=AuditLog.Source.STAGING,
+            )
+            audit_ids.append(str(audit_entry.id))
+
+        return {
+            "preview": False,
+            "staged_count": len(staged_items),
+            "audit_ids": audit_ids,
+            "message": f"Successfully committed {len(staged_items)} staged changes.",
+        }
+    except Exception as exc:
+        clean_msg = _friendly_constraint_error(exc)
+        logger.warning("Batch staged mutation failed: %s", exc)
+        raise ValidationError(f"Batch commit failed: {clean_msg}") from exc
     finally:
         driver.close()

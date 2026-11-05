@@ -16,6 +16,7 @@ from .base import (
     DriverQueryError,
     DriverReadOnlyError,
     DriverTimeoutError,
+    DryRunResult,
     ForeignKeyMeta,
     QueryResult,
     TableMeta,
@@ -198,6 +199,75 @@ class MySQLDriver(BaseDriver):
         finally:
             if run_id:
                 run_tracker.unregister(run_id)
+            try:
+                conn.close()
+            except Exception:
+                pass
+
+    def execute_dry_run(
+        self,
+        sql: str,
+        params: tuple | list | dict | None = None,
+        timeout: int = 30,
+    ) -> DryRunResult:
+        """
+        Execute statement inside an isolated transaction in MySQL, read rows_affected,
+        and GUARANTEE rollback.
+        """
+        started = time.perf_counter()
+        conn = self._open_direct_connection(timeout=min(timeout, 10))
+        sample_rows: list[dict[str, Any]] = []
+        columns: list[ColumnMeta] = []
+        rows_affected = 0
+        warnings: list[str] = []
+
+        try:
+            timeout_ms = max(int(timeout * 1000), 1000)
+            with conn.cursor() as cur:
+                try:
+                    cur.execute(f"SET max_execution_time = {timeout_ms};")
+                except Exception:
+                    pass
+
+                conn.begin()
+                cur.execute(sql, params)
+                rows_affected = cur.rowcount if cur.rowcount != -1 else 0
+
+                if cur.description is not None:
+                    col_names = [desc[0] for desc in cur.description]
+                    for name in col_names:
+                        columns.append(
+                            ColumnMeta(
+                                name=name,
+                                data_type="text",
+                                generic_type=generic_type_from_name(name),
+                                nullable=True,
+                            )
+                        )
+                    raw_rows = cur.fetchmany(10)
+                    for row in raw_rows:
+                        row_dict = {}
+                        for col_name, val in zip(col_names, row):
+                            row_dict[col_name] = serialize_value(val)
+                        sample_rows.append(row_dict)
+
+            duration = int((time.perf_counter() - started) * 1000)
+            return DryRunResult(
+                sql=sql,
+                rows_affected=rows_affected,
+                sample_rows=sample_rows,
+                columns=columns,
+                duration_ms=duration,
+                warnings=warnings,
+            )
+        except Exception as exc:
+            msg = str(exc)
+            raise DriverQueryError(f"Dry-run execution failed: {msg}", exc) from exc
+        finally:
+            try:
+                conn.rollback()
+            except Exception:
+                pass
             try:
                 conn.close()
             except Exception:

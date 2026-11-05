@@ -5,6 +5,7 @@ from .views import (
     RowDetailView,
     RowMutationView,
     SqlPreviewView,
+    StagedMutationsView,
     TableBrowseExportView,
     TableRowCountView,
 )
@@ -12,6 +13,7 @@ from .views import (
 urlpatterns = [
     # 1. General mutation endpoint (PRD §12: POST /api/connections/{id}/rows/)
     path("connections/<uuid:connection_id>/rows/", RowMutationView.as_view(), name="browser-rows-mutate"),
+    path("connections/<uuid:connection_id>/staged-mutations/", StagedMutationsView.as_view(), name="browser-staged-mutations"),
 
     # 2. Table rows (GET to browse, POST to insert, DELETE for bulk delete)
     path("connections/<uuid:connection_id>/tables/<str:table_ref>/rows/", BrowseRowsView.as_view(), name="browser-table-rows"),

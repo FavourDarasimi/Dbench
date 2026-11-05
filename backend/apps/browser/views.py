@@ -20,7 +20,7 @@ from apps.queries.serializers import ExportQueryParamsSerializer
 from apps.queries.views import BaseStreamingExportView
 
 from .builder import BrowseQueryBuilder
-from .mutations import execute_row_mutation
+from .mutations import execute_row_mutation, execute_staged_mutations
 from .serializers import (
     BrowseRequestSerializer,
     BrowseResponseSerializer,
@@ -479,4 +479,24 @@ class TableBrowseExportView(BaseStreamingExportView):
             filename=filename,
             max_rows=max_rows,
         )
+
+
+class StagedMutationsView(APIView):
+    """POST /api/connections/{id}/staged-mutations/ - batch commit or dry-run staged grid edits."""
+
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, connection_id):
+        connection = _get_connection(request, connection_id)
+        staged_items = request.data.get("staged_items", [])
+        preview = bool(request.data.get("preview", False))
+
+        payload = execute_staged_mutations(
+            connection=connection,
+            user=request.user,
+            staged_items=staged_items,
+            preview=preview,
+        )
+        return Response(payload, status=status.HTTP_200_OK)
+
 

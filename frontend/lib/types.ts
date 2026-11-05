@@ -29,6 +29,9 @@ export interface Connection {
   ssl_mode: SslMode;
   ssh_config: SSHConfig;
   read_only: boolean;
+  environment?: "development" | "staging" | "production";
+  is_production?: boolean;
+  require_approval?: boolean;
   has_password: boolean;
   has_ssh_password: boolean;
   created_at: string;
@@ -46,6 +49,9 @@ export interface ConnectionPayload {
   database_url?: string;
   ssl_mode?: SslMode;
   read_only?: boolean;
+  environment?: "development" | "staging" | "production";
+  is_production?: boolean;
+  require_approval?: boolean;
   ssh_config?: { enabled: boolean; host: string; port: number; username: string; password?: string };
 }
 
@@ -201,6 +207,10 @@ export interface RowMutationResponse {
   sql: string;
   row?: Record<string, unknown> | null;
   message: string;
+  audit_id?: string;
+  requires_approval?: boolean;
+  change_request_id?: string;
+  impact_summary?: Record<string, unknown>;
 }
 
 // ---- Query Execution Types (Phase 4) ----
@@ -210,6 +220,7 @@ export interface ExecuteQueryRequest {
   limit?: number;
   timeout?: number;
   confirm_destructive?: boolean;
+  dry_run?: boolean;
 }
 
 export interface ExecuteQueryResponse {
@@ -221,12 +232,88 @@ export interface ExecuteQueryResponse {
   duration_ms: number;
   truncated: boolean;
   total_rows?: number | null;
+  sample_rows?: Record<string, unknown>[];
+  requires_approval?: boolean;
+  change_request_id?: string;
+  impact_summary?: Record<string, unknown>;
+  message?: string;
 }
 
 export interface DestructiveWarningResponse {
   requires_confirmation: boolean;
   warnings: string[];
   message: string;
+  impact?: {
+    rows_affected: number;
+    sample_rows?: Record<string, unknown>[];
+  } | null;
+}
+
+export interface DryRunResponse {
+  sql: string;
+  rows_affected: number;
+  sample_rows: Record<string, unknown>[];
+  columns: ColumnInfo[];
+  duration_ms: number;
+  warnings: string[];
+}
+
+export interface StagedChange {
+  id: string;
+  action: "insert" | "update" | "delete";
+  schema: string;
+  table: string;
+  pk?: string | number | null;
+  data?: Record<string, unknown>;
+  originalData?: Record<string, unknown>;
+  displayLabel?: string;
+}
+
+export interface AuditEntry {
+  id: string;
+  action: "insert" | "update" | "delete" | "bulk_delete" | "raw_sql" | "batch_mutation" | "undo";
+  schema_name: string;
+  table_name: string;
+  record_pk: string;
+  before_state?: Record<string, unknown> | null;
+  after_state?: Record<string, unknown> | null;
+  diff?: Record<string, { old: unknown; new: unknown }> | null;
+  sql: string;
+  rows_affected: number;
+  reversible: boolean;
+  undone_at?: string | null;
+  undone_by_email?: string | null;
+  source: string;
+  user_email: string;
+  created_at: string;
+}
+
+export type ChangeRequestStatus = "pending" | "approved" | "rejected" | "executed" | "cancelled";
+
+export interface ChangeRequest {
+  id: string;
+  connection: string;
+  connection_name: string;
+  requester_email: string;
+  reviewer_email?: string | null;
+  title: string;
+  description: string;
+  action: string;
+  schema_name: string;
+  table_name: string;
+  sql: string;
+  impact_summary: {
+    rows_affected?: number;
+    sample_rows?: Record<string, unknown>[];
+    duration_ms?: number;
+    warnings?: string[];
+    error?: string;
+  };
+  status: ChangeRequestStatus;
+  review_comment: string;
+  created_at: string;
+  reviewed_at?: string | null;
+  executed_at?: string | null;
 }
 
 export interface CancelQueryResponse {

@@ -85,6 +85,9 @@ def config_from_connection(conn) -> dict:
         "ssl_mode": conn.ssl_mode,
         "ssh_config": ssh,
         "read_only": conn.read_only,
+        "environment": getattr(conn, "environment", "development"),
+        "is_production": getattr(conn, "is_production", False),
+        "require_approval": getattr(conn, "require_approval", False),
         "use_pool": True,
     }
 

@@ -97,6 +97,26 @@ class TestResult:
         return asdict(self)
 
 
+@dataclass
+class DryRunResult:
+    sql: str
+    rows_affected: int
+    sample_rows: list[dict[str, Any]]
+    columns: list[ColumnMeta]
+    duration_ms: int
+    warnings: list[str] = field(default_factory=list)
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "sql": self.sql,
+            "rows_affected": self.rows_affected,
+            "sample_rows": self.sample_rows,
+            "columns": [c.to_dict() for c in self.columns],
+            "duration_ms": self.duration_ms,
+            "warnings": self.warnings,
+        }
+
+
 # ---- Driver Exceptions ----
 
 
@@ -223,6 +243,15 @@ class BaseDriver(ABC):
         run_id: str | None = None,
     ) -> QueryResult:
         """Execute SQL with timeout, row limit, and run tracking."""
+
+    @abstractmethod
+    def execute_dry_run(
+        self,
+        sql: str,
+        params: tuple | list | dict | None = None,
+        timeout: int = 30,
+    ) -> DryRunResult:
+        """Execute a statement inside a transaction, report affected rows & sample, then roll back."""
 
     @abstractmethod
     def stream_query(
