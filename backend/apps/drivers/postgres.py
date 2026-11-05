@@ -48,6 +48,17 @@ class PostgresDriver(BaseDriver):
             return self._direct_tunnel.local_host, self._direct_tunnel.local_port or self.port
         return self.host, self.port
 
+    @staticmethod
+    def _safe_rollback(conn: Any) -> None:
+        """Safely attempt to roll back a transaction, suppressing errors if connection is closed or lost."""
+        if conn is None:
+            return
+        try:
+            if not getattr(conn, "closed", True) and not getattr(conn, "broken", False):
+                conn.rollback()
+        except Exception:
+            pass
+
     def _open_direct_connection(self, timeout: int = 6) -> psycopg.Connection:
         """Open a single direct connection (used for testing or control commands)."""
         host, port = self._get_connect_params()
@@ -211,19 +222,19 @@ class PostgresDriver(BaseDriver):
                 )
 
         except ReadOnlySqlTransaction as exc:
-            conn.rollback()
+            self._safe_rollback(conn)
             raise DriverReadOnlyError("Database is in read-only mode. Modifying operations are blocked.", exc) from exc
         except QueryCanceled as exc:
-            conn.rollback()
+            self._safe_rollback(conn)
             msg = str(exc).lower()
             if "statement timeout" in msg or "canceling statement due to statement timeout" in msg:
                 raise DriverTimeoutError(f"Query timed out after {timeout} seconds.", exc) from exc
             raise DriverCancelledError("Query was cancelled by the user.", exc) from exc
         except OperationalError as exc:
-            conn.rollback()
+            self._safe_rollback(conn)
             raise DriverConnectionError(f"Connection error during query: {exc}", exc) from exc
         except psycopg.Error as exc:
-            conn.rollback()
+            self._safe_rollback(conn)
             raise DriverQueryError(f"Database error: {exc}", exc) from exc
         finally:
             if run_id:
@@ -267,7 +278,7 @@ class PostgresDriver(BaseDriver):
                 except Exception as exc:
                     if can_return:
                         # Fallback to original SQL if RETURNING * failed (e.g. complex expression)
-                        conn.rollback()
+                        self._safe_rollback(conn)
                         cur.execute(sql, params)
                     else:
                         raise exc
@@ -307,10 +318,7 @@ class PostgresDriver(BaseDriver):
                 raise DriverTimeoutError(f"Dry-run timed out after {timeout} seconds.", exc) from exc
             raise DriverQueryError(f"Dry-run execution failed: {msg}", exc) from exc
         finally:
-            try:
-                conn.rollback()
-            except Exception:
-                pass
+            self._safe_rollback(conn)
             try:
                 conn.close()
             except Exception:
@@ -356,19 +364,19 @@ class PostgresDriver(BaseDriver):
                         break
 
         except ReadOnlySqlTransaction as exc:
-            conn.rollback()
+            self._safe_rollback(conn)
             raise DriverReadOnlyError("Database is in read-only mode.", exc) from exc
         except QueryCanceled as exc:
-            conn.rollback()
+            self._safe_rollback(conn)
             msg = str(exc).lower()
             if "statement timeout" in msg or "canceling statement due to statement timeout" in msg:
                 raise DriverTimeoutError(f"Query timed out after {timeout} seconds.", exc) from exc
             raise DriverCancelledError("Query was cancelled.", exc) from exc
         except OperationalError as exc:
-            conn.rollback()
+            self._safe_rollback(conn)
             raise DriverConnectionError(f"Connection error during query: {exc}", exc) from exc
         except psycopg.Error as exc:
-            conn.rollback()
+            self._safe_rollback(conn)
             raise DriverQueryError(f"Database error: {exc}", exc) from exc
         finally:
             try:

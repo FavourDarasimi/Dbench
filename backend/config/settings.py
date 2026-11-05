@@ -20,7 +20,7 @@ env = environ.Env(
     ALLOWED_HOSTS=(list, ["localhost", "127.0.0.1", "api", "testserver"]),
     CSRF_TRUSTED_ORIGINS=(
         list,
-        ["http://localhost:3000", "http://127.0.0.1:3000"],
+        ["http://localhost:3000", "http://127.0.0.1:3000","http://localhost:3001", "http://127.0.0.1:3001"],
     ),
     ALLOW_REGISTRATION=(bool, True),
     ALLOW_LOCAL_CONNECTIONS=(bool, True),

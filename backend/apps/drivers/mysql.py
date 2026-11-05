@@ -45,6 +45,19 @@ class MySQLDriver(BaseDriver):
             return self._direct_tunnel.local_host, self._direct_tunnel.local_port or self.port
         return self.host, self.port
 
+    @staticmethod
+    def _safe_rollback(conn: Any) -> None:
+        """Safely attempt to roll back a transaction, suppressing errors if connection is closed or lost."""
+        if conn is None:
+            return
+        try:
+            is_closed = getattr(conn, "closed", False)
+            is_open = getattr(conn, "open", True)
+            if is_open and not is_closed:
+                conn.rollback()
+        except Exception:
+            pass
+
     def _open_direct_connection(self, timeout: int = 6) -> pymysql.connections.Connection:
         host, port = self._get_connect_params()
         try:
@@ -182,7 +195,7 @@ class MySQLDriver(BaseDriver):
                 )
 
         except pymysql.err.OperationalError as exc:
-            conn.rollback()
+            self._safe_rollback(conn)
             code, msg = exc.args if len(exc.args) >= 2 else (0, str(exc))
             # 1792 = Cannot execute statement in a READ ONLY transaction
             # 1290 = The MySQL server is running with the --read-only option so it cannot execute this statement
@@ -194,7 +207,7 @@ class MySQLDriver(BaseDriver):
                 raise DriverCancelledError("Query was cancelled by the user.", exc) from exc
             raise DriverQueryError(f"MySQL error: {msg}", exc) from exc
         except pymysql.MySQLError as exc:
-            conn.rollback()
+            self._safe_rollback(conn)
             raise DriverQueryError(f"MySQL error: {exc}", exc) from exc
         finally:
             if run_id:
@@ -316,7 +329,7 @@ class MySQLDriver(BaseDriver):
                         break
 
         except pymysql.err.OperationalError as exc:
-            conn.rollback()
+            self._safe_rollback(conn)
             code, msg = exc.args if len(exc.args) >= 2 else (0, str(exc))
             if code in (1792, 1290) or "read only" in str(msg).lower():
                 raise DriverReadOnlyError("Database is in read-only mode.", exc) from exc
@@ -326,7 +339,7 @@ class MySQLDriver(BaseDriver):
                 raise DriverCancelledError("Query was cancelled.", exc) from exc
             raise DriverQueryError(f"MySQL error: {msg}", exc) from exc
         except pymysql.MySQLError as exc:
-            conn.rollback()
+            self._safe_rollback(conn)
             raise DriverQueryError(f"MySQL error: {exc}", exc) from exc
         finally:
             try:

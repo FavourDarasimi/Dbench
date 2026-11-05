@@ -12,7 +12,14 @@ from rest_framework.views import APIView
 
 from apps.connections.models import Connection
 from apps.connections.services import config_from_connection
-from apps.drivers.base import ColumnMeta, ForeignKeyMeta
+from apps.drivers.base import (
+    ColumnMeta,
+    DriverConnectionError,
+    DriverError,
+    DriverQueryError,
+    DriverTimeoutError,
+    ForeignKeyMeta,
+)
 from apps.drivers.factory import get_driver
 from apps.explorer.services import schema_cache
 from apps.queries.export import build_streaming_export_response
@@ -133,8 +140,29 @@ class BrowseRowsView(APIView):
             select_columns=params.get("columns"),
         )
 
-        payload = execute_browse(connection, request.user, builder)
-        return Response(payload, status=status.HTTP_200_OK)
+        try:
+            payload = execute_browse(connection, request.user, builder)
+            return Response(payload, status=status.HTTP_200_OK)
+        except DriverConnectionError as exc:
+            return Response(
+                {"detail": f"Database connection error: {exc}"},
+                status=status.HTTP_503_SERVICE_UNAVAILABLE,
+            )
+        except DriverTimeoutError as exc:
+            return Response(
+                {"detail": f"Query timed out: {exc}"},
+                status=status.HTTP_408_REQUEST_TIMEOUT,
+            )
+        except DriverQueryError as exc:
+            return Response(
+                {"detail": f"Query execution failed: {exc}"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        except DriverError as exc:
+            return Response(
+                {"detail": str(exc)},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
     @extend_schema(
         summary="Insert row",

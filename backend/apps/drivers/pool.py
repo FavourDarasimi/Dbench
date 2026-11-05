@@ -145,8 +145,10 @@ class PoolManager:
                 min_size=1,
                 max_size=5,
                 max_idle=self.idle_timeout,
+                max_lifetime=1800.0,
                 timeout=10.0,
                 configure=configure_connection,
+                check=ConnectionPool.check_connection,
                 open=True,
             )
 
