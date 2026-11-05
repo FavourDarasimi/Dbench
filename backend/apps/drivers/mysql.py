@@ -128,6 +128,9 @@ class MySQLDriver(BaseDriver):
                 cur.execute(sql, params)
 
                 if cur.description is None:
+                    if self.read_only:
+                        conn.rollback()
+                        raise DriverReadOnlyError("Connection is in read-only mode. Modifying operations are blocked.")
                     conn.commit()
                     duration = int((time.perf_counter() - started) * 1000)
                     return QueryResult(

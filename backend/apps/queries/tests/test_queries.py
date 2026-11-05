@@ -70,10 +70,17 @@ def test_safety_catches_drop_and_truncate():
 
 def test_is_mutation_statement():
     assert is_mutation_statement("SELECT * FROM users") is False
+    assert is_mutation_statement("WITH cte AS (SELECT 1) SELECT * FROM cte") is False
+    assert is_mutation_statement("EXPLAIN SELECT 1") is False
     assert is_mutation_statement("INSERT INTO users(name) VALUES ('Bob')") is True
     assert is_mutation_statement("UPDATE users SET name = 'Bob'") is True
     assert is_mutation_statement("DELETE FROM users") is True
     assert is_mutation_statement("DROP TABLE users") is True
+    assert is_mutation_statement("SET default_transaction_read_only = off") is True
+    assert is_mutation_statement("SET SESSION transaction_read_only = OFF") is True
+    assert is_mutation_statement("DO $$ BEGIN DELETE FROM users; END $$") is True
+    assert is_mutation_statement("CALL my_procedure()") is True
+    assert is_mutation_statement('COPY users TO "/tmp/out"') is True
 
 
 # --- 2. Query Execution View Tests ---

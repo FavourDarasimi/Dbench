@@ -90,6 +90,8 @@ class PostgresDriver(BaseDriver):
                 if not conn.closed:
                     try:
                         conn.rollback()
+                        if self.read_only:
+                            conn.execute("SET default_transaction_read_only = on;")
                     except Exception:
                         pass
                 managed = pool_manager.get_pg_pool(self.config)
@@ -152,6 +154,9 @@ class PostgresDriver(BaseDriver):
 
                 if cur.description is None:
                     # Non-SELECT statement (INSERT, UPDATE, DELETE, DDL)
+                    if self.read_only:
+                        conn.rollback()
+                        raise DriverReadOnlyError("Connection is in read-only mode. Modifying operations are blocked.")
                     conn.commit()
                     duration = int((time.perf_counter() - started) * 1000)
                     return QueryResult(

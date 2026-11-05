@@ -1,10 +1,37 @@
 import json
 
+from django.conf import settings
 from rest_framework import serializers
 
 from .crypto import decrypt, encrypt
 from .models import Connection
 from .url_parser import parse_database_url
+
+
+def validate_not_app_database(attrs: dict) -> None:
+    """Disallow connecting to DBench's own operational database."""
+    default_db = getattr(settings, "DATABASES", {}).get("default", {})
+    engine = default_db.get("ENGINE", "")
+    if "sqlite" in engine:
+        return
+
+    app_host = (default_db.get("HOST") or "localhost").lower().strip()
+    app_port = int(default_db.get("PORT") or 5432)
+    app_name = (default_db.get("NAME") or "").lower().strip()
+
+    target_host = (attrs.get("host") or "").lower().strip()
+    target_port = int(attrs.get("port") or (5432 if attrs.get("engine") == Connection.Engine.POSTGRES else 3306))
+    target_name = (attrs.get("db_name") or "").lower().strip()
+
+    is_same_host = (
+        target_host == app_host or
+        (app_host in ("localhost", "127.0.0.1") and target_host in ("localhost", "127.0.0.1"))
+    )
+
+    if is_same_host and target_port == app_port and target_name == app_name and app_name:
+        raise serializers.ValidationError({
+            "db_name": "Connecting to DBench's own application database is not permitted."
+        })
 
 
 class SSHConfigSerializer(serializers.Serializer):
@@ -82,6 +109,19 @@ class ConnectionSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("You already have a connection with this name.")
         return value
 
+    def validate(self, attrs):
+        host = attrs.get("host") if "host" in attrs else (self.instance.host if self.instance else "")
+        port = attrs.get("port") if "port" in attrs else (self.instance.port if self.instance else 5432)
+        db_name = attrs.get("db_name") if "db_name" in attrs else (self.instance.db_name if self.instance else "")
+        engine = attrs.get("engine") if "engine" in attrs else (self.instance.engine if self.instance else Connection.Engine.POSTGRES)
+        validate_not_app_database({
+            "host": host,
+            "port": port,
+            "db_name": db_name,
+            "engine": engine,
+        })
+        return attrs
+
     def _encrypt_ssh(self, ssh: dict | None) -> str:
         if not ssh or not ssh.get("enabled"):
             return ""
@@ -147,6 +187,7 @@ class ConnectionTestSerializer(serializers.Serializer):
             missing["db_name"] = "Database name is required (specify db_name or provide database_url)."
         if missing:
             raise serializers.ValidationError(missing)
+        validate_not_app_database(attrs)
         return attrs
 
     def to_config(self) -> dict:

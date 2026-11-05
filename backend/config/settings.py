@@ -23,6 +23,7 @@ env = environ.Env(
         ["http://localhost:3000", "http://127.0.0.1:3000"],
     ),
     ALLOW_REGISTRATION=(bool, True),
+    ALLOW_LOCAL_CONNECTIONS=(bool, True),
     COOKIE_SECURE=(bool, False),
 )
 
@@ -46,6 +47,7 @@ DEBUG = env("DEBUG")
 ALLOWED_HOSTS = env.list("ALLOWED_HOSTS")
 CSRF_TRUSTED_ORIGINS = env.list("CSRF_TRUSTED_ORIGINS")
 ALLOW_REGISTRATION = env.bool("ALLOW_REGISTRATION")
+ALLOW_LOCAL_CONNECTIONS = env.bool("ALLOW_LOCAL_CONNECTIONS")
 
 INSTALLED_APPS = [
     "django.contrib.admin",

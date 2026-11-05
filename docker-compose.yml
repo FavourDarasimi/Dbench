@@ -4,18 +4,18 @@ services:
   postgres:
     image: postgres:16-alpine
     environment:
-      POSTGRES_USER: dbench
-      POSTGRES_PASSWORD: dbench-dev-pass
-      POSTGRES_DB: dbench
+      POSTGRES_USER: ${POSTGRES_USER:-dbench}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-dbench-dev-pass}
+      POSTGRES_DB: ${POSTGRES_DB:-dbench}
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U dbench -d dbench"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-dbench} -d ${POSTGRES_DB:-dbench}"]
       interval: 5s
       timeout: 3s
       retries: 12
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5432:5432"
 
   api:
     build: ./backend
@@ -23,10 +23,11 @@ services:
       SECRET_KEY: ${SECRET_KEY:?Generate it - see .env.example}
       ENCRYPTION_KEY: ${ENCRYPTION_KEY:?Generate it - see .env.example}
       DEBUG: "false"
-      DATABASE_URL: postgres://dbench:dbench-dev-pass@postgres:5432/dbench
+      DATABASE_URL: postgres://${POSTGRES_USER:-dbench}:${POSTGRES_PASSWORD:-dbench-dev-pass}@postgres:5432/${POSTGRES_DB:-dbench}
       ALLOWED_HOSTS: api,localhost,127.0.0.1
       CSRF_TRUSTED_ORIGINS: http://localhost:3000,http://127.0.0.1:3000
       ALLOW_REGISTRATION: "true"
+      SOKETI_APP_SECRET: ${SOKETI_APP_SECRET:-app-secret}
     depends_on:
       postgres:
         condition: service_healthy
@@ -76,12 +77,12 @@ services:
   soketi:
     image: quay.io/soketi/soketi:1.6-16-debian
     environment:
-      PUSHER_APP_ID: app-id
-      PUSHER_APP_KEY: app-key
-      PUSHER_APP_SECRET: app-secret
+      PUSHER_APP_ID: ${SOKETI_APP_ID:-app-id}
+      PUSHER_APP_KEY: ${SOKETI_APP_KEY:-app-key}
+      PUSHER_APP_SECRET: ${SOKETI_APP_SECRET:-app-secret}
       DEBUG: "1"
     ports:
-      - "6001:6001"
+      - "127.0.0.1:6001:6001"
 
 volumes:
   pgdata:

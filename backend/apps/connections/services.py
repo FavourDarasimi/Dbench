@@ -6,14 +6,58 @@ The BaseDriver abstraction (schema introspection, execute, cancel) lands in
 weeks 3-4.
 """
 
+import ipaddress
 import json
+import socket
 import time
 
+from django.conf import settings
 import psycopg
 import pymysql
 from sshtunnel import SSHTunnelForwarder
 
 from .crypto import decrypt
+
+BLOCKED_IP_NETWORKS = [
+    ipaddress.ip_network("169.254.0.0/16"),   # IPv4 Link-Local / Cloud Metadata (IMDS)
+    ipaddress.ip_network("fe80::/10"),        # IPv6 Link-Local
+]
+
+
+def validate_connection_host(host: str) -> None:
+    """Validate that host does not resolve to restricted link-local or prohibited private addresses."""
+    cleaned = (host or "").strip()
+    if not cleaned:
+        raise ValueError("Host cannot be empty.")
+
+    allow_local = getattr(settings, "ALLOW_LOCAL_CONNECTIONS", True)
+
+    # 1. Direct check if host is an IP address
+    try:
+        ip = ipaddress.ip_address(cleaned)
+        for blocked_net in BLOCKED_IP_NETWORKS:
+            if ip in blocked_net:
+                raise ValueError("Connection to link-local or cloud metadata addresses is strictly prohibited.")
+        if not allow_local and (ip.is_private or ip.is_loopback):
+            raise ValueError(f"Connection to private or loopback address '{cleaned}' is not permitted.")
+        return
+    except ValueError as exc:
+        if "prohibited" in str(exc) or "not permitted" in str(exc):
+            raise
+
+    # 2. Hostname resolution
+    try:
+        addr_info = socket.getaddrinfo(cleaned, None)
+        for _, _, _, _, sockaddr in addr_info:
+            ip = ipaddress.ip_address(sockaddr[0])
+            for blocked_net in BLOCKED_IP_NETWORKS:
+                if ip in blocked_net:
+                    raise ValueError("Connection to link-local or cloud metadata addresses is strictly prohibited.")
+            if not allow_local and (ip.is_private or ip.is_loopback):
+                raise ValueError(f"Connection to private or loopback address '{cleaned}' is not permitted.")
+    except socket.gaierror:
+        # If DNS cannot resolve the host, allow downstream driver/mock to handle socket attempt
+        pass
 
 
 def config_from_connection(conn) -> dict:
@@ -107,6 +151,7 @@ def run_connection_test(config: dict) -> dict:
     ssh = config.get("ssh_config") or {}
     tunnel = None
     try:
+        validate_connection_host(host)
         if ssh.get("enabled"):
             if not ssh.get("host") or not ssh.get("username"):
                 return {
@@ -115,6 +160,7 @@ def run_connection_test(config: dict) -> dict:
                     "latency_ms": None,
                     "server_version": None,
                 }
+            validate_connection_host(ssh["host"])
             tunnel = _open_tunnel(ssh, host, port)
             tunnel.start()
             host, port = "127.0.0.1", tunnel.local_bind_port
