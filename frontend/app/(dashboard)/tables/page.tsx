@@ -25,6 +25,9 @@ import { CommandPalette } from "@/components/command-palette/command-palette";
 import { ShortcutsModal } from "@/components/shortcuts/shortcuts-modal";
 import { useKeyboardShortcuts } from "@/lib/hooks/use-keyboard-shortcuts";
 import { Spinner } from "@/components/ui/badge";
+import { isSystemOrFrameworkTable } from "@/lib/table-classification";
+
+type TableCategory = "application" | "system" | "all";
 
 export default function TablesPage() {
   const {
@@ -42,6 +45,8 @@ export default function TablesPage() {
   const [tablesRailCollapsed, setTablesRailCollapsed] = useState<boolean>(false);
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<TableCategory>("application");
+  const [categoryDropdownOpen, setCategoryDropdownOpen] = useState(false);
 
   // Global Keyboard Shortcuts (PRD F13)
   useKeyboardShortcuts({
@@ -100,28 +105,65 @@ export default function TablesPage() {
     return item?.tables || [];
   }, [schemaTreeData, selectedSchema]);
 
-  // Filtered tables by search query
-  const filteredTables = useMemo(() => {
-    if (!tableSearch.trim()) return currentSchemaTables;
-    const q = tableSearch.toLowerCase().trim();
-    return currentSchemaTables.filter((t) => t.name.toLowerCase().includes(q));
-  }, [currentSchemaTables, tableSearch]);
+  // Category counts for the current schema
+  const { appCount, sysCount, allCount } = useMemo(() => {
+    let app = 0;
+    let sys = 0;
+    for (const tbl of currentSchemaTables) {
+      if (isSystemOrFrameworkTable(tbl.name, selectedSchema)) {
+        sys++;
+      } else {
+        app++;
+      }
+    }
+    return { appCount: app, sysCount: sys, allCount: currentSchemaTables.length };
+  }, [currentSchemaTables, selectedSchema]);
 
-  // Auto-select first table if none selected or table is not in active schema
+  // Tables filtered by active category
+  const categorizedTables = useMemo(() => {
+    if (selectedCategory === "application") {
+      return currentSchemaTables.filter((t) => !isSystemOrFrameworkTable(t.name, selectedSchema));
+    }
+    if (selectedCategory === "system") {
+      return currentSchemaTables.filter((t) => isSystemOrFrameworkTable(t.name, selectedSchema));
+    }
+    return currentSchemaTables;
+  }, [currentSchemaTables, selectedCategory, selectedSchema]);
+
+  // Filtered tables by search query within the category
+  const filteredTables = useMemo(() => {
+    if (!tableSearch.trim()) return categorizedTables;
+    const q = tableSearch.toLowerCase().trim();
+    return categorizedTables.filter((t) => t.name.toLowerCase().includes(q));
+  }, [categorizedTables, tableSearch]);
+
+  function handleSelectCategory(cat: TableCategory) {
+    setSelectedCategory(cat);
+    setCategoryDropdownOpen(false);
+
+    // If native PostgreSQL schemas exist, switch schema accordingly
+    if (cat === "system" && availableSchemas.includes("django")) {
+      setSelectedSchema("django");
+    } else if (cat === "application" && availableSchemas.includes("public")) {
+      setSelectedSchema("public");
+    }
+  }
+
+  // Auto-select first table if none selected or table is not in active schema/category
   useEffect(() => {
-    if (!connId || currentSchemaTables.length === 0) return;
+    if (!connId || filteredTables.length === 0) return;
 
     const isCurrentValid =
       selectedTable &&
       selectedTable.schema === selectedSchema &&
-      currentSchemaTables.some((t) => t.name === selectedTable.table);
+      filteredTables.some((t) => t.name === selectedTable.table);
 
     if (!isCurrentValid) {
-      const firstTable = currentSchemaTables[0].name;
+      const firstTable = filteredTables[0].name;
       setSelectedTable({ schema: selectedSchema, table: firstTable });
       openBrowserTab(connId, selectedSchema, firstTable);
     }
-  }, [connId, selectedSchema, currentSchemaTables, selectedTable, setSelectedTable, openBrowserTab]);
+  }, [connId, selectedSchema, filteredTables, selectedTable, setSelectedTable, openBrowserTab]);
 
   function handleSelectTable(tableName: string) {
     if (!connId) return;
@@ -204,70 +246,163 @@ export default function TablesPage() {
               </span>
             </div>
 
-            {/* Database Engine / Type (Disabled Input) */}
-            <div>
-              <input
-                type="text"
-                disabled
-                value={
-                  activeConn?.engine === "postgres"
-                    ? "PostgreSQL"
-                    : activeConn?.engine === "mysql"
-                    ? "MySQL"
-                    : activeConn?.engine || "PostgreSQL"
-                }
-                className="w-full px-2.5 py-1.5 rounded-[3px] bg-zinc-950/80 border border-zinc-800 text-xs sm:text-sm font-mono text-zinc-400 select-none cursor-not-allowed opacity-90"
-                title="Database Type"
-              />
-            </div>
-
-            {/* Schema Selector Dropdown */}
+            {/* Table Category Dropdown: Application Tables vs System Tables */}
             <div className="relative">
               <button
                 type="button"
-                onClick={() => setSchemaDropdownOpen((prev) => !prev)}
+                onClick={() => setCategoryDropdownOpen((prev) => !prev)}
                 className="flex w-full items-center justify-between gap-1.5 px-2.5 py-1.5 rounded-[3px] bg-zinc-900/90 hover:bg-zinc-800 border border-zinc-700 text-xs sm:text-sm font-medium text-zinc-200 transition-colors cursor-pointer"
               >
-                <div className="flex items-center gap-1.5 truncate">
-                  <HugeiconsIcon icon={Layers01Icon} className="size-3.5 text-emerald-400 shrink-0" />
-                  <span className="truncate">{selectedSchema}</span>
+                <div className="flex items-center gap-2 truncate">
+                  <span
+                    className={cn(
+                      "size-2 rounded-full shrink-0",
+                      selectedCategory === "application"
+                        ? "bg-emerald-400 shadow-[0_0_6px_rgba(16,185,129,0.5)]"
+                        : selectedCategory === "system"
+                        ? "bg-amber-400 shadow-[0_0_6px_rgba(251,191,36,0.5)]"
+                        : "bg-blue-400"
+                    )}
+                  />
+                  <span className="truncate font-sans font-medium text-xs">
+                    {selectedCategory === "application"
+                      ? "Application Tables"
+                      : selectedCategory === "system"
+                      ? "System Tables"
+                      : "All Tables"}
+                  </span>
                 </div>
-                <HugeiconsIcon icon={ChevronDownIcon} className="size-3 text-zinc-400 shrink-0" />
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <span className="text-[10px] font-mono text-zinc-400 px-1.5 py-0.2 rounded bg-zinc-800 border border-zinc-700/60">
+                    {selectedCategory === "application"
+                      ? appCount
+                      : selectedCategory === "system"
+                      ? sysCount
+                      : allCount}
+                  </span>
+                  <HugeiconsIcon icon={ChevronDownIcon} className="size-3 text-zinc-400 shrink-0" />
+                </div>
               </button>
 
-              {/* Schema Menu */}
-              {schemaDropdownOpen && (
+              {/* Category Dropdown Menu */}
+              {categoryDropdownOpen && (
                 <>
                   <div
                     className="fixed inset-0 z-30"
-                    onClick={() => setSchemaDropdownOpen(false)}
+                    onClick={() => setCategoryDropdownOpen(false)}
                   />
                   <div className="absolute left-0 top-full mt-1 w-full z-40 rounded-[3px] bg-zinc-950 border border-zinc-700 py-1 shadow-2xl">
-                    <div className="px-2.5 py-1 text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">
-                      Schemas
+                    <div className="px-2.5 py-1 text-[10px] font-semibold text-zinc-500 uppercase tracking-wider">
+                      Table Category
                     </div>
-                    {availableSchemas.map((schema) => (
-                      <button
-                        key={schema}
-                        type="button"
-                        onClick={() => {
-                          setSelectedSchema(schema);
-                          setSchemaDropdownOpen(false);
-                        }}
-                        className={cn(
-                          "flex w-full items-center gap-2 px-2.5 py-1.5 text-xs sm:text-sm text-left transition-colors cursor-pointer",
-                          schema === selectedSchema
-                            ? "bg-zinc-800 text-emerald-400 font-medium"
-                            : "text-zinc-400 hover:bg-zinc-900 hover:text-zinc-200"
-                        )}
-                      >
-                        <span className="truncate">{schema}</span>
-                      </button>
-                    ))}
+
+                    <button
+                      type="button"
+                      onClick={() => handleSelectCategory("application")}
+                      className={cn(
+                        "flex w-full items-center justify-between gap-2 px-2.5 py-1.5 text-xs text-left transition-colors cursor-pointer",
+                        selectedCategory === "application"
+                          ? "bg-zinc-800 text-emerald-400 font-medium"
+                          : "text-zinc-300 hover:bg-zinc-900 hover:text-white"
+                      )}
+                    >
+                      <div className="flex items-center gap-2 truncate">
+                        <span className="size-1.5 rounded-full bg-emerald-400 shrink-0" />
+                        <span className="truncate font-sans">Application Tables</span>
+                      </div>
+                      <span className="text-[10px] font-mono text-zinc-500">{appCount}</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => handleSelectCategory("system")}
+                      className={cn(
+                        "flex w-full items-center justify-between gap-2 px-2.5 py-1.5 text-xs text-left transition-colors cursor-pointer",
+                        selectedCategory === "system"
+                          ? "bg-zinc-800 text-amber-400 font-medium"
+                          : "text-zinc-300 hover:bg-zinc-900 hover:text-white"
+                      )}
+                    >
+                      <div className="flex items-center gap-2 truncate">
+                        <span className="size-1.5 rounded-full bg-amber-400 shrink-0" />
+                        <span className="truncate font-sans">System Tables</span>
+                      </div>
+                      <span className="text-[10px] font-mono text-zinc-500">{sysCount}</span>
+                    </button>
+
+                    <div className="my-1 border-t border-zinc-800/80" />
+
+                    <button
+                      type="button"
+                      onClick={() => handleSelectCategory("all")}
+                      className={cn(
+                        "flex w-full items-center justify-between gap-2 px-2.5 py-1.5 text-xs text-left transition-colors cursor-pointer",
+                        selectedCategory === "all"
+                          ? "bg-zinc-800 text-white font-medium"
+                          : "text-zinc-400 hover:bg-zinc-900 hover:text-white"
+                      )}
+                    >
+                      <div className="flex items-center gap-2 truncate">
+                        <span className="size-1.5 rounded-full bg-zinc-500 shrink-0" />
+                        <span className="truncate font-sans">All Tables</span>
+                      </div>
+                      <span className="text-[10px] font-mono text-zinc-500">{allCount}</span>
+                    </button>
                   </div>
                 </>
               )}
             </div>
+
+            {/* Schema Selector Dropdown (Shown when database has multiple schemas) */}
+            {availableSchemas.length > 1 && (
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setSchemaDropdownOpen((prev) => !prev)}
+                  className="flex w-full items-center justify-between gap-1.5 px-2.5 py-1.5 rounded-[3px] bg-zinc-900/60 hover:bg-zinc-800 border border-zinc-800 text-xs font-mono text-zinc-300 transition-colors cursor-pointer"
+                >
+                  <div className="flex items-center gap-1.5 truncate">
+                    <HugeiconsIcon icon={Layers01Icon} className="size-3 text-zinc-400 shrink-0" />
+                    <span className="truncate text-zinc-500">Schema:</span>
+                    <span className="truncate text-zinc-200 font-medium">{selectedSchema}</span>
+                  </div>
+                  <HugeiconsIcon icon={ChevronDownIcon} className="size-3 text-zinc-400 shrink-0" />
+                </button>
+
+                {/* Schema Menu */}
+                {schemaDropdownOpen && (
+                  <>
+                    <div
+                      className="fixed inset-0 z-30"
+                      onClick={() => setSchemaDropdownOpen(false)}
+                    />
+                    <div className="absolute left-0 top-full mt-1 w-full z-40 rounded-[3px] bg-zinc-950 border border-zinc-700 py-1 shadow-2xl">
+                      <div className="px-2.5 py-1 text-[10px] font-semibold text-zinc-500 uppercase tracking-wider">
+                        Schemas
+                      </div>
+                      {availableSchemas.map((schema) => (
+                        <button
+                          key={schema}
+                          type="button"
+                          onClick={() => {
+                            setSelectedSchema(schema);
+                            setSchemaDropdownOpen(false);
+                          }}
+                          className={cn(
+                            "flex w-full items-center gap-2 px-2.5 py-1.5 text-xs text-left transition-colors cursor-pointer",
+                            schema === selectedSchema
+                              ? "bg-zinc-800 text-emerald-400 font-medium"
+                              : "text-zinc-400 hover:bg-zinc-900 hover:text-zinc-200"
+                          )}
+                        >
+                          <span className="truncate">{schema}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
 
             {/* Search row with filter and refresh button */}
             <div className="flex items-center gap-1.5 pt-0.5">
@@ -310,7 +445,13 @@ export default function TablesPage() {
               </div>
             ) : filteredTables.length === 0 ? (
               <div className="p-4 text-center text-xs sm:text-sm text-zinc-500">
-                {tableSearch ? "No matching tables" : "No tables in schema"}
+                {tableSearch
+                  ? "No matching tables"
+                  : selectedCategory === "application"
+                  ? "No application tables in this schema"
+                  : selectedCategory === "system"
+                  ? "No system tables in this schema"
+                  : "No tables in schema"}
               </div>
             ) : (
               filteredTables.map((tbl) => {

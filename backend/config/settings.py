@@ -97,6 +97,12 @@ WSGI_APPLICATION = "config.wsgi.application"
 
 if env("DATABASE_URL", default=""):
     DATABASES = {"default": env.db()}
+    # Support PostgreSQL search_path for public (app models) and django (system tables)
+    if DATABASES["default"].get("ENGINE", "").endswith("postgresql"):
+        DATABASES["default"].setdefault("OPTIONS", {})
+        existing_opts = DATABASES["default"]["OPTIONS"].get("options", "")
+        if "search_path" not in existing_opts:
+            DATABASES["default"]["OPTIONS"]["options"] = f"-c search_path=public,django {existing_opts}".strip()
 else:
     # Built directly (not via a URL) so paths with spaces work fine.
     DATABASES = {"default": {"ENGINE": "django.db.backends.sqlite3", "NAME": BASE_DIR / "db.sqlite3"}}
