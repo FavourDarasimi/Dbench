@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
@@ -101,11 +101,39 @@ export function BrowseToolbar({
   const router = useRouter();
 
   // Filter creation modal / popover state
-  const [filterModalOpen, setFilterModalOpen] = useState(false);
+  const [filterPopoverOpen, setFilterPopoverOpen] = useState(false);
+  const filterPopoverRef = useRef<HTMLDivElement>(null);
   const [selectedColName, setSelectedColName] = useState<string>(columns[0]?.name || "");
   const [selectedOp, setSelectedOp] = useState<FilterOperator>("contains");
   const [filterVal, setFilterVal] = useState<string>("");
   const [filterVal2, setFilterVal2] = useState<string>("");
+
+  // Close filter popover on click outside or Escape
+  useEffect(() => {
+    if (!filterPopoverOpen) return;
+
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        filterPopoverRef.current &&
+        !filterPopoverRef.current.contains(event.target as Node)
+      ) {
+        setFilterPopoverOpen(false);
+      }
+    }
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setFilterPopoverOpen(false);
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [filterPopoverOpen]);
 
   // SQL Preview loading state
   const [isPreviewingSql, setIsPreviewingSql] = useState(false);
@@ -202,7 +230,7 @@ export function BrowseToolbar({
     onFiltersChange([...filters, newFilter]);
     setFilterVal("");
     setFilterVal2("");
-    setFilterModalOpen(false);
+    setFilterPopoverOpen(false);
   }
 
   function handleRemoveFilter(index: number) {
@@ -255,7 +283,7 @@ export function BrowseToolbar({
     : `${startRow} - ${endRow} of ${rowCount}`;
 
   return (
-    <div className="flex flex-col gap-2 px-3 py-2 bg-[#09090b] border-b border-zinc-800">
+    <div className="flex flex-col gap-2 px-3 py-2 bg-[#09090b] border-b border-zinc-800 relative z-30">
       {/* Top Header Bar */}
       <div className="flex flex-wrap items-center justify-between gap-2.5">
         {/* Left Side: Collapse Rail Button, DATA Tab, Actions */}
@@ -295,19 +323,158 @@ export function BrowseToolbar({
             </button>
           )}
 
-          {/* Filters Button */}
-          <button
-            onClick={() => setFilterModalOpen(true)}
-            className="flex items-center gap-1.5 px-2.5 py-1 rounded-[3px] bg-[#121214] hover:bg-zinc-800 border border-zinc-700 text-xs sm:text-sm font-mono text-zinc-300 hover:text-white transition-colors cursor-pointer"
-          >
-            <HugeiconsIcon icon={FilterIcon} className="size-3.5 text-zinc-400" />
-            <span>Filters</span>
-            {filters.length > 0 && (
-              <span className="size-4 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 text-[10px] flex items-center justify-center font-bold">
-                {filters.length}
-              </span>
+          {/* Filters Button & Dropdown Popover */}
+          <div className="relative" ref={filterPopoverRef}>
+            <button
+              type="button"
+              onClick={() => {
+                if (!filterPopoverOpen && !selectedColName && columns.length > 0) {
+                  setSelectedColName(columns[0].name);
+                  const ops = getOperatorsForColumn(columns[0]);
+                  setSelectedOp(ops[0]?.op || "eq");
+                }
+                setFilterPopoverOpen((prev) => !prev);
+              }}
+              aria-expanded={filterPopoverOpen}
+              className={cn(
+                "flex items-center gap-1.5 px-2.5 py-1 rounded-[3px] border text-xs sm:text-sm font-mono transition-colors cursor-pointer",
+                filterPopoverOpen
+                  ? "bg-zinc-800 border-emerald-500/50 text-white"
+                  : "bg-[#121214] hover:bg-zinc-800 border-zinc-700 text-zinc-300 hover:text-white"
+              )}
+              title="Filter table records"
+            >
+              <HugeiconsIcon
+                icon={FilterIcon}
+                className={cn("size-3.5", filterPopoverOpen ? "text-emerald-400" : "text-zinc-400")}
+              />
+              <span>Filters</span>
+              {filters.length > 0 && (
+                <span className="size-4 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 text-[10px] flex items-center justify-center font-bold">
+                  {filters.length}
+                </span>
+              )}
+            </button>
+
+            {/* Filter Popover Appearing Directly Under the Filter Button */}
+            {filterPopoverOpen && (
+              <div className="absolute left-0 top-full mt-1.5 z-50 w-80 sm:w-96 bg-[#0e0e11] border border-zinc-800 rounded-[3px] p-4 shadow-2xl space-y-3 font-mono animate-in fade-in-50 zoom-in-95 duration-100">
+                <div className="flex items-center justify-between pb-2 border-b border-zinc-800">
+                  <h3 className="text-xs sm:text-sm font-bold text-white flex items-center gap-2">
+                    <HugeiconsIcon icon={FilterIcon} className="size-4 text-emerald-400" />
+                    <span>Add Column Filter</span>
+                  </h3>
+                  <button
+                    type="button"
+                    onClick={() => setFilterPopoverOpen(false)}
+                    className="text-zinc-500 hover:text-white rounded-[3px] p-0.5 cursor-pointer"
+                    title="Close"
+                  >
+                    <HugeiconsIcon icon={Cancel01Icon} className="size-4" />
+                  </button>
+                </div>
+
+                <div className="space-y-3 text-xs sm:text-sm">
+                  {/* Column Select */}
+                  <div>
+                    <label className="block text-zinc-400 mb-1 text-xs">Column</label>
+                    <select
+                      value={selectedColName}
+                      onChange={(e) => {
+                        setSelectedColName(e.target.value);
+                        const col = columns.find((c) => c.name === e.target.value);
+                        const ops = getOperatorsForColumn(col);
+                        setSelectedOp(ops[0]?.op || "eq");
+                      }}
+                      className="w-full px-2.5 py-1.5 rounded-[3px] bg-zinc-950 border border-zinc-800 text-zinc-200 focus:outline-none focus:border-emerald-500"
+                    >
+                      {columns.map((c) => (
+                        <option key={c.name} value={c.name}>
+                          {c.name} ({c.data_type})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Operator Select */}
+                  <div>
+                    <label className="block text-zinc-400 mb-1 text-xs">Condition</label>
+                    <select
+                      value={selectedOp}
+                      onChange={(e) => setSelectedOp(e.target.value as FilterOperator)}
+                      className="w-full px-2.5 py-1.5 rounded-[3px] bg-zinc-950 border border-zinc-800 text-zinc-200 focus:outline-none focus:border-emerald-500"
+                    >
+                      {getOperatorsForColumn(selectedCol).map((op) => (
+                        <option key={op.op} value={op.op}>
+                          {op.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Value Input */}
+                  {selectedOp !== "is_null" && selectedOp !== "is_not_null" && (
+                    <div>
+                      <label className="block text-zinc-400 mb-1 text-xs">
+                        {selectedOp === "between" ? "From Value" : "Value"}
+                      </label>
+                      <input
+                        type="text"
+                        value={filterVal}
+                        onChange={(e) => setFilterVal(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" && selectedOp !== "between") {
+                            e.preventDefault();
+                            handleAddFilter();
+                          }
+                        }}
+                        placeholder="Enter value..."
+                        className="w-full px-2.5 py-1.5 rounded-[3px] bg-zinc-950 border border-zinc-800 text-zinc-200 focus:outline-none focus:border-emerald-500"
+                        autoFocus
+                      />
+                    </div>
+                  )}
+
+                  {/* Between Second Value */}
+                  {selectedOp === "between" && (
+                    <div>
+                      <label className="block text-zinc-400 mb-1 text-xs">To Value</label>
+                      <input
+                        type="text"
+                        value={filterVal2}
+                        onChange={(e) => setFilterVal2(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            handleAddFilter();
+                          }
+                        }}
+                        placeholder="Enter upper bound..."
+                        className="w-full px-2.5 py-1.5 rounded-[3px] bg-zinc-950 border border-zinc-800 text-zinc-200 focus:outline-none focus:border-emerald-500"
+                      />
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex items-center justify-end gap-2 pt-2 border-t border-zinc-800/80">
+                  <button
+                    type="button"
+                    onClick={() => setFilterPopoverOpen(false)}
+                    className="px-3 py-1 rounded-[3px] bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-zinc-200 text-xs font-mono cursor-pointer transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleAddFilter}
+                    className="px-3.5 py-1 rounded-[3px] bg-emerald-500 hover:bg-emerald-400 text-zinc-950 text-xs font-mono font-bold cursor-pointer transition-colors"
+                  >
+                    Apply Filter
+                  </button>
+                </div>
+              </div>
             )}
-          </button>
+          </div>
 
           {/* Search Bar */}
           <div className="relative min-w-[180px] max-w-[240px]">
@@ -510,112 +677,6 @@ export function BrowseToolbar({
           >
             Clear all
           </button>
-        </div>
-      )}
-
-      {/* Popover / Dialog: Add Filter */}
-      {filterModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
-          <div className="w-full max-w-md bg-[#0e0e11] border border-zinc-800 rounded-[3px] p-5 shadow-2xl space-y-4">
-            <div className="flex items-center justify-between pb-2 border-b border-zinc-800">
-              <h3 className="text-sm font-mono font-bold text-white flex items-center gap-2">
-                <HugeiconsIcon icon={FilterIcon} className="size-4 text-emerald-400" />
-                <span>Add Column Filter</span>
-              </h3>
-              <button
-                onClick={() => setFilterModalOpen(false)}
-                className="text-zinc-500 hover:text-white rounded-[3px] cursor-pointer"
-              >
-                <HugeiconsIcon icon={Cancel01Icon} className="size-4" />
-              </button>
-            </div>
-
-            <div className="space-y-3 font-mono text-xs sm:text-sm">
-              {/* Column Select */}
-              <div>
-                <label className="block text-zinc-400 mb-1">Column</label>
-                <select
-                  value={selectedColName}
-                  onChange={(e) => {
-                    setSelectedColName(e.target.value);
-                    const col = columns.find((c) => c.name === e.target.value);
-                    const ops = getOperatorsForColumn(col);
-                    setSelectedOp(ops[0].op);
-                  }}
-                  className="w-full px-2.5 py-1.5 rounded-[3px] bg-zinc-950 border border-zinc-800 text-zinc-200 focus:outline-none focus:border-emerald-500"
-                >
-                  {columns.map((c) => (
-                    <option key={c.name} value={c.name}>
-                      {c.name} ({c.data_type})
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Operator Select */}
-              <div>
-                <label className="block text-zinc-400 mb-1">Condition</label>
-                <select
-                  value={selectedOp}
-                  onChange={(e) => setSelectedOp(e.target.value as FilterOperator)}
-                  className="w-full px-2.5 py-1.5 rounded-[3px] bg-zinc-950 border border-zinc-800 text-zinc-200 focus:outline-none focus:border-emerald-500"
-                >
-                  {getOperatorsForColumn(selectedCol).map((op) => (
-                    <option key={op.op} value={op.op}>
-                      {op.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Value Input */}
-              {selectedOp !== "is_null" && selectedOp !== "is_not_null" && (
-                <div>
-                  <label className="block text-zinc-400 mb-1">
-                    {selectedOp === "between" ? "From Value" : "Value"}
-                  </label>
-                  <input
-                    type="text"
-                    value={filterVal}
-                    onChange={(e) => setFilterVal(e.target.value)}
-                    placeholder="Enter value..."
-                    className="w-full px-2.5 py-1.5 rounded-[3px] bg-zinc-950 border border-zinc-800 text-zinc-200 focus:outline-none focus:border-emerald-500"
-                  />
-                </div>
-              )}
-
-              {/* Between Second Value */}
-              {selectedOp === "between" && (
-                <div>
-                  <label className="block text-zinc-400 mb-1">To Value</label>
-                  <input
-                    type="text"
-                    value={filterVal2}
-                    onChange={(e) => setFilterVal2(e.target.value)}
-                    placeholder="Enter upper bound..."
-                    className="w-full px-2.5 py-1.5 rounded-[3px] bg-zinc-950 border border-zinc-800 text-zinc-200 focus:outline-none focus:border-emerald-500"
-                  />
-                </div>
-              )}
-            </div>
-
-            <div className="flex items-center justify-end gap-2 pt-3 border-t border-zinc-800/80">
-              <button
-                type="button"
-                onClick={() => setFilterModalOpen(false)}
-                className="px-3 py-1.5 rounded-[3px] bg-zinc-900 hover:bg-zinc-800 text-zinc-400 text-xs sm:text-sm font-mono cursor-pointer"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={handleAddFilter}
-                className="px-4 py-1.5 rounded-[3px] bg-emerald-500 hover:bg-emerald-400 text-zinc-950 text-xs sm:text-sm font-mono font-bold cursor-pointer"
-              >
-                Apply Filter
-              </button>
-            </div>
-          </div>
         </div>
       )}
     </div>
