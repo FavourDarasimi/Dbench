@@ -25,6 +25,7 @@ from apps.explorer.services import schema_cache
 from apps.queries.export import build_streaming_export_response
 from apps.queries.serializers import ExportQueryParamsSerializer
 from apps.queries.views import BaseStreamingExportView
+from config.exceptions import sanitize_message
 
 from .builder import BrowseQueryBuilder
 from .mutations import execute_row_mutation, execute_staged_mutations
@@ -145,22 +146,22 @@ class BrowseRowsView(APIView):
             return Response(payload, status=status.HTTP_200_OK)
         except DriverConnectionError as exc:
             return Response(
-                {"detail": f"Database connection error: {exc}"},
+                {"detail": sanitize_message(str(exc)) or "Unable to connect to the target database."},
                 status=status.HTTP_503_SERVICE_UNAVAILABLE,
             )
-        except DriverTimeoutError as exc:
+        except DriverTimeoutError:
             return Response(
-                {"detail": f"Query timed out: {exc}"},
+                {"detail": "Query timed out before completing."},
                 status=status.HTTP_408_REQUEST_TIMEOUT,
             )
         except DriverQueryError as exc:
             return Response(
-                {"detail": f"Query execution failed: {exc}"},
+                {"detail": sanitize_message(str(exc))},
                 status=status.HTTP_400_BAD_REQUEST,
             )
         except DriverError as exc:
             return Response(
-                {"detail": str(exc)},
+                {"detail": sanitize_message(str(exc))},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 

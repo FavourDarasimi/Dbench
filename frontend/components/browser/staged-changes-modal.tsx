@@ -14,7 +14,7 @@ import {
 
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/badge";
-import { apiPost } from "@/lib/api";
+import { apiPost, sanitizeErrorMessage } from "@/lib/api";
 import type { Connection, StagedChange } from "@/lib/types";
 
 interface StagedChangesModalProps {
@@ -80,7 +80,7 @@ export function StagedChangesModal({
         message: res.message,
       });
     } catch (err) {
-      setErrorMessage(err instanceof Error ? err.message : "Dry run simulation failed");
+      setErrorMessage(err instanceof Error ? sanitizeErrorMessage(err.message) : "Dry run simulation failed");
     } finally {
       setDryRunRunning(false);
     }
@@ -114,7 +114,7 @@ export function StagedChangesModal({
       onCommitSuccess(res.message, res.requires_approval);
       onClose();
     } catch (err) {
-      setErrorMessage(err instanceof Error ? err.message : "Commit failed");
+      setErrorMessage(err instanceof Error ? sanitizeErrorMessage(err.message) : "Commit failed");
     } finally {
       setCommitting(false);
     }

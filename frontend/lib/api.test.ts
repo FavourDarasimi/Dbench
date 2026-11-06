@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { ApiError, api, extractDetail } from "./api";
+import { ApiError, api, extractDetail, sanitizeErrorMessage } from "./api";
 
 function jsonResponse(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json" } });
@@ -8,6 +8,30 @@ function jsonResponse(body: unknown, status = 200) {
 
 afterEach(() => {
   vi.unstubAllGlobals();
+});
+
+describe("sanitizeErrorMessage", () => {
+  it("converts raw HTML error pages into friendly server error messages", () => {
+    const html = "<!DOCTYPE html><html><head><title>500 Internal Server Error</title></head><body><h1>Server Error</h1></body></html>";
+    expect(sanitizeErrorMessage(html)).toBe("A server error occurred. Please try again or check server connectivity.");
+  });
+
+  it("masks python tracebacks and internal stack traces", () => {
+    const traceback = 'Traceback (most recent call last):\n  File "/run/media/kaiser/Local Disk/Projects/DBench/backend/view.py", line 55\npsycopg.OperationalError: the connection is lost';
+    expect(sanitizeErrorMessage(traceback)).toBe("An internal server error occurred while processing the request.");
+  });
+
+  it("normalizes severed database connection errors", () => {
+    const raw = "psycopg.OperationalError: the connection is lost";
+    expect(sanitizeErrorMessage(raw)).toBe("Database connection was lost or refused. Please verify database connectivity.");
+  });
+
+  it("masks internal IP addresses and server hostnames", () => {
+    const raw = 'Failed to connect to host "ep-crimson-123.neon.tech" at 192.168.1.100 port 5432';
+    const cleaned = sanitizeErrorMessage(raw);
+    expect(cleaned).not.toContain("192.168.1.100");
+    expect(cleaned).not.toContain("ep-crimson-123.neon.tech");
+  });
 });
 
 describe("extractDetail", () => {
@@ -71,5 +95,12 @@ describe("api", () => {
     expect(error).toBeInstanceOf(ApiError);
     expect(error.status).toBe(0);
     expect(error.message).toContain("Cannot reach the API");
+  });
+
+  it("re-throws AbortError without wrapping in network failure message", async () => {
+    const abortErr = new Error("The user aborted a request.");
+    abortErr.name = "AbortError";
+    vi.stubGlobal("fetch", vi.fn().mockRejectedValue(abortErr));
+    await expect(api("/tables/")).rejects.toThrow("The user aborted a request.");
   });
 });

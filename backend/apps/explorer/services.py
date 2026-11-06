@@ -16,6 +16,7 @@ from apps.drivers.base import (
     TableMeta,
 )
 from apps.drivers.factory import get_driver
+from config.exceptions import sanitize_message
 
 logger = logging.getLogger(__name__)
 
@@ -67,13 +68,13 @@ class SchemaCacheManager:
             config = config_from_connection(connection)
             return get_driver(config)
         except DriverAuthenticationError as exc:
-            raise DatabaseUnavailableException(f"Database authentication failed: {exc}") from exc
+            raise DatabaseUnavailableException(f"Database authentication failed: {sanitize_message(str(exc))}") from exc
         except DriverConnectionError as exc:
-            raise DatabaseUnavailableException(f"Cannot connect to database: {exc}") from exc
+            raise DatabaseUnavailableException(f"Cannot connect to database: {sanitize_message(str(exc))}") from exc
         except DriverError as exc:
-            raise DatabaseUnavailableException(f"Database driver error: {exc}") from exc
+            raise DatabaseUnavailableException(f"Database driver error: {sanitize_message(str(exc))}") from exc
         except ValueError as exc:
-            raise DatabaseUnavailableException(str(exc)) from exc
+            raise DatabaseUnavailableException(sanitize_message(str(exc))) from exc
 
     def get_schemas(self, connection: Connection, force_refresh: bool = False) -> list[str]:
         conn_id = str(connection.id)
@@ -92,7 +93,7 @@ class SchemaCacheManager:
             return schemas
         except Exception as exc:
             logger.error("Error listing schemas for connection %s: %s", conn_id, exc)
-            raise DatabaseUnavailableException(f"Failed to list schemas: {exc}") from exc
+            raise DatabaseUnavailableException(f"Failed to list schemas: {sanitize_message(str(exc))}") from exc
         finally:
             driver.close()
 
@@ -114,7 +115,7 @@ class SchemaCacheManager:
             return serialized
         except Exception as exc:
             logger.error("Error listing tables for connection %s (schema %s): %s", conn_id, schema, exc)
-            raise DatabaseUnavailableException(f"Failed to list tables: {exc}") from exc
+            raise DatabaseUnavailableException(f"Failed to list tables: {sanitize_message(str(exc))}") from exc
         finally:
             driver.close()
 
@@ -140,7 +141,7 @@ class SchemaCacheManager:
             logger.error(
                 "Error describing table %s.%s for connection %s: %s", schema, table, conn_id, exc
             )
-            raise DatabaseUnavailableException(f"Failed to describe table structure: {exc}") from exc
+            raise DatabaseUnavailableException(f"Failed to describe table structure: {sanitize_message(str(exc))}") from exc
         finally:
             driver.close()
 

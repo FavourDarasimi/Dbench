@@ -24,6 +24,7 @@ from apps.drivers.base import (
 )
 from apps.drivers.factory import get_driver
 from apps.drivers.pool import run_tracker
+from config.exceptions import sanitize_message
 from apps.notifications.events import (
     notify_query_cancelled,
     notify_query_completed,
@@ -277,7 +278,7 @@ class ExecuteQueryView(APIView):
             return Response({"detail": "Query was cancelled.", "run_id": run_id}, status=499)
 
         except (DriverConnectionError, DriverAuthenticationError) as exc:
-            err_msg = str(exc)
+            err_msg = sanitize_message(str(exc)) or "Unable to connect to database."
             QueryHistory.objects.create(
                 id=uuid.UUID(run_id),
                 user=request.user,
@@ -300,7 +301,7 @@ class ExecuteQueryView(APIView):
             return Response({"detail": err_msg, "run_id": run_id}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
 
         except (DriverQueryError, DriverError, Exception) as exc:
-            err_msg = str(exc)
+            err_msg = sanitize_message(str(exc))
             QueryHistory.objects.create(
                 id=uuid.UUID(run_id),
                 user=request.user,

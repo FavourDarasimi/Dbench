@@ -10,7 +10,7 @@ import {
   DatabaseIcon,
   ShieldCheckIcon,
 } from "@hugeicons/core-free-icons";
-import { apiGet, apiPost } from "@/lib/api";
+import { apiGet, apiPost, sanitizeErrorMessage } from "@/lib/api";
 import { BrowseToolbar } from "./browse-toolbar";
 import { DataGrid } from "@/components/grid/data-grid";
 import { RowFormModal } from "@/components/forms/row-form-modal";
@@ -57,6 +57,21 @@ export function DataBrowserView({
     tab.initialFilter ? [tab.initialFilter] : []
   );
   const [search, setSearch] = useState<string>("");
+  const [debouncedSearch, setDebouncedSearch] = useState<string>("");
+  const [rowErrorDismissed, setRowErrorDismissed] = useState<boolean>(false);
+
+  // Debounce search input by 300ms to avoid flooding backend with in-flight keystroke queries
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [search]);
+
+  // Reset dismissed error state when query coordinates change
+  useEffect(() => {
+    setRowErrorDismissed(false);
+  }, [schema, table, page, debouncedSearch, filters]);
 
   // Mutation State (Phase 3)
   const [rowFormOpen, setRowFormOpen] = useState(false);
@@ -133,7 +148,7 @@ export function DataBrowserView({
   queryParams.set("page", String(page));
   queryParams.set("page_size", String(pageSize));
   if (sort) queryParams.set("sort", sort);
-  if (search.trim()) queryParams.set("search", search.trim());
+  if (debouncedSearch.trim()) queryParams.set("search", debouncedSearch.trim());
   if (filters.length > 0) queryParams.set("filters", JSON.stringify(filters));
 
   const {
@@ -152,7 +167,7 @@ export function DataBrowserView({
       pageSize,
       sort,
       filters,
-      search,
+      debouncedSearch,
     ],
     queryFn: () =>
       apiGet<BrowseResponse>(
@@ -397,7 +412,7 @@ export function DataBrowserView({
       });
       refetchRows();
     } catch (err) {
-      showToast(err instanceof Error ? err.message : "Delete failed", "error");
+      showToast(err instanceof Error ? sanitizeErrorMessage(err.message) : "Delete failed", "error");
       setDeleteDialogOpen(false);
     } finally {
       setIsDeleting(false);
@@ -451,7 +466,7 @@ export function DataBrowserView({
         </div>
         <h4 className="text-sm font-bold text-white mb-1">Failed to load table</h4>
         <p className="text-xs text-zinc-400 max-w-md mb-4">
-          {columnsError instanceof Error ? columnsError.message : "Table columns unavailable"}
+          {columnsError instanceof Error ? sanitizeErrorMessage(columnsError.message) : "Table columns unavailable"}
         </p>
       </div>
     );
@@ -528,17 +543,32 @@ export function DataBrowserView({
       )}
 
       {/* Row Query Error Alert Banner */}
-      {isRowsError && (
-        <div className="mx-4 my-2 px-3 py-2 rounded-lg bg-red-950/40 border border-red-500/30 text-red-300 text-xs font-mono flex items-center justify-between">
-          <span>
-            {rowsError instanceof Error ? rowsError.message : "Error executing browse query"}
-          </span>
-          <button
-            onClick={() => refetchRows()}
-            className="underline hover:text-white cursor-pointer ml-3 shrink-0"
-          >
-            Retry
-          </button>
+      {isRowsError && !rowErrorDismissed && !(rowsError instanceof Error && rowsError.name === "AbortError") && (
+        <div className="mx-4 my-2 px-3 py-2 rounded-[3px] bg-red-950/40 border border-red-500/30 text-red-300 text-xs font-mono flex items-center justify-between gap-3 shadow-lg">
+          <div className="flex items-center gap-2 min-w-0">
+            <HugeiconsIcon icon={AlertCircleIcon} className="size-4 text-red-400 shrink-0" />
+            <span className="truncate">
+              {rowsError instanceof Error ? sanitizeErrorMessage(rowsError.message) : "Error executing browse query"}
+            </span>
+          </div>
+          <div className="flex items-center gap-3 shrink-0">
+            <button
+              onClick={() => {
+                setRowErrorDismissed(false);
+                refetchRows();
+              }}
+              className="underline hover:text-white cursor-pointer text-xs"
+            >
+              Retry
+            </button>
+            <button
+              onClick={() => setRowErrorDismissed(true)}
+              className="hover:text-white p-0.5 text-zinc-400 cursor-pointer"
+              title="Dismiss error"
+            >
+              <HugeiconsIcon icon={Cancel01Icon} className="size-3.5" />
+            </button>
+          </div>
         </div>
       )}
 

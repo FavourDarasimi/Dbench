@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Cancel01Icon, ShieldAlertIcon } from "@hugeicons/core-free-icons";
-import { apiGet, apiPost, ApiError } from "@/lib/api";
+import { apiGet, apiPost, ApiError, sanitizeErrorMessage } from "@/lib/api";
 import { useWorkspaceStore } from "@/lib/stores/workspace-store";
 import { MonacoSqlCanvas } from "./monaco-sql-canvas";
 import { QueryToolbar } from "./query-toolbar";
@@ -140,7 +140,7 @@ export function SqlEditorView({ tab, connection }: SqlEditorViewProps) {
         }
       }
 
-      setErrorMessage(err instanceof Error ? err.message : "Query execution failed");
+      setErrorMessage(err instanceof Error ? sanitizeErrorMessage(err.message) : "Query execution failed");
       setRowCount(0);
       setResultsCollapsed(false);
     } finally {
@@ -174,7 +174,7 @@ export function SqlEditorView({ tab, connection }: SqlEditorViewProps) {
       setResultsCollapsed(false);
       setErrorMessage(`[Dry-Run Simulator] Transaction rolled back. This statement will affect ${res.rows_affected} ${res.rows_affected === 1 ? 'row' : 'rows'}.`);
     } catch (err) {
-      setErrorMessage(err instanceof Error ? err.message : "Dry-run failed");
+      setErrorMessage(err instanceof Error ? sanitizeErrorMessage(err.message) : "Dry-run failed");
     } finally {
       setIsRunning(false);
     }
@@ -208,7 +208,7 @@ export function SqlEditorView({ tab, connection }: SqlEditorViewProps) {
         await downloadDirectExport(tab.connectionId, currentSql.trim(), format);
       }
     } catch (err) {
-      setErrorMessage(err instanceof Error ? err.message : "Export failed");
+      setErrorMessage(err instanceof Error ? sanitizeErrorMessage(err.message) : "Export failed");
     }
   }
 

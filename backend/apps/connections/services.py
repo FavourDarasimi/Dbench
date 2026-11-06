@@ -16,6 +16,7 @@ import psycopg
 import pymysql
 from sshtunnel import SSHTunnelForwarder
 
+from config.exceptions import sanitize_message
 from .crypto import decrypt
 
 BLOCKED_IP_NETWORKS = [
@@ -142,7 +143,8 @@ def _test_mysql(config: dict, host: str, port: int) -> str:
 
 def _friendly_error(exc: Exception) -> str:
     message = " ".join(str(exc).split())
-    return f"{type(exc).__name__}: {message}"[:300]
+    cleaned = sanitize_message(f"{type(exc).__name__}: {message}")
+    return cleaned[:300]
 
 
 def run_connection_test(config: dict) -> dict:
