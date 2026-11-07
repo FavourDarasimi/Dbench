@@ -468,12 +468,12 @@ export function RowFormModal({
       {/* Slide-over Drawer from Right */}
       <div className="fixed inset-y-0 right-0 z-50 flex w-full max-w-2xl flex-col bg-[#111113] border-l border-zinc-800 shadow-2xl animate-in slide-in-from-right duration-200 ease-out">
         {/* Header (styled similar to reference image) */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-800 bg-[#0e0e10]">
-          <div className="flex items-center gap-2">
-            <h2 className="text-sm sm:text-base font-bold text-white tracking-tight">
-              {mode === "insert" ? "Add new record to" : "Edit record in"}
+        <div className="flex items-center justify-between px-4 sm:px-6 py-3.5 sm:py-4 border-b border-zinc-800 bg-[#0e0e10]">
+          <div className="flex items-center gap-2 truncate">
+            <h2 className="text-xs sm:text-base font-bold text-white tracking-tight truncate">
+              {mode === "insert" ? "Add record to" : "Edit record in"}
             </h2>
-            <span className="px-2 py-0.5 rounded-[3px] bg-zinc-800/80 border border-zinc-700/80 text-xs font-mono text-zinc-200">
+            <span className="px-2 py-0.5 rounded-[3px] bg-zinc-800/80 border border-zinc-700/80 text-xs font-mono text-zinc-200 truncate">
               {table}
             </span>
           </div>
@@ -483,7 +483,7 @@ export function RowFormModal({
             onClick={onClose}
             disabled={isSubmitting}
             aria-label="Close"
-            className="flex size-7 items-center justify-center rounded-[3px] hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors cursor-pointer"
+            className="flex size-7 items-center justify-center rounded-[3px] hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors cursor-pointer shrink-0"
           >
             <HugeiconsIcon icon={Cancel01Icon} className="size-4" />
           </button>
@@ -491,13 +491,13 @@ export function RowFormModal({
 
         {/* Error notification banner if any */}
         {errorMessage && (
-          <div className="mx-6 mt-4 p-3 rounded-[3px] bg-red-950/40 border border-red-500/40 text-red-300 text-xs">
+          <div className="mx-4 sm:mx-6 mt-4 p-3 rounded-[3px] bg-red-950/40 border border-red-500/40 text-red-300 text-xs">
             {errorMessage}
           </div>
         )}
 
         {/* Form Body: Separated into Main fields and Optional fields */}
-        <div className="flex-1 overflow-y-auto px-6 py-6 custom-scrollbar space-y-6">
+        <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-4 sm:py-6 custom-scrollbar space-y-6">
           {/* Main Fields Section: no header at top */}
           {mainColumns.length > 0 && (
             <div className="space-y-6">
@@ -524,19 +524,19 @@ export function RowFormModal({
         </div>
 
         {/* Sticky Footer Actions */}
-        <div className="flex items-center justify-between px-6 py-4 border-t border-zinc-800 bg-[#0e0e10]">
+        <div className="flex items-center justify-between px-4 sm:px-6 py-3.5 sm:py-4 border-t border-zinc-800 bg-[#0e0e10] gap-2">
           {/* Bottom Left: optional PK info in edit mode */}
-          <div className="text-[11px] text-zinc-500 font-mono">
+          <div className="text-[11px] text-zinc-500 font-mono hidden sm:block">
             {mode === "edit" && pkValue ? `PK: ${pkValue}` : ""}
           </div>
 
           {/* Bottom Right: Cancel, Stage, & Save Ctrl+Enter */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center justify-end gap-2 sm:gap-3 w-full sm:w-auto">
             <button
               type="button"
               onClick={onClose}
               disabled={isSubmitting}
-              className="px-4 py-2 rounded-[3px] hover:bg-zinc-800 text-xs sm:text-sm font-mono text-zinc-400 hover:text-white transition-colors cursor-pointer disabled:opacity-40"
+              className="px-3 sm:px-4 py-2 rounded-[3px] hover:bg-zinc-800 text-xs sm:text-sm font-mono text-zinc-400 hover:text-white transition-colors cursor-pointer disabled:opacity-40"
             >
               Cancel
             </button>
@@ -550,9 +550,9 @@ export function RowFormModal({
                   onClose();
                 }}
                 disabled={isSubmitting}
-                className="px-3.5 py-2 rounded-[3px] border border-amber-500/40 bg-amber-950/40 hover:bg-amber-900/60 text-amber-300 font-mono font-medium text-xs sm:text-sm transition-colors cursor-pointer disabled:opacity-40"
+                className="px-2.5 sm:px-3.5 py-2 rounded-[3px] border border-amber-500/40 bg-amber-950/40 hover:bg-amber-900/60 text-amber-300 font-mono font-medium text-xs sm:text-sm transition-colors cursor-pointer disabled:opacity-40"
               >
-                Stage {mode === "edit" ? "Edit" : "Insert"}
+                Stage
               </button>
             )}
 
@@ -560,7 +560,7 @@ export function RowFormModal({
               type="button"
               onClick={handleSave}
               disabled={isSubmitting}
-              className="flex items-center gap-2 px-5 py-2 rounded-[3px] bg-white hover:bg-zinc-200 text-zinc-950 font-mono font-bold text-xs sm:text-sm transition-all shadow-sm cursor-pointer disabled:opacity-40"
+              className="flex items-center gap-1.5 sm:gap-2 px-3.5 sm:px-5 py-2 rounded-[3px] bg-white hover:bg-zinc-200 text-zinc-950 font-mono font-bold text-xs sm:text-sm transition-all shadow-sm cursor-pointer disabled:opacity-40"
             >
               {isSubmitting ? (
                 <>
@@ -570,7 +570,7 @@ export function RowFormModal({
               ) : (
                 <>
                   <span>Save</span>
-                  <span className="text-[10px] text-zinc-500 font-normal">Ctrl ↵</span>
+                  <span className="text-[10px] text-zinc-500 font-normal hidden sm:inline">Ctrl ↵</span>
                 </>
               )}
             </button>

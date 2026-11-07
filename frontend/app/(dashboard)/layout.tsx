@@ -40,13 +40,34 @@ function RealtimeSubscriber() {
 }
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+  const { openNav } = useWorkspaceStore();
+
   return (
     <RequireAuth>
       <RealtimeSubscriber />
       <div className="flex h-dvh w-full bg-[#0c0c0e] text-zinc-100 selection:bg-emerald-500/25 selection:text-emerald-200 antialiased overflow-hidden">
         <AppSidebar />
-        <div className="flex-1 min-w-0 h-full p-3 md:p-3.5 flex flex-col overflow-hidden">
-          <main className="relative flex-1 min-w-0 h-full overflow-y-auto overflow-x-hidden rounded-[26px] border border-zinc-800/80 bg-black shadow-2xl flex flex-col">
+        <div className="flex-1 min-w-0 h-full p-0 md:p-3.5 flex flex-col overflow-hidden">
+          {/* Mobile Top App Bar */}
+          <header className="flex h-12 w-full shrink-0 items-center justify-between border-b border-zinc-800/80 bg-[#0c0c0e] px-3 md:hidden z-20">
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                aria-label="Open navigation"
+                onClick={openNav}
+                className="flex size-8 shrink-0 items-center justify-center rounded-[3px] border border-zinc-800 bg-zinc-900/90 text-zinc-300 hover:text-white transition-colors"
+              >
+                <HugeiconsIcon icon={Menu01Icon} className="size-4" />
+              </button>
+              <Brand collapsed={false} />
+            </div>
+            {/* Connection Switcher in mobile header */}
+            <div className="max-w-[170px] shrink-0">
+              <ConnectionSwitcher collapsed={false} />
+            </div>
+          </header>
+
+          <main className="relative flex-1 min-w-0 h-full overflow-y-auto overflow-x-hidden rounded-none md:rounded-[26px] border-0 md:border md:border-zinc-800/80 bg-black shadow-2xl flex flex-col">
             {children}
           </main>
         </div>
@@ -56,7 +77,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 }
 
 function AppSidebar() {
-  const { navCollapsed, navOpen, openNav, closeNav } = useWorkspaceStore();
+  const { navCollapsed, navOpen, closeNav } = useWorkspaceStore();
   const pathname = usePathname();
 
   // Escape dismisses the mobile drawer.
@@ -154,16 +175,6 @@ function AppSidebar() {
         {/* Bottom User profile (email only) */}
         <UserBlock collapsed={navCollapsed} />
       </aside>
-
-      {/* Mobile opener */}
-      <button
-        type="button"
-        aria-label="Open navigation"
-        onClick={openNav}
-        className="fixed left-3 top-3 z-30 flex size-9 items-center justify-center rounded-lg border border-zinc-800 bg-zinc-950/90 text-zinc-300 backdrop-blur transition-colors hover:border-emerald-500/30 hover:text-emerald-400 md:hidden"
-      >
-        <HugeiconsIcon icon={Menu01Icon} className="size-4" />
-      </button>
     </>
   );
 }

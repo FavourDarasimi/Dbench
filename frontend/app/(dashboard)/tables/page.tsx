@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
+  Cancel01Icon,
   ChevronDownIcon,
   CodeIcon,
   DatabaseIcon,
@@ -47,6 +48,7 @@ export default function TablesPage() {
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<TableCategory>("application");
   const [categoryDropdownOpen, setCategoryDropdownOpen] = useState(false);
+  const [mobileTableDrawerOpen, setMobileTableDrawerOpen] = useState(false);
 
   // Global Keyboard Shortcuts (PRD F13)
   useKeyboardShortcuts({
@@ -236,7 +238,7 @@ export default function TablesPage() {
         Left Pane: Schema & Table Browser
       */}
       {!tablesRailCollapsed && (
-        <aside className="flex h-full w-60 sm:w-64 shrink-0 flex-col border-r border-zinc-800 bg-[#070709]">
+        <aside className="hidden md:flex h-full w-60 lg:w-64 shrink-0 flex-col border-r border-zinc-800 bg-[#070709]">
           {/* Header row: Database title and schema selector */}
           <div className="p-3 border-b border-zinc-800/80 bg-[#0a0a0d] space-y-2">
             <div className="flex items-center justify-between">
@@ -510,6 +512,7 @@ export default function TablesPage() {
             connection={activeConn}
             onToggleRail={() => setTablesRailCollapsed((prev) => !prev)}
             isRailCollapsed={tablesRailCollapsed}
+            onOpenTableDrawer={() => setMobileTableDrawerOpen(true)}
           />
         ) : (
           <div className="flex-1 flex flex-col items-center justify-center p-8 text-center text-zinc-400 select-none">
@@ -532,6 +535,189 @@ export default function TablesPage() {
           </div>
         )}
       </div>
+
+      {/* Mobile Table Selector Drawer (Supabase / Dribbble Inspired) */}
+      {mobileTableDrawerOpen && (
+        <div className="md:hidden fixed inset-0 z-50 flex">
+          {/* Backdrop */}
+          <div
+            className="fixed inset-0 bg-black/80 backdrop-blur-xs transition-opacity animate-in fade-in duration-200"
+            onClick={() => setMobileTableDrawerOpen(false)}
+          />
+
+          {/* Slide-over Drawer */}
+          <div className="relative z-10 w-full max-w-xs sm:max-w-sm bg-[#0c0c0e] border-r border-zinc-800 flex flex-col h-full shadow-2xl animate-in slide-in-from-left duration-200 font-mono">
+            {/* Drawer Header */}
+            <div className="p-3.5 border-b border-zinc-800/80 bg-[#0a0a0d] space-y-2.5">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="flex size-6 items-center justify-center rounded-[3px] bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
+                    <HugeiconsIcon icon={TableIcon} className="size-3.5" />
+                  </span>
+                  <span className="text-sm font-bold text-white tracking-tight">Tables</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setMobileTableDrawerOpen(false)}
+                  className="size-7 flex items-center justify-center rounded-[3px] text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors"
+                >
+                  <HugeiconsIcon icon={Cancel01Icon} className="size-4" />
+                </button>
+              </div>
+
+              {/* Category Segmented Controls */}
+              <div className="grid grid-cols-3 gap-1 p-0.5 rounded-lg bg-zinc-950 border border-zinc-800 text-[11px]">
+                <button
+                  type="button"
+                  onClick={() => handleSelectCategory("application")}
+                  className={cn(
+                    "py-1 rounded text-center transition-colors cursor-pointer font-sans truncate",
+                    selectedCategory === "application"
+                      ? "bg-zinc-800 text-emerald-400 font-semibold"
+                      : "text-zinc-400 hover:text-white"
+                  )}
+                >
+                  App ({appCount})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleSelectCategory("system")}
+                  className={cn(
+                    "py-1 rounded text-center transition-colors cursor-pointer font-sans truncate",
+                    selectedCategory === "system"
+                      ? "bg-zinc-800 text-amber-400 font-semibold"
+                      : "text-zinc-400 hover:text-white"
+                  )}
+                >
+                  Sys ({sysCount})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleSelectCategory("all")}
+                  className={cn(
+                    "py-1 rounded text-center transition-colors cursor-pointer font-sans truncate",
+                    selectedCategory === "all"
+                      ? "bg-zinc-800 text-white font-semibold"
+                      : "text-zinc-400 hover:text-white"
+                  )}
+                >
+                  All ({allCount})
+                </button>
+              </div>
+
+              {/* Schema Selector (if multiple schemas exist) */}
+              {availableSchemas.length > 1 && (
+                <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-zinc-900 border border-zinc-800 text-xs text-zinc-300">
+                  <HugeiconsIcon icon={Layers01Icon} className="size-3.5 text-zinc-400 shrink-0" />
+                  <span className="text-zinc-500 text-[11px]">Schema:</span>
+                  <select
+                    value={selectedSchema}
+                    onChange={(e) => setSelectedSchema(e.target.value)}
+                    className="bg-transparent text-xs text-zinc-200 focus:outline-none flex-1 truncate"
+                  >
+                    {availableSchemas.map((s) => (
+                      <option key={s} value={s} className="bg-zinc-900 text-zinc-200">
+                        {s}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              {/* Search Bar + Refresh */}
+              <div className="flex items-center gap-1.5">
+                <div className="relative flex-1">
+                  <HugeiconsIcon
+                    icon={Search01Icon}
+                    className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3 text-zinc-500 pointer-events-none"
+                  />
+                  <input
+                    type="text"
+                    value={tableSearch}
+                    onChange={(e) => setTableSearch(e.target.value)}
+                    placeholder="Search tables..."
+                    className="w-full pl-7 pr-6 py-1.5 rounded-lg bg-zinc-950 border border-zinc-700/80 text-xs text-zinc-200 placeholder:text-zinc-500 focus:outline-none focus:border-emerald-500/50"
+                  />
+                  {tableSearch && (
+                    <button
+                      type="button"
+                      onClick={() => setTableSearch("")}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-white"
+                    >
+                      <HugeiconsIcon icon={Cancel01Icon} className="size-3" />
+                    </button>
+                  )}
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => refetchSchema()}
+                  disabled={isSchemaFetching}
+                  className="size-8 flex items-center justify-center rounded-lg border border-zinc-700/80 bg-zinc-900/60 text-zinc-400 hover:text-white shrink-0"
+                  title="Refresh tables"
+                >
+                  <HugeiconsIcon
+                    icon={ReloadIcon}
+                    className={cn("size-3.5", isSchemaFetching && "animate-spin text-emerald-400")}
+                  />
+                </button>
+              </div>
+            </div>
+
+            {/* Tables List */}
+            <div className="flex-1 overflow-y-auto p-2 space-y-1 custom-scrollbar">
+              {isSchemaLoading ? (
+                <div className="flex items-center justify-center p-8 text-zinc-500 text-xs">
+                  <Spinner className="size-4 text-emerald-400 mr-2" />
+                  <span>Loading tables...</span>
+                </div>
+              ) : filteredTables.length === 0 ? (
+                <div className="p-6 text-center text-xs text-zinc-500">
+                  {tableSearch ? "No matching tables" : "No tables found"}
+                </div>
+              ) : (
+                filteredTables.map((tbl) => {
+                  const isSelected = selectedTable?.table === tbl.name;
+                  const isView = tbl.type?.toLowerCase().includes("view");
+
+                  return (
+                    <button
+                      key={tbl.name}
+                      type="button"
+                      onClick={() => {
+                        handleSelectTable(tbl.name);
+                        setMobileTableDrawerOpen(false);
+                      }}
+                      className={cn(
+                        "group flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-xs text-left outline-none transition-colors cursor-pointer",
+                        isSelected
+                          ? "bg-zinc-800 border border-emerald-500/40 text-white font-medium shadow-sm"
+                          : "text-zinc-300 hover:bg-zinc-900 hover:text-white"
+                      )}
+                    >
+                      <HugeiconsIcon
+                        icon={isView ? ViewIcon : TableIcon}
+                        className={cn(
+                          "size-4 shrink-0",
+                          isSelected ? "text-emerald-400" : "text-zinc-500 group-hover:text-zinc-300"
+                        )}
+                      />
+                      <span className="truncate flex-1 font-semibold">{tbl.name}</span>
+                      {typeof tbl.row_count_estimate === "number" && (
+                        <span className="text-[11px] text-zinc-500 font-mono">
+                          {tbl.row_count_estimate > 999
+                            ? `${(tbl.row_count_estimate / 1000).toFixed(1)}k`
+                            : tbl.row_count_estimate}
+                        </span>
+                      )}
+                    </button>
+                  );
+                })
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Global Command Palette (PRD F13: Cmd+K) */}
       <CommandPalette

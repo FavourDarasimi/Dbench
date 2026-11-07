@@ -113,7 +113,14 @@ export function CellInspector({
   }
 
   return (
-    <div className="fixed inset-y-0 right-0 z-50 w-full sm:w-[540px] md:w-[620px] bg-[#0c0c0e] border-l border-zinc-800 shadow-2xl flex flex-col animate-in slide-in-from-right duration-200">
+    <>
+      {/* Backdrop overlay */}
+      <div
+        className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs transition-opacity animate-in fade-in duration-150"
+        onClick={onClose}
+      />
+
+      <div className="fixed inset-y-0 right-0 z-50 w-full sm:w-[540px] md:w-[620px] bg-[#0c0c0e] border-l border-zinc-800 shadow-2xl flex flex-col animate-in slide-in-from-right duration-200">
       {/* Header */}
       <div className="flex items-center justify-between px-5 py-3.5 border-b border-zinc-800/80 bg-[#0a0a0c]">
         <div className="flex items-center gap-2">
@@ -421,5 +428,6 @@ export function CellInspector({
         </div>
       )}
     </div>
+    </>
   );
 }

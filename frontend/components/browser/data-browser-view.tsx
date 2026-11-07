@@ -13,6 +13,8 @@ import {
 import { apiGet, apiPost, sanitizeErrorMessage } from "@/lib/api";
 import { BrowseToolbar } from "./browse-toolbar";
 import { DataGrid } from "@/components/grid/data-grid";
+import { DataCardsView } from "@/components/grid/data-cards-view";
+import { CellInspector } from "@/components/grid/cell-inspector";
 import { RowFormModal } from "@/components/forms/row-form-modal";
 import { DeleteConfirmModal } from "@/components/forms/delete-confirm-modal";
 import { StagingBar } from "@/components/browser/staging-bar";
@@ -37,6 +39,7 @@ interface DataBrowserViewProps {
   connection?: Connection;
   onToggleRail?: () => void;
   isRailCollapsed?: boolean;
+  onOpenTableDrawer?: () => void;
 }
 
 export function DataBrowserView({
@@ -44,12 +47,16 @@ export function DataBrowserView({
   connection,
   onToggleRail,
   isRailCollapsed,
+  onOpenTableDrawer,
 }: DataBrowserViewProps) {
   const queryClient = useQueryClient();
   const schema = tab.schema || "public";
   const table = tab.table || "";
 
   // Browse State
+  const [viewMode, setViewMode] = useState<"grid" | "cards">("grid");
+  const [inspectorOpen, setInspectorOpen] = useState(false);
+  const [inspectedRow, setInspectedRow] = useState<Record<string, unknown> | null>(null);
   const [page, setPage] = useState<number>(1);
   const [pageSize, setPageSize] = useState<number>(50);
   const [sort, setSort] = useState<string>("");
@@ -530,6 +537,9 @@ export function DataBrowserView({
         onOpenChangeRequestsModal={() => setChangeRequestsModalOpen(true)}
         requireApproval={Boolean(connection?.require_approval)}
         isProduction={Boolean(connection?.is_production || connection?.environment === "production")}
+        viewMode={viewMode}
+        onViewModeChange={setViewMode}
+        onOpenTableDrawer={onOpenTableDrawer}
       />
 
       {/* Primary Key Absence Warning for Mutations */}
@@ -572,32 +582,54 @@ export function DataBrowserView({
         </div>
       )}
 
-      {/* High-Performance Virtualized Grid Viewport */}
+      {/* Responsive Data Viewport: Spreadsheet Grid or Mobile Cards */}
       <div className="flex-1 overflow-hidden flex flex-col min-h-0">
-        <DataGrid
-          connectionId={tab.connectionId}
-          schema={schema}
-          table={table}
-          columns={columns}
-          rows={rows}
-          sort={sort}
-          onSortChange={setSort}
-          isLoading={isRowsLoading}
-          isReadOnly={isReadOnly}
-          isView={isView}
-          selectedRowKeys={selectedRowKeys}
-          onToggleSelectRow={handleToggleSelectRow}
-          onToggleSelectAll={handleToggleSelectAll}
-          onEditRow={handleEditRow}
-          onDeleteRow={handleDeleteSingleRow}
-          stagedChanges={stagedChanges}
-          onStageCellEdit={handleStageCellEdit}
-        />
+        {viewMode === "grid" ? (
+          <DataGrid
+            connectionId={tab.connectionId}
+            schema={schema}
+            table={table}
+            columns={columns}
+            rows={rows}
+            sort={sort}
+            onSortChange={setSort}
+            isLoading={isRowsLoading}
+            isReadOnly={isReadOnly}
+            isView={isView}
+            selectedRowKeys={selectedRowKeys}
+            onToggleSelectRow={handleToggleSelectRow}
+            onToggleSelectAll={handleToggleSelectAll}
+            onEditRow={handleEditRow}
+            onDeleteRow={handleDeleteSingleRow}
+            stagedChanges={stagedChanges}
+            onStageCellEdit={handleStageCellEdit}
+          />
+        ) : (
+          <DataCardsView
+            connectionId={tab.connectionId}
+            schema={schema}
+            table={table}
+            columns={columns}
+            rows={rows}
+            isLoading={isRowsLoading}
+            isReadOnly={isReadOnly}
+            isView={isView}
+            selectedRowKeys={selectedRowKeys}
+            onToggleSelectRow={handleToggleSelectRow}
+            onEditRow={handleEditRow}
+            onDeleteRow={handleDeleteSingleRow}
+            onInspectRow={(r) => {
+              setInspectedRow(r);
+              setInspectorOpen(true);
+            }}
+            stagedChanges={stagedChanges}
+          />
+        )}
       </div>
 
       {/* Workspace Footer / Status Line */}
-      <div className="flex items-center justify-end px-3 py-1.5 bg-[#08080a] border-t border-zinc-800/80 text-xs sm:text-[13px] font-mono text-zinc-400">
-        <div className="flex items-center gap-3">
+      <div className="flex items-center justify-between sm:justify-end px-3 py-1.5 bg-[#08080a] border-t border-zinc-800/80 text-xs sm:text-[13px] font-mono text-zinc-400">
+        <div className="flex items-center gap-3 text-[11px] sm:text-xs">
           <span>{columns.length} columns</span>
           <span>·</span>
           <span>
@@ -605,6 +637,26 @@ export function DataBrowserView({
           </span>
         </div>
       </div>
+
+      {/* Cards View Row Inspector Drawer */}
+      <CellInspector
+        isOpen={inspectorOpen}
+        onClose={() => setInspectorOpen(false)}
+        connectionId={tab.connectionId}
+        schema={schema}
+        table={table}
+        columns={columns}
+        row={inspectedRow}
+        canMutate={!isReadOnly && !isView && hasPrimaryKey}
+        onEditRow={(r) => {
+          setInspectorOpen(false);
+          handleEditRow(r);
+        }}
+        onDeleteRow={(r) => {
+          setInspectorOpen(false);
+          handleDeleteSingleRow(r);
+        }}
+      />
 
       {/* Add / Edit Row Modal Form */}
       <RowFormModal

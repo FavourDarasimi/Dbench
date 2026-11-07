@@ -685,26 +685,32 @@ export function DataGrid({
           <thead className="sticky top-0 z-20 bg-[#0c0c0e] border-b border-zinc-800/90 shadow-sm">
             {tableInstance.getHeaderGroups().map((headerGroup) => (
               <tr key={headerGroup.id}>
-                {headerGroup.headers.map((header) => (
-                  <th
-                    key={header.id}
-                    style={{ width: header.getSize() }}
-                    className="relative px-2 py-2 text-xs font-mono font-medium text-zinc-400 border-r border-zinc-800/40 last:border-r-0"
-                  >
-                    {flexRender(header.column.columnDef.header, header.getContext())}
+                {headerGroup.headers.map((header) => {
+                  const isFirstCol = header.column.id === "__row_index";
+                  return (
+                    <th
+                      key={header.id}
+                      style={{ width: header.getSize() }}
+                      className={cn(
+                        "relative px-2 py-2 text-xs font-mono font-medium text-zinc-400 border-r border-zinc-800/40 last:border-r-0 select-none",
+                        isFirstCol && "sticky left-0 z-30 bg-[#0c0c0e] shadow-[2px_0_4px_rgba(0,0,0,0.4)]"
+                      )}
+                    >
+                      {flexRender(header.column.columnDef.header, header.getContext())}
 
-                    {/* Column Resizer Handle */}
-                    {header.column.getCanResize() && (
-                      <div
-                        onMouseDown={header.getResizeHandler()}
-                        onTouchStart={header.getResizeHandler()}
-                        className={`absolute top-0 right-0 h-full w-1.5 cursor-col-resize select-none touch-none hover:bg-emerald-500/50 ${
-                          header.column.getIsResizing() ? "bg-emerald-500" : ""
-                        }`}
-                      />
-                    )}
-                  </th>
-                ))}
+                      {/* Column Resizer Handle */}
+                      {header.column.getCanResize() && (
+                        <div
+                          onMouseDown={header.getResizeHandler()}
+                          onTouchStart={header.getResizeHandler()}
+                          className={`absolute top-0 right-0 h-full w-1.5 cursor-col-resize select-none touch-none hover:bg-emerald-500/50 ${
+                            header.column.getIsResizing() ? "bg-emerald-500" : ""
+                          }`}
+                        />
+                      )}
+                    </th>
+                  );
+                })}
               </tr>
             ))}
           </thead>
@@ -758,15 +764,21 @@ export function DataGrid({
                         isStagedDelete && "bg-red-950/20 opacity-60 text-red-400 line-through"
                       )}
                     >
-                      {row.getVisibleCells().map((cell) => (
-                        <td
-                          key={cell.id}
-                          style={{ width: cell.column.getSize() }}
-                          className="px-2.5 py-1.5 text-xs sm:text-[13px] border-r border-zinc-900/40 last:border-r-0 truncate max-w-0"
-                        >
-                          {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                        </td>
-                      ))}
+                      {row.getVisibleCells().map((cell) => {
+                        const isFirstCol = cell.column.id === "__row_index";
+                        return (
+                          <td
+                            key={cell.id}
+                            style={{ width: cell.column.getSize() }}
+                            className={cn(
+                              "px-2.5 py-1.5 text-xs sm:text-[13px] border-r border-zinc-900/40 last:border-r-0 truncate max-w-0",
+                              isFirstCol && "sticky left-0 z-10 bg-[#050505] group-hover:bg-[#111115] shadow-[2px_0_4px_rgba(0,0,0,0.4)]"
+                            )}
+                          >
+                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                          </td>
+                        );
+                      })}
                     </tr>
                   );
                 })}

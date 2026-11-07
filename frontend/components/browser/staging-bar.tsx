@@ -30,8 +30,8 @@ export function StagingBar({
   if (stagedCount === 0) return null;
 
   return (
-    <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 animate-in fade-in slide-in-from-bottom-4 duration-200">
-      <div className="flex items-center gap-3 px-4 py-2.5 rounded-2xl bg-[#141418]/95 border border-amber-500/40 text-zinc-100 shadow-2xl backdrop-blur-md">
+    <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 w-[calc(100%-1.5rem)] max-w-lg px-2 sm:px-0 flex justify-center animate-in fade-in slide-in-from-bottom-4 duration-200">
+      <div className="flex w-full sm:w-auto items-center justify-between sm:justify-start gap-2 sm:gap-3 px-3 sm:px-4 py-2.5 rounded-2xl bg-[#141418]/95 border border-amber-500/40 text-zinc-100 shadow-2xl backdrop-blur-md">
         {/* Pulsing indicator */}
         <div className="flex items-center gap-2 pr-2 border-r border-zinc-800">
           <span className="relative flex size-2.5">
