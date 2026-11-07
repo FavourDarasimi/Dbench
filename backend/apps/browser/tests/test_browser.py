@@ -385,3 +385,32 @@ def test_row_detail_batched_union_all_counts(auth_client, test_connection, sampl
     assert resp.data["related"][1]["count"] == 12
     # Check that UNION ALL was executed to batch the counts
     assert any("UNION ALL" in q for q in executed_queries)
+
+
+def test_table_browse_export_with_filters(auth_client, test_connection, sample_columns, monkeypatch):
+    setup_mock_schema(monkeypatch, sample_columns)
+
+    executed_sql = []
+
+    class MockExportDriver:
+        def stream_query(self, sql, params=None, **kwargs):
+            executed_sql.append((sql, params))
+            yield ["id", "name"], [[1, "Alice"]]
+
+        def close(self):
+            pass
+
+    monkeypatch.setattr("apps.browser.views.get_driver", lambda config: MockExportDriver())
+
+    filters_param = json.dumps([{"column": "name", "operator": "eq", "value": "Alice"}])
+    resp = auth_client.get(
+        f"/api/connections/{test_connection.id}/tables/users/export/?format=csv&filters={filters_param}"
+    )
+    assert resp.status_code == 200
+    content = b"".join(resp.streaming_content)
+    assert len(executed_sql) == 1
+    sql, params = executed_sql[0]
+    assert "WHERE" in sql
+    assert params == ["Alice"]
+    assert b"Alice" in content
+

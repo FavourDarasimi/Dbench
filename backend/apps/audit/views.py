@@ -30,15 +30,23 @@ from .services import (
 )
 
 
-def _get_connection(request, connection_id: str | uuid.UUID) -> Connection:
+def _get_connection(request, connection_id: str | uuid.UUID, allow_peer_approver: bool = False) -> Connection:
     try:
         return Connection.objects.get(pk=connection_id, owner=request.user)
     except Connection.DoesNotExist:
-        # Also allow staff/admin or peer team members to view connection change requests
-        try:
-            return Connection.objects.get(pk=connection_id)
-        except Connection.DoesNotExist:
-            raise NotFound("Connection not found.")
+        if request.user.is_staff:
+            try:
+                return Connection.objects.get(pk=connection_id)
+            except Connection.DoesNotExist:
+                raise NotFound("Connection not found.")
+        if allow_peer_approver:
+            try:
+                conn = Connection.objects.get(pk=connection_id)
+                if conn.require_approval or conn.is_production:
+                    return conn
+            except Connection.DoesNotExist:
+                pass
+        raise NotFound("Connection not found.")
 
 
 class AuditLogListView(APIView):
@@ -170,7 +178,7 @@ class ChangeRequestListView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, connection_id):
-        connection = _get_connection(request, connection_id)
+        connection = _get_connection(request, connection_id, allow_peer_approver=True)
         status_filter = request.query_params.get("status")
 
         qs = ChangeRequest.objects.filter(connection=connection).select_related("requester", "reviewer")
@@ -188,6 +196,17 @@ class ChangeRequestDetailView(APIView):
         try:
             req = ChangeRequest.objects.select_related("connection", "requester", "reviewer").get(pk=req_id)
         except ChangeRequest.DoesNotExist:
+            raise NotFound("Change request not found.")
+
+        conn = req.connection
+        is_allowed = (
+            conn.owner == request.user
+            or req.requester == request.user
+            or request.user.is_staff
+            or conn.require_approval
+            or conn.is_production
+        )
+        if not is_allowed:
             raise NotFound("Change request not found.")
 
         serializer = ChangeRequestSerializer(req)

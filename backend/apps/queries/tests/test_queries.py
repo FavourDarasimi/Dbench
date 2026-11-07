@@ -154,6 +154,23 @@ def test_execute_destructive_query_requires_confirmation(auth_client, test_conne
     assert confirmed_resp.data["row_count"] == 5
 
 
+def test_unparseable_sql_with_destructive_keyword_still_triggers_confirmation(auth_client, test_connection, monkeypatch):
+    from unittest.mock import MagicMock
+    import sqlglot
+
+    # Force sqlglot to raise an exception simulating syntax parser failure
+    monkeypatch.setattr(sqlglot, "parse", MagicMock(side_effect=Exception("Parser failure")))
+
+    resp = auth_client.post(
+        f"/api/connections/{test_connection.id}/query/",
+        {"sql": "DELETE FROM users"},
+    )
+    assert resp.status_code == 422
+    assert resp.data["requires_confirmation"] is True
+    assert any("DELETE statement without a WHERE clause" in w for w in resp.data["warnings"])
+
+
+
 def test_execute_mutation_on_read_only_connection_rejected(auth_client, read_only_connection):
     resp = auth_client.post(
         f"/api/connections/{read_only_connection.id}/query/",

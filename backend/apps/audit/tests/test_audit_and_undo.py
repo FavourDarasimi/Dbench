@@ -68,6 +68,14 @@ class TestAuditAndUndo:
         assert data["results"][0]["diff"]["status"]["old"] == "draft"
         assert data["results"][0]["diff"]["status"]["new"] == "paid"
 
+    def test_non_owner_cannot_access_audit_logs(self, test_conn):
+        other_user = User.objects.create_user(email="other@dbench.local", password="password123")
+        client = APIClient()
+        client.force_authenticate(user=other_user)
+
+        res = client.get(f"/api/connections/{test_conn.id}/audit/")
+        assert res.status_code == status.HTTP_404_NOT_FOUND
+
     def test_execute_undo_for_update(self, monkeypatch, auth_user, test_conn):
         entry = record_audit(
             connection=test_conn,
